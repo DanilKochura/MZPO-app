@@ -22,9 +22,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import lk.mzpo.ru.models.BottomItem
+import lk.mzpo.ru.screens.CartScreen
 import lk.mzpo.ru.screens.CatalogScreen
 import lk.mzpo.ru.screens.CategoriesScreen
 import lk.mzpo.ru.screens.Main
+import lk.mzpo.ru.screens.ProfileScreen
+import lk.mzpo.ru.screens.StudyScreen
 
 @Composable
 fun NavGraph(
@@ -33,14 +36,14 @@ fun NavGraph(
     ) {
     NavHost(navController = navHostController, startDestination = "home") {
         composable("profile") {
-            InDev()
+            ProfileScreen(navHostController = navHostController)
         }
         composable("categories")
         {
             CategoriesScreen(navHostController = navHostController)
         }
         composable("study") {
-            InDev()
+            StudyScreen(navHostController = navHostController)
         }
         composable("notifications") {
             InDev()
@@ -51,7 +54,7 @@ fun NavGraph(
         }
         composable("cart")
         {
-            InDev()
+            CartScreen(navHostController = navHostController)
         }
 
         composable(
