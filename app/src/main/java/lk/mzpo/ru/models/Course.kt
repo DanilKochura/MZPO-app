@@ -1,0 +1,16 @@
+package lk.mzpo.ru.models
+
+class Course(
+    val id: Int,
+    val category: Int,
+    val name: String,
+    val prefix: String,
+    val hours: Int,
+    val prices: Prices,
+    val description: String,
+    val uid: String,
+    val image: String,
+    val groups: List<Group>?,
+    val docs: List<Document>,
+    val modules: List<Module>,
+)
