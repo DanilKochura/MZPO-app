@@ -9,8 +9,9 @@ class Course(
     val prices: Prices,
     val description: String,
     val uid: String,
-    val image: String,
+    val images: List<String>,
     val groups: List<Group>?,
     val docs: List<Document>,
     val modules: List<Module>,
+    val doctype: String,
 )
