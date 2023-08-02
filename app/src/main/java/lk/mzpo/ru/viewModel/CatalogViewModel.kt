@@ -61,22 +61,22 @@ class CatalogViewModel
         (
         ): ViewModel()
 {
-
         val courses: MutableState<List<CoursePreview>> = mutableStateOf(emptyList())
+        val courses_selected: MutableState<List<CoursePreview>> = mutableStateOf(emptyList())
 
 
+        val categories: MutableState<List<Category>> = mutableStateOf(emptyList())
 
-
-
+        val selected_cat = mutableStateOf(0)
 
         fun getCourses(context: Context, url: String)
         {
-                        val cats = arrayListOf<CoursePreview>()
-                        val url = "https://lk.mzpo-s.ru/mobile/catalog/$url"
+                        val courses_ar = arrayListOf<CoursePreview>()
+                        val url1 = "https://lk.mzpo-s.ru/mobile/catalog/$url"
                         val queue = Volley.newRequestQueue(context)
                         val sRequest = StringRequest(
                                 Request.Method.GET,
-                                url,
+                                url1,
                                 {
                                                 response ->
 
@@ -86,7 +86,7 @@ class CatalogViewModel
                                         {
                                                 val item = mainobj[i] as JSONObject
                                                 val prices = item.getJSONObject("prices")
-                                                cats.add(CoursePreview(
+                                                courses_ar.add(CoursePreview(
                                                         item.getInt("id"),
                                                         item.getString("image"),
                                                         item.getString("name"),
@@ -110,22 +110,65 @@ class CatalogViewModel
                                                                 } catch (e: Exception)
                                                                 {
                                                                         null
-                                                                }
+                                                                },
+                                                                try {
+                                                                        prices.getInt("dist")
+                                                                } catch (e: Exception)
+                                                                {
+                                                                        null
+                                                                },
+                                                        ),
+                                                        item.getInt("category"),
+                                                        item.getString("doctype")
 
-
-
-                                                        )
 
                                                 ))
 
                                         }
-                                        courses.value = cats
+                                        courses.value = courses_ar
+                                        courses_selected.value = courses_ar
                                 },
                                 {
                                         Log.d("MyLog", "VolleyError: $it")
                                 }
                         )
                         queue.add(sRequest)
+
+
+
+                        val cats = arrayListOf<Category>()
+                        val url_cats = "https://lk.mzpo-s.ru/mobile/category/$url"
+                        val sRequest1 = StringRequest(
+                                Request.Method.GET,
+                                url_cats,
+                                {
+                                                response ->
+
+                                        try {
+                                                val mainobj = JSONObject(response).getJSONArray("children")
+
+                                                for(i in 0 until  mainobj.length())
+                                                {
+                                                        val item = mainobj[i] as JSONObject
+                                                        cats.add(
+                                                                Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), null, item.getInt("amount"))
+                                                                                                                )
+
+
+                                                }
+                                        } catch (e: Exception)
+                                        {
+                                                Log.d("MyLog", e.toString())
+                                        }
+
+
+                                        categories.value = cats
+                                },
+                                {
+                                        Log.d("MyLog", "VolleyError: $it")
+                                }
+                        )
+                        queue.add(sRequest1)
                 }
 
 

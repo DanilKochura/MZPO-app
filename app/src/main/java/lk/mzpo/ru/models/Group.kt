@@ -15,5 +15,8 @@ data class Group(
 //   val is_weekend: Int,
 //   val is_intensive: Int,
 //   val is_evening: Int,
-   val uid: String
+   val uid: String,
+   val teacher: String,
+   val teacher_name: String = "Не указан",
+   val month: Int = 0
 )
