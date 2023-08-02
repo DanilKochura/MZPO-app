@@ -69,6 +69,8 @@ class MainViewModel
         val stories: MutableState<List<List<Story>>> = mutableStateOf(emptyList())
         val step = mutableStateOf(0);
 
+        val banner_sliser = mutableStateOf(listOf<String>())
+
         val _storyState  = MutableTransitionState(false).apply {
                         targetState = false // start the animation immediately
                 }
@@ -204,16 +206,49 @@ class MainViewModel
                                                                 item.getString("prefix"),
                                                                 item.getInt("hours"),
                                                                 Prices(
-                                                                        prices.getInt("sale15"),
-                                                                        prices.getInt("weekend"),
-                                                                        prices.getInt("ind")
-                                                                )
+                                                                        try {
+                                                                                prices.getInt("sale15")
+                                                                        } catch (e: Exception)
+                                                                        {
+                                                                                null
+                                                                        },
+                                                                        try {
+                                                                                prices.getInt("ind")
+                                                                        } catch (e: Exception)
+                                                                        {
+                                                                                null
+                                                                        },
+                                                                        try {
+                                                                                prices.getInt("weekend")
+                                                                        } catch (e: Exception)
+                                                                        {
+                                                                                null
+                                                                        },
+                                                                        try {
+                                                                                prices.getInt("dist")
+                                                                        } catch (e: Exception)
+                                                                        {
+                                                                                null
+                                                                        }
+
+
+
+                                                                ),
+                                                                item.getInt("category"),
+                                                                item.getString("doctype")
+
 
                                                         )
                                                 )
                                         }
                                         _courses.value = previewList
-
+                                        val banners = mainobj.getJSONArray("mainPromoBanner")
+                                        val ban_list = arrayListOf<String>()
+                                        for (i in 0 until banners.length())
+                                        {
+                                                ban_list.add(banners[i] as String)
+                                        }
+                                        banner_sliser.value = ban_list
 
 
                                 },

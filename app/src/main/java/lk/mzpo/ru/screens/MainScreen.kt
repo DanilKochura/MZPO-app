@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,12 +39,15 @@ import androidx.compose.material.Button
 import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Checkbox
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -51,6 +56,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -76,6 +82,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.PagerState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -88,6 +97,7 @@ import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
+import lk.mzpo.ru.viewModel.CourseViewModel
 import lk.mzpo.ru.viewModel.MainViewModel
 import kotlin.math.abs
 
@@ -96,7 +106,8 @@ import kotlin.math.abs
 @Composable
 fun Main(navHostController: NavHostController = rememberNavController(), padding: PaddingValues = PaddingValues(25.dp), mainViewModel: MainViewModel = viewModel())
 {
-    mainViewModel.getStories(LocalContext.current)
+    val ctx = LocalContext.current
+    mainViewModel.getStories(context = ctx)
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
 //            topBar = {
@@ -135,12 +146,13 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                 ) {
                     Row (horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 15.dp)){
+                        .padding(top = 5.dp, bottom = 15.dp)){
                         SearchViewPreview();
                         IconButton(onClick = { /*TODO*/ }) {
                             Icon(imageVector = Icons.Default.Notifications, contentDescription = "bell", tint = Color.White, modifier = Modifier.size(40.dp))
                         }
                     }
+
                     Column(
                         Modifier
                             .fillMaxSize()
@@ -149,7 +161,9 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                 shape = RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)
                             )
                             .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
-                            .verticalScroll(rememberScrollState())) {
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 7.dp)
+                    ) {
 
                         //region Strories
                         LazyRow(
@@ -163,14 +177,15 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                 Column( verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally)
                                 {
                                     Image(painter = painterResource(id = mainViewModel.Story_lables[index][1] as Int), contentDescription = "",
-                                        contentScale = ContentScale.Inside, modifier = Modifier.clip(RoundedCornerShape(50)).clickable {
+                                        contentScale = ContentScale.Inside, modifier = Modifier
+                                            .clip(RoundedCornerShape(50))
+                                            .clickable {
 
-                                           if(mainViewModel.stories.value[index].isNotEmpty())
-                                           {
-                                               mainViewModel._storyState.targetState = true
-                                               mainViewModel.story_position.value = index
-                                           }
-                                        }
+                                                if (mainViewModel.stories.value[index].isNotEmpty()) {
+                                                    mainViewModel._storyState.targetState = true
+                                                    mainViewModel.story_position.value = index
+                                                }
+                                            }
                                         )
                                     Text(
                                         text = mainViewModel.Story_lables[index][0] as String,
@@ -198,20 +213,25 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                 color = Color(0xFF1D2B4B),
                                 textAlign = TextAlign.Center,
                             ),
-                            modifier = Modifier.padding(10.dp)
+
                         )
 
                         LazyRow(modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 10.dp, top = 10.dp)
+                            .padding(top = 10.dp)
                         ) {
                             itemsIndexed(mainViewModel.courses)
                             {
                                 _, index ->
-                                CourseCard(index, Modifier.width(300.dp))
+                                CourseCard(index,
+                                    Modifier
+                                        .width(300.dp)
+                                        .clickable {
+                                            navHostController.navigate("course/" + index.id)
+                                        })
                             }
                         }
-                        MainPromoBanner()
+                        MainPromoBanner(mainViewModel)
                         Text(
                             text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
                             style = TextStyle(
@@ -220,9 +240,20 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                 color = Color(0xFF1D2B4B),
                                 textAlign = TextAlign.Center,
                             ),
-                            modifier = Modifier.padding(10.dp)
+                        )
+                        Faculties()
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
+                            style = TextStyle(
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight(500),
+                                color = Color(0xFF1D2B4B),
+                                textAlign = TextAlign.Center,
+                            ),
                         )
                         MainBottomCats(navHostController)
+
                     }
                 }
 
@@ -391,12 +422,12 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
 
 @Preview
 @Composable
-fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3)), modifier: Modifier = Modifier)
+fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3, 4), 1,""), modifier: Modifier = Modifier.width(300.dp))
 {
     Card(modifier = modifier
-        .padding(horizontal = 5.dp)
+        .padding(end = 5.dp)
         .shadow(2.dp, RoundedCornerShape(10.dp))
-        .width(300.dp), colors = CardDefaults.cardColors(
+        , colors = CardDefaults.cardColors(
         containerColor = Color.White
     )) {
 //        Image(painter = painterResource(id = R.drawable.masage), contentDescription = "", modifier = Modifier
@@ -409,38 +440,81 @@ fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/bu
             .padding(7.dp)
             .fillMaxWidth()) {
             Text(course.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
-            Row() {
-                Icon(painter = painterResource(id = R.drawable.time_svgrepo_com), modifier = Modifier.height(20.dp),contentDescription = "hours")
-                Text(text = course.hours.toString()+" ак.ч.")
+            Row(Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier= Modifier.padding(end = 10.dp)) {
+                    Icon(painter = painterResource(id = R.drawable.time_svgrepo_com), modifier = Modifier
+                        .height(18.dp)
+                        .padding(end = 2.dp),contentDescription = "hours", tint = Color.Gray)
+                    Text(text = course.hours.toString()+" ак.ч.", color = Color.Gray)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, ) {
+                    Icon(painter = painterResource(id = R.drawable.diploma_svgrepo_com), modifier = Modifier
+                        .height(18.dp)
+                        .padding(end = 2.dp),contentDescription = "doc", tint = Color.Gray)
+                    Text(text = course.doctype, color = Color.Gray)
+                }
             }
             Row() {
 
                 Text(text = "Срок обучения: ", fontWeight = FontWeight.Bold)
                 Text(text = "1,5 - 2 мес.")
             }
-            Row{
-                Text(text = "Дистанционно: ", fontWeight = FontWeight.Bold)
-                Text(text = "9000 руб.", color = Aggressive_red)
+            if (course.prices.dist != 0 && course.prices.dist != null)
+            {
+                Row{
+                    Text(text = "Дистанционно: ", fontWeight = FontWeight.Bold)
+                    Text(text = "9000 руб.", color = Aggressive_red)
+                }
+            } else
+            {
+                Row{
+                    Text(text = "Очно: ", fontWeight = FontWeight.Bold)
+                    Text(text = "от "+course.prices.sale15.toString()+" руб.", color = Aggressive_red)
+                }
             }
-            Row{
-                Text(text = "Очно: ", fontWeight = FontWeight.Bold)
-                Text(text = course.prices.sale15.toString()+" руб.", color = Aggressive_red)
-            }
-            Button(onClick = { /*TODO*/ }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
+            Button(onClick = { /*TODO*/ }, modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 5.dp), shape = RoundedCornerShape(30), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
                 Text("Купить со скидкой", color = Color.White)
             }
         }
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun MainPromoBanner()
+fun MainPromoBanner(viewModel: MainViewModel)
 {
-    AsyncImage(model = "https://www.mzpo-s.ru/images/events/2023/01/01/56_6352aae82c764.jpg", placeholder = painterResource(
-        id = R.drawable.masage
-    ), modifier = Modifier
-        .padding(vertical = 10.dp, horizontal = 0.dp)
-        .fillMaxWidth(), contentDescription = "", contentScale = ContentScale.FillBounds)
+    val state = com.google.accompanist.pager.rememberPagerState()
+
+
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 20.dp)
+            .clip(RoundedCornerShape(10.dp))) {
+            SliderView(state = state, viewModel = viewModel)
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 5.dp)
+            ) {
+                DotsIndicator(
+                    totalDots = viewModel.banner_sliser.value.size,
+                    selectedIndex = state.currentPage
+                )
+            }
+
+        }
+            LaunchedEffect(key1 = state.currentPage) {
+                delay(3000)
+                var newPosition = state.currentPage + 1
+                if (newPosition > viewModel.banner_sliser.value.size - 1) newPosition = 0
+                // scrolling to the new position.
+                state.animateScrollToPage(newPosition)
+            }
+
+
 }
 @Preview(showBackground = true)
 @Composable
@@ -449,12 +523,12 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            .padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
         Surface (modifier = Modifier
             .height(100.dp)
             .fillMaxWidth()
             .weight(1f)
-            .padding(horizontal = 5.dp)
+            .padding(end = 5.dp)
             .shadow(1.dp, RoundedCornerShape(10.dp))
             .clickable {
                 navHostController.navigate("catalog?name=massazh-i-reabilitaciya")
@@ -470,11 +544,7 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
                 modifier = Modifier.padding(start = 50.dp)
             ) {
                 Text(
-                    text = "Массаж и ",
-                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
-                )
-                Text(
-                    text = "реабилитация",
+                    text = "Массаж и реабилитация",
                     style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
                 )
 
@@ -485,11 +555,12 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
 
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Подробнее", fontSize = 14.sp, color = Aggressive_red)
+                    Text(text = "Подробнее", fontSize = 12.sp, color = Aggressive_red)
                     Icon(
                         imageVector = Icons.Default.ArrowForward,
                         contentDescription = "next",
-                        tint = Aggressive_red
+                        tint = Aggressive_red,
+                        modifier = Modifier.size(14.dp)
                     )
 
                 }
@@ -499,7 +570,7 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
             .height(100.dp)
             .fillMaxWidth()
             .weight(1f)
-            .padding(horizontal = 5.dp)
+            .padding(start = 5.dp)
             .shadow(1.dp, RoundedCornerShape(10.dp))
             .clickable {
                 navHostController.navigate("catalog?name=medicinskaya-podgotovka")
@@ -515,13 +586,10 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
                 modifier = Modifier.padding(start = 50.dp)
             ) {
                 Text(
-                    text = "Медицинская ",
+                    text = "Медицинская подготовка",
                     style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
                 )
-                Text(
-                    text = "подготовка",
-                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
-                )
+
 
                 Row {
                     Text(text = "более ", style = TextStyle(fontSize = 12.sp))
@@ -530,11 +598,12 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
 
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Подробнее", fontSize = 14.sp, color = Aggressive_red)
+                    Text(text = "Подробнее", fontSize = 12.sp, color = Aggressive_red)
                     Icon(
                         imageVector = Icons.Default.ArrowForward,
                         contentDescription = "next",
-                        tint = Aggressive_red
+                        tint = Aggressive_red,
+                        modifier = Modifier.size(14.dp)
                     )
 
                 }
@@ -558,7 +627,7 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
             Image(
                 painter = painterResource(id = R.drawable.mas1), contentDescription = "",
                 Modifier
-                    .offset((-70).dp)
+                    .offset((-80).dp)
                     .alpha(0.3f), contentScale = ContentScale.FillHeight
             )
             Column(
@@ -578,11 +647,12 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
 
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Подробнее", fontSize = 14.sp, color = Aggressive_red)
+                    Text(text = "Подробнее", fontSize = 12.sp, color = Aggressive_red)
                     Icon(
                         imageVector = Icons.Default.ArrowForward,
                         contentDescription = "next",
-                        tint = Aggressive_red
+                        tint = Aggressive_red,
+                        modifier = Modifier.size(14.dp)
                     )
 
                 }
@@ -590,6 +660,170 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
         }
 
 
+
+    }
+}
+
+
+@Preview
+@Composable
+fun Faculties() {
+    Column (Modifier.padding(vertical =  5.dp)){
+        Surface (modifier = Modifier
+            .height(100.dp)
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+            .shadow(1.dp, RoundedCornerShape(10.dp))
+
+//            .clickable {
+//                navHostController.navigate("catalog?name=massazh-i-reabilitaciya")
+//            }
+            ){
+            Row {
+                Image(
+                    painter = painterResource(id = R.drawable.kosmetologiya),
+                    modifier = Modifier.fillMaxWidth(0.4f),
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier
+                        .padding(start = 20.dp)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        text = "Косметология",
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
+                    )
+//                Text(text = "")
+
+                    Row {
+                        Text(text = "более ", style = TextStyle(fontSize = 12.sp))
+                        Text(text = "159 ", color = Aggressive_red, style = TextStyle(fontSize = 12.sp))
+                        Text(text = "курсов ", style = TextStyle(fontSize = 12.sp))
+
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "Подробнее", fontSize = 12.sp, color = Aggressive_red)
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "next",
+                            tint = Aggressive_red,
+                            modifier = Modifier.size(14.dp)
+                        )
+
+                    }
+                }
+            }
+        }
+        Surface (modifier = Modifier
+            .height(100.dp)
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+            .shadow(1.dp, RoundedCornerShape(10.dp))){
+            Row() {
+                Image(
+                    painter = painterResource(id = R.drawable.massaj),
+                    modifier = Modifier.fillMaxWidth(0.4f),
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier
+                        .padding(start = 20.dp)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        text = "Массаж и реабилитация",
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
+                    )
+
+
+                    Row {
+                        Text(text = "более ", style = TextStyle(fontSize = 12.sp))
+                        Text(text = "250 ", color = Aggressive_red, style = TextStyle(fontSize = 12.sp))
+                        Text(text = "курсов ", style = TextStyle(fontSize = 12.sp))
+
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "Подробнее", fontSize = 12.sp, color = Aggressive_red)
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "next",
+                            tint = Aggressive_red,
+                            modifier = Modifier.size(14.dp)
+                        )
+
+                    }
+                }
+            }
+        }
+        Surface (modifier = Modifier
+            .height(100.dp)
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+            .shadow(1.dp, RoundedCornerShape(10.dp))){
+            Row {
+                Image(
+                    painter = painterResource(id = R.drawable.medpodgotovka),
+                    modifier = Modifier.fillMaxWidth(0.4f),
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier
+                        .padding(start = 20.dp)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        text = "Медицинская подготовка",
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600))
+                    )
+
+
+                    Row {
+                        Text(text = "более ", style = TextStyle(fontSize = 12.sp))
+                        Text(text = "600 ", color = Aggressive_red, style = TextStyle(fontSize = 12.sp))
+                        Text(text = "курсов ", style = TextStyle(fontSize = 12.sp))
+
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "Подробнее", fontSize = 12.sp, color = Aggressive_red)
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "next",
+                            tint = Aggressive_red,
+                            modifier = Modifier.size(14.dp)
+                        )
+
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun SliderView(state: PagerState, viewModel: MainViewModel) {
+
+    val imageUrl =
+        remember { mutableStateOf("") }
+    HorizontalPager(
+        state = state,
+        count = viewModel.banner_sliser.value.size, modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+    ) { page ->
+
+
+            AsyncImage(
+                model = viewModel.banner_sliser.value[page], contentDescription = "", Modifier
+                    .fillMaxSize(), contentScale = ContentScale.FillBounds
+            )
 
     }
 }
