@@ -28,15 +28,25 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldColors
+import androidx.compose.material.TextFieldColorsWithIcons
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
@@ -55,6 +65,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusModifier
@@ -62,9 +73,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,7 +103,13 @@ import kotlinx.coroutines.delay
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Course
+import lk.mzpo.ru.network.retrofit.Data2Amo
+import lk.mzpo.ru.network.retrofit.SendDataToAmo
+import lk.mzpo.ru.ui.components.EmailTextField
+import lk.mzpo.ru.ui.components.NameTextField
+import lk.mzpo.ru.ui.components.PhoneTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
+import lk.mzpo.ru.ui.components.isValidEmail
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CatalogViewModel
@@ -185,6 +208,7 @@ fun CourseScreen(
                 }
 
             }
+            ModalForm(mainViewModel = courseViewModel)
         },
         floatingActionButton = {
             Row(
@@ -192,7 +216,7 @@ fun CourseScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 5.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
                 FloatingActionButton(
-                    onClick = { /*TODO*/ },
+                    onClick = { courseViewModel.modalForm.value = true },
                     containerColor = Primary_Green,
                     contentColor = Color.White,
                     modifier = Modifier
@@ -354,6 +378,7 @@ fun CourseInfo(courseViewModel: CourseViewModel)
                     .clip(
                         RoundedCornerShape(20)
                     )
+                    .background(if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.Transparent)
                     .border(
                         width = 1.dp,
                         color = if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.LightGray,
@@ -363,7 +388,7 @@ fun CourseInfo(courseViewModel: CourseViewModel)
                         courseViewModel.selectedPrice.value = course.prices.sale15!!
                     }, verticalArrangement = Arrangement.Center)
                 {
-                    Text(text = "Очно в группе", Modifier.padding(10.dp), color = Color.Black)
+                    Text(text = "Очно в группе", Modifier.padding(10.dp), color = if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Color.White else Color.Black)
                 }
             }
             if(course.prices.ind != 0)
@@ -374,6 +399,7 @@ fun CourseInfo(courseViewModel: CourseViewModel)
                     .clip(
                         RoundedCornerShape(20)
                     )
+                    .background(if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.Transparent)
                     .border(
                         width = 1.dp,
                         color = if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.LightGray,
@@ -383,7 +409,7 @@ fun CourseInfo(courseViewModel: CourseViewModel)
                         courseViewModel.selectedPrice.value = course.prices.ind!!
                     }, verticalArrangement = Arrangement.Center)
                 {
-                    Text(text = "Индивидуально", Modifier.padding(10.dp), color = Color.Black)
+                    Text(text = "Индивидуально", Modifier.padding(10.dp), color = if (courseViewModel.selectedPrice.value == course.prices.ind!!) Color.White else Color.Black)
                 }
             }
             if(course.prices.weekend !=0 )
@@ -394,6 +420,7 @@ fun CourseInfo(courseViewModel: CourseViewModel)
                     .clip(
                         RoundedCornerShape(20)
                     )
+                    .background(if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.Transparent)
                     .border(
                         width = 1.dp,
                         color = if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.LightGray,
@@ -403,7 +430,7 @@ fun CourseInfo(courseViewModel: CourseViewModel)
                         courseViewModel.selectedPrice.value = course.prices.weekend!!
                     }, verticalArrangement = Arrangement.Center)
                 {
-                    Text(text = "Учись в выходной", Modifier.padding(10.dp), color = Color.Black)
+                    Text(text = "Учись в выходной", Modifier.padding(10.dp), color = if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Color.White else Color.Black)
                 }
             }
         }
@@ -628,4 +655,112 @@ fun DotsIndicator(
     }
 }
 
+
+@Composable
+fun ModalForm(mainViewModel: CourseViewModel)
+{
+    var name  = remember { mutableStateOf(TextFieldValue("")) }
+    var email  = remember { mutableStateOf(TextFieldValue("")) }
+    var phone  = remember { mutableStateOf("") }
+    var comment  = remember { mutableStateOf(TextFieldValue("")) }
+
+
+    var nameError = remember {
+        mutableStateOf(false)
+    }
+    var emailError = remember {
+        mutableStateOf(false)
+    }
+    var phoneError = remember {
+        mutableStateOf(false)
+    }
+
+    val context = LocalContext.current
+   if(mainViewModel.modalForm.value)
+   {
+       AlertDialog(
+           onDismissRequest = {
+               mainViewModel.modalForm.value = false
+           },
+           text = {
+               Column() {
+                   Text("Задать вопрос по курсу", fontSize = 20.sp)
+                   Spacer(modifier = Modifier.height(5.dp))
+                   NameTextField(name = name, nameError)
+                   PhoneTextField(phone = phone, phoneError)
+                   EmailTextField(email = email, emailError)
+                   OutlinedTextField(
+                       value = comment.value,
+                       placeholder = { Text(text = "Ваш вопрос", Modifier.alpha(0.5f))},
+                       onValueChange = { comment.value = it },
+                       leadingIcon = {
+                           Icon(
+                               imageVector = Icons.Default.Edit,
+                               contentDescription = "Email Icon"
+                           )
+                       },
+                       label = { Text(text = "Вопрос")},
+                       modifier = Modifier
+                           .padding(top = 10.dp)
+                           .height(100.dp),
+                       colors = TextFieldDefaults.outlinedTextFieldColors(
+                           focusedBorderColor = Primary_Green,  cursorColor = Color.Black))
+
+               }
+           },
+           buttons = {
+               Row(
+                   modifier = Modifier.padding(all = 8.dp),
+                   horizontalArrangement = Arrangement.Center
+               ) {
+                   Button(
+                       modifier = Modifier.fillMaxWidth(),
+                       onClick = {
+                                if(phone.value.length != 10)
+                                {
+                                    phoneError.value = true
+                                    return@Button
+                                }else
+                                {
+                                    phoneError.value = false
+
+                                }
+                                if(!isValidEmail(email.value.text))
+                                {
+                                    emailError.value = true
+                                    return@Button
+                                } else
+                                {
+                                    emailError.value = false
+                                }
+                                if(name.value.text.isEmpty())
+                                {
+                                    nameError.value = true
+                                    return@Button
+                                } else
+                                {
+                                    nameError.value = false
+                                }
+
+
+                               SendDataToAmo.sendDataToAmo(
+                                   Data2Amo(
+                                       "Задать вопрос по курсу "+mainViewModel.courses.value[0].name+" с мобильного приложения\n"+ comment.value.text,
+                                       email = email.value.text,
+                                       "Задать вопрос по курсу "+mainViewModel.courses.value[0].name+" с мобильного приложения",
+                                       name.value.text.toString(),
+                                       phone = phone.value
+                                   ), ctx = context)
+                           mainViewModel.modalForm.value = false },
+                       colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                       shape = RoundedCornerShape(10.dp)
+                   ) {
+                       Text("Оставить заявку", color = Color.White)
+                   }
+               }
+           },
+           shape = RoundedCornerShape(10.dp)
+       )
+   }
+}
 

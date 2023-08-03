@@ -23,7 +23,7 @@ class CourseViewModel   (
 ): ViewModel(){
 
     val courses = mutableStateOf(listOf<Course>())
-
+    val modalForm = mutableStateOf(false)
     val tabIndex = mutableStateOf("Инфо")
 
     val monthes = listOf("Декабрь", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь")
