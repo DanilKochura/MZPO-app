@@ -89,7 +89,7 @@ class CategoriesViewModel
                                                 for(j in  0 until children.length())
                                                 {
                                                         val it = children[j] as JSONObject
-                                                        child.add(Category(it.getInt("id"),it.getString("name"), it.getString("alias"), it.getInt("parent_id"), null, it.getInt("amount")))
+                                                        child.add(Category(it.getInt("id"),it.getString("name"), it.getString("alias"), it.getInt("parent_id"), null, it.getString("image"),it.getInt("amount")))
                                                 }
                                                 cats.add(Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), child))
 

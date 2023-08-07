@@ -2,26 +2,21 @@ package lk.mzpo.ru.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -50,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import lk.mzpo.ru.InDev
+import coil.compose.AsyncImage
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomItem
 import lk.mzpo.ru.models.BottomNavigationMenu
@@ -58,6 +53,9 @@ import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
+import lk.mzpo.ru.ui.theme.Primary_Green_BG
+import lk.mzpo.ru.ui.theme.Second_Green
+import lk.mzpo.ru.ui.theme.Third_green
 import lk.mzpo.ru.viewModel.CategoriesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,6 +105,8 @@ fun CategoriesScreen(
                         .padding(padding)
                 ) {
 
+
+                    
                     //region Search
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
@@ -158,7 +158,7 @@ fun CategoriesScreen(
                                 if (item.child !== null && item.child.isNotEmpty()) {
                                     val size = item.child.size
 
-                                    for (i in 0 until size - 1 step 2) {
+                                    for (i in 0 until size step 2) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -166,16 +166,19 @@ fun CategoriesScreen(
                                             horizontalArrangement = Arrangement.SpaceEvenly
                                         )
                                         {
-                                            CatCard(
+                                            CatCardAlternate(
                                                 category = item.child[i],
                                                 navHostController = navHostController,
                                                 modifier = Modifier.weight(1f)
                                             )
-                                            CatCard(
-                                                category = item.child[i + 1],
-                                                navHostController = navHostController,
-                                                modifier = Modifier.weight(1f)
-                                            )
+                                            if(item.child.size > i+1)
+                                            {
+                                                CatCardAlternate(
+                                                    category = item.child[i + 1],
+                                                    navHostController = navHostController,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -197,11 +200,14 @@ fun CatCard(category: Category, navHostController: NavHostController, modifier: 
 {
 
     var painter_res = R.drawable.mas1
+    var color_bg = Second_Green
     if(category.parent == 7)
     {
+        color_bg = Primary_Green_BG
         painter_res = R.drawable.kos
     } else if(category.parent == 11)
     {
+        color_bg = Third_green
         painter_res = R.drawable.med
     }
     Surface (modifier = modifier
@@ -211,38 +217,92 @@ fun CatCard(category: Category, navHostController: NavHostController, modifier: 
         .clickable {
             navHostController.navigate("catalog?name=" + category.url)
         }) {
-        Image(
-            painter = painterResource(id = painter_res), contentDescription = "",
-            Modifier
-                .offset((-70).dp)
-                .alpha(0.3f), contentScale = ContentScale.FillHeight
-        )
-        Column(
-            verticalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.padding(start = 50.dp)
-        ) {
-            androidx.compose.material3.Text(
-                text = category.name,
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight(600)),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(color = color_bg, shape = RoundedCornerShape(10.dp)))
+        {
+            Column(
+                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .fillMaxSize()
+            ) {
+                androidx.compose.material3.Text(
+                    text = category.name,
+                    style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight(600)),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,color = Color.White
+                )
 //                Text(text = "")
 
-            Row (horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
-                androidx.compose.material3.Text(text = category.amount.toString(), color = Aggressive_red, style = TextStyle(fontSize = 12.sp))
-                androidx.compose.material3.Text(text = " курсов ", style = TextStyle(fontSize = 12.sp))
+                Row (/*horizontalArrangement = Arrangement.Center, */modifier = Modifier.fillMaxWidth()){
+                    androidx.compose.material3.Text(text = category.amount.toString(), color = Color.White, style = TextStyle(fontSize = 12.sp))
+                    androidx.compose.material3.Text(text = " курсов ", style = TextStyle(fontSize = 12.sp),color = Color.White)
+
+                }
 
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.material3.Text(text = "Подробнее", fontSize = 14.sp, color = Aggressive_red)
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "next",
-                    tint = Aggressive_red
+            Icon(
+                painter = painterResource(id = painter_res), contentDescription = "",
+                Modifier
+                    .size(40.dp)
+                    .align(Alignment.BottomEnd)
+                    .alpha(0.8f)
+                    .padding(2.dp), tint = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun CatCardAlternate(category: Category, navHostController: NavHostController, modifier: Modifier = Modifier)
+{
+
+    var painter_res = R.drawable.mas1
+    var color_bg = Second_Green
+    if(category.parent == 7)
+    {
+        color_bg = Primary_Green_BG
+        painter_res = R.drawable.kos
+    } else if(category.parent == 11)
+    {
+        color_bg = Third_green
+        painter_res = R.drawable.med
+    }
+    Surface (modifier = modifier
+        .padding(horizontal = 5.dp)
+        .shadow(1.dp, RoundedCornerShape(10.dp))
+        .clickable {
+            navHostController.navigate("catalog?name=" + category.url)
+        }) {
+
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(color = color_bg, shape = RoundedCornerShape(10.dp)).height(150.dp))
+        {
+            AsyncImage(model = category.image, contentDescription = "", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Column(
+//                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .padding(start = 10.dp, top = 10.dp)
+                    .fillMaxSize()
+            ) {
+                androidx.compose.material3.Text(
+                    text = category.name,
+                    style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight(600)),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,color = Color.White, modifier = Modifier.fillMaxSize(0.7f)
                 )
+//                Text(text = "")
 
+//                Row (/*horizontalArrangement = Arrangement.Center, */modifier = Modifier.fillMaxWidth().padding(top = 20.dp)){
+//                    androidx.compose.material3.Text(text = category.amount.toString(), color = Color.White, style = TextStyle(fontSize = 12.sp))
+//                    androidx.compose.material3.Text(text = " курсов ", style = TextStyle(fontSize = 12.sp),color = Color.White)
+//
+//                }
             }
+
         }
     }
 }

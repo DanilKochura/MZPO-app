@@ -6,14 +6,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,22 +29,14 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Checkbox
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
-import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,7 +60,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -85,19 +73,20 @@ import coil.compose.AsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
+import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.network.retrofit.Data2Amo
+import lk.mzpo.ru.network.retrofit.SendDataToAmo
+import lk.mzpo.ru.ui.components.EmailTextField
+import lk.mzpo.ru.ui.components.NameTextField
+import lk.mzpo.ru.ui.components.PhoneTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
-import lk.mzpo.ru.viewModel.CourseViewModel
 import lk.mzpo.ru.viewModel.MainViewModel
 import kotlin.math.abs
 
@@ -147,7 +136,7 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                     Row (horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 5.dp, bottom = 15.dp)){
-                        SearchViewPreview();
+                        SearchViewPreview(navHostController = navHostController);
                         IconButton(onClick = { /*TODO*/ }) {
                             Icon(imageVector = Icons.Default.Notifications, contentDescription = "bell", tint = Color.White, modifier = Modifier.size(40.dp))
                         }
@@ -241,6 +230,7 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                 textAlign = TextAlign.Center,
                             ),
                         )
+                        AltFaculties(navHostController = navHostController)
                         Faculties()
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
@@ -353,40 +343,29 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
     }
     var name  = remember { mutableStateOf(TextFieldValue("")) }
     var email  = remember { mutableStateOf(TextFieldValue("")) }
-    var phone  = remember { mutableStateOf(TextFieldValue("+7")) }
+    var phone  = remember { mutableStateOf("") }
     val context = LocalContext.current
-
+    var nameError = remember {
+        mutableStateOf(false)
+    }
+    var emailError = remember {
+        mutableStateOf(false)
+    }
+    var phoneError = remember {
+        mutableStateOf(false)
+    }
     AnimatedVisibility(visibleState = mainViewModel.openDialog, exit = slideOutVertically()) {
         AlertDialog(
             onDismissRequest = {
                 mainViewModel.paused.value = false
                 mainViewModel.openDialog.targetState = false
             },
-            title = {
-                Text(mainViewModel.form_title.value, fontSize = 20.sp, modifier = Modifier.padding(vertical = 5.dp))
-
-            },
             text = {
                 Column() {
-                    TextField(
-                        value = name.value,
-                        placeholder = { Text(text = "ФИО", Modifier.alpha(0.5f))},
-                        onValueChange = { name.value = it },
-                        )
-                    TextField(
-                        value = phone.value,
-                        placeholder = { Text(text = "Телефон", Modifier.alpha(0.5f))},
-                        onValueChange = { phone.value = it },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-
-                    )
-                    TextField(
-                        value = email.value,
-                        placeholder = { Text(text = "Email", Modifier.alpha(0.5f))},
-                        onValueChange = { email.value = it },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-
-                        )
+                    Text(mainViewModel.form_title.value, fontSize = 20.sp, modifier = Modifier.padding(bottom = 5.dp))
+                    NameTextField(name = name, nameError)
+                    PhoneTextField(phone = phone, phoneError)
+                    EmailTextField(email = email, emailError)
                 }
             },
             buttons = {
@@ -397,22 +376,25 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            mainViewModel.sendDataToAmo(
+                            SendDataToAmo.sendDataToAmo(
                                 Data2Amo(
                                     "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
                                     email = email.value.text,
                                     "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
                                     name.value.text.toString(),
-                                    phone = phone.value.text
+                                    phone = phone.value
                                 ), ctx = context)
                             mainViewModel.paused.value = false
                             mainViewModel.openDialog.targetState = false },
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red)
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("Оставить заявку", color = Color.White)
                     }
                 }
-            }
+            },
+            shape = RoundedCornerShape(10.dp)
+
         )
     }
 
@@ -486,12 +468,10 @@ fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/bu
 fun MainPromoBanner(viewModel: MainViewModel)
 {
     val state = com.google.accompanist.pager.rememberPagerState()
-
-
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 20.dp)
-            .clip(RoundedCornerShape(10.dp))) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 20.dp)
+        .clip(RoundedCornerShape(10.dp))) {
             SliderView(state = state, viewModel = viewModel)
             Row(
                 horizontalArrangement = Arrangement.Center,
@@ -664,6 +644,42 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
     }
 }
 
+
+@Composable
+fun AltFaculties(navHostController: NavHostController)
+{
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    )
+    {
+        CatCardAlternate(
+            category = Category(7, "Массаж и реабилитация", "massazh-i-reabilitaciya", 6, null, "https://lk.mzpo-s.ru/build/images/mobile/menues/8_8f596751-e619-4653-a158-b7ee68726aca.png"),
+            navHostController = navHostController,
+            modifier = Modifier.weight(1f)
+        )
+        CatCardAlternate(
+            category = Category(11, "Медицинская подготовка", "medicinskaya-podgotovka", 6, null, "https://lk.mzpo-s.ru/build/images/mobile/menues/46_314d0e87-571b-4834-8a9a-fb40a2e20755.png"),
+                  navHostController = navHostController,
+                modifier = Modifier.weight(1f)
+            )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    )
+    {
+        CatCardAlternate(
+            category = Category(13, "Косметология", "kosmetologiya", 6, null, "https://lk.mzpo-s.ru/build/images/mobile/menues/14_afc0e14f-af52-4055-967e-5d948306afbf.png"),
+            navHostController = navHostController,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
 
 @Preview
 @Composable
