@@ -17,26 +17,38 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,6 +79,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -73,16 +87,21 @@ import coil.compose.AsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
+import com.ireward.htmlcompose.HtmlText
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Category
+import lk.mzpo.ru.models.CourseFilterModel
 import lk.mzpo.ru.network.retrofit.Data2Amo
 import lk.mzpo.ru.network.retrofit.SendDataToAmo
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
+import lk.mzpo.ru.ui.components.PriceTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
+import lk.mzpo.ru.ui.components.isValidEmail
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.theme.Aggressive_red
@@ -90,11 +109,27 @@ import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.MainViewModel
 import kotlin.math.abs
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Preview
 @Composable
 fun Main(navHostController: NavHostController = rememberNavController(), padding: PaddingValues = PaddingValues(25.dp), mainViewModel: MainViewModel = viewModel())
 {
+    val bottomSheetState =
+        rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    LaunchedEffect(key1 =  mainViewModel.bottomSheetState.value, block = {
+        if(mainViewModel.bottomSheetState.value)
+        {
+            bottomSheetState.show()
+        }
+    })
+    LaunchedEffect(key1 = bottomSheetState.targetValue, block = {
+        if(bottomSheetState.targetValue ==  ModalBottomSheetValue.Hidden)
+        {
+            mainViewModel.paused.value = false
+            mainViewModel.bottomSheetState.value = false
+
+        }
+    })
     val ctx = LocalContext.current
     mainViewModel.getStories(context = ctx)
     Scaffold(
@@ -192,7 +227,6 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
 
 
                         }
-                        //endregion
 
                         Text(
                             text = "ПОПУЛЯРНЫЕ КУРСЫ",
@@ -204,6 +238,7 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                             ),
 
                         )
+
 
                         LazyRow(modifier = Modifier
                             .fillMaxWidth()
@@ -230,24 +265,14 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                 textAlign = TextAlign.Center,
                             ),
                         )
-                        AltFaculties(navHostController = navHostController)
-                        Faculties()
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight(500),
-                                color = Color(0xFF1D2B4B),
-                                textAlign = TextAlign.Center,
-                            ),
-                        )
-                        MainBottomCats(navHostController)
+                        AltFaculties(navHostController = navHostController, mainViewModel)
+
 
                     }
                 }
 
             }
+
         }, modifier = Modifier.fillMaxSize()
     )
     AnimatedVisibility(visibleState = mainViewModel._storyState, modifier = Modifier.fillMaxSize(), exit = fadeOut()) {
@@ -354,6 +379,7 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
     var phoneError = remember {
         mutableStateOf(false)
     }
+
     AnimatedVisibility(visibleState = mainViewModel.openDialog, exit = slideOutVertically()) {
         AlertDialog(
             onDismissRequest = {
@@ -376,6 +402,7 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
+
                             SendDataToAmo.sendDataToAmo(
                                 Data2Amo(
                                     "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
@@ -397,7 +424,79 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
 
         )
     }
+    val text = remember {
+        mainViewModel.bottomText
+    }
+    ModalBottomSheetLayout(
+        sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        sheetContent = {
+            Column (modifier = Modifier
+                .padding(10.dp)
+                .verticalScroll(rememberScrollState())){
+                Text(text = mainViewModel.form_title.value, fontSize = 22.sp, fontWeight = FontWeight(600), textAlign = TextAlign.Center, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = padding.calculateTopPadding()))
+                HtmlText(text = mainViewModel.bottomText.value)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    NameTextField(name = name, nameError)
+                    PhoneTextField(phone = phone, phoneError)
+                    EmailTextField(email = email, emailError)
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .padding(top = 20.dp, bottom = 10.dp)
+                            .height(45.dp)
+                            ,
+                        onClick = {
+                            if(phone.value.length != 10)
+                            {
+                                phoneError.value = true
+                                return@Button
+                            }else
+                            {
+                                phoneError.value = false
 
+                            }
+//                            if(!isValidEmail(email.value.text))
+//                            {
+//                                emailError.value = true
+//                                return@Button
+//                            } else
+//                            {
+//                                emailError.value = false
+//                            }
+                            if(name.value.text.isEmpty())
+                            {
+                                nameError.value = true
+                                return@Button
+                            } else
+                            {
+                                nameError.value = false
+                            }
+                            SendDataToAmo.sendDataToAmo(
+                                Data2Amo(
+                                    "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
+                                    email = email.value.text,
+                                    "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
+                                    name.value.text.toString(),
+                                    phone = phone.value
+                                ), ctx = context)
+                            mainViewModel.paused.value = false
+                            mainViewModel.openDialog.targetState = false },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Оставить заявку", color = Color.White)
+                    }
+                }
+
+            }
+        },
+        sheetState = bottomSheetState,
+
+    ) {
+
+    }
 }
 
 
@@ -646,38 +745,32 @@ fun MainBottomCats(navHostController: NavHostController = rememberNavController(
 
 
 @Composable
-fun AltFaculties(navHostController: NavHostController)
+fun AltFaculties(navHostController: NavHostController, mainViewModel: MainViewModel)
 {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    )
-    {
-        CatCardAlternate(
-            category = Category(7, "Массаж и реабилитация", "massazh-i-reabilitaciya", 6, null, "https://lk.mzpo-s.ru/build/images/mobile/menues/8_8f596751-e619-4653-a158-b7ee68726aca.png"),
-            navHostController = navHostController,
-            modifier = Modifier.weight(1f)
+
+    for (i in 0 until mainViewModel.cats_main.value.size step 2) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         )
-        CatCardAlternate(
-            category = Category(11, "Медицинская подготовка", "medicinskaya-podgotovka", 6, null, "https://lk.mzpo-s.ru/build/images/mobile/menues/46_314d0e87-571b-4834-8a9a-fb40a2e20755.png"),
-                  navHostController = navHostController,
+        {
+            CatCardAlternate(
+                category = mainViewModel.cats_main.value[i],
+                navHostController = navHostController,
                 modifier = Modifier.weight(1f)
             )
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    )
-    {
-        CatCardAlternate(
-            category = Category(13, "Косметология", "kosmetologiya", 6, null, "https://lk.mzpo-s.ru/build/images/mobile/menues/14_afc0e14f-af52-4055-967e-5d948306afbf.png"),
-            navHostController = navHostController,
-            modifier = Modifier.weight(1f)
-        )
+            if(mainViewModel.cats_main.value.size > i+1)
+            {
+                CatCardAlternate(
+                    category = mainViewModel.cats_main.value[i + 1],
+                    navHostController = navHostController,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
     }
 }
 

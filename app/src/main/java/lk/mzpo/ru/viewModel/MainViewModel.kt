@@ -14,10 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Text
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +47,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.Cart
+import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.network.retrofit.Data2Amo
 import lk.mzpo.ru.network.retrofit.DataToAmoApi
@@ -60,6 +66,7 @@ class MainViewModel
         (
         ): ViewModel()
 {
+        val bottomText = mutableStateOf("")
         val Story_lables = listOf(listOf("Акции", R.drawable.group_30),listOf("Мероприятия", R.drawable.group_29),listOf("Подборки", R.drawable.group_32),listOf("Преподаватели", R.drawable.group_31))
         private val _courses: MutableState<List<CoursePreview>> = mutableStateOf(listOf())
 
@@ -71,6 +78,7 @@ class MainViewModel
         val step = mutableStateOf(0);
 
         val banner_sliser = mutableStateOf(listOf<String>())
+        val cats_main = mutableStateOf(listOf<Category>())
 
 
 
@@ -82,10 +90,12 @@ class MainViewModel
         val openDialog = MutableTransitionState(false).apply {
                 targetState = false // start the animation immediately
         }
+        @OptIn(ExperimentalMaterialApi::class)
+        val bottomSheetState = mutableStateOf(false)
 
 
 
-
+        @OptIn(ExperimentalMaterialApi::class)
         fun getStories(context: Context)
         {
                         val url = "https://lk.mzpo-s.ru/mobile/main"
@@ -99,6 +109,7 @@ class MainViewModel
                                         val mainobj = JSONObject(response)
                                         val events = mainobj.getJSONArray("events")
                                         val promos = mainobj.getJSONArray("promos")
+                                        val cats = mainobj.getJSONArray("cats")
                                         val popular = mainobj.getJSONArray("popular")
                                         val teachers = mainobj.getJSONArray("teachers")
                                         val dictionary = listOf("promos", "events", "popular", "teachers")
@@ -118,19 +129,21 @@ class MainViewModel
                                                                         Story(
                                                                                 story.getString("image")
                                                                         ) {
-                                                                                if(i == 0 || i == 3)
+                                                                                if(i == 0 || i == 1)
                                                                                 {
                                                                                         Button(
                                                                                                 onClick = {
+                                                                                                        bottomText.value = story.getString("description")
                                                                                                         paused.value = true
-                                                                                                        openDialog.targetState = true
+//                                                                                                        openDialog.targetState = true
+                                                                                                        bottomSheetState.value = true
                                                                                                         form_title.value = story.getString("name")
                                                                                                 },
-                                                                                                colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                                                                                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(android.graphics.Color.parseColor(story.getString("btn_color")))),
                                                                                                 shape = RoundedCornerShape(50),
                                                                                                 modifier = Modifier.fillMaxWidth(0.7f).padding(bottom = 10.dp)
                                                                                         ) {
-                                                                                                Text(text = "Оставить заявку", color = Color.White)
+                                                                                                Text(text = story.getString("btn_text"), color = Color.White)
                                                                                         }
                                                                                 }
 
@@ -201,6 +214,14 @@ class MainViewModel
                                                 ban_list.add(banners[i] as String)
                                         }
                                         banner_sliser.value = ban_list
+                                        val cats_list = arrayListOf<Category>()
+                                        for (i in 0 until  cats.length())
+                                        {
+                                              val item = cats.getJSONObject(i)
+                                              cats_list.add(Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), null, item.getString("image")))
+
+                                        }
+                                        cats_main.value = cats_list
 
 
                                 },
