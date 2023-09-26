@@ -14,7 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Text
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +69,7 @@ class CatalogViewModel
 
 
         val categories: MutableState<List<Category>> = mutableStateOf(emptyList())
-
+        val h1 = mutableStateOf("")
         val selected_cat = mutableStateOf(0)
 
         fun getCourses(context: Context, url: String)
@@ -146,12 +149,12 @@ class CatalogViewModel
 
                                         try {
                                                 val mainobj = JSONObject(response).getJSONArray("children")
-
+                                                h1.value = JSONObject(response).getString("name")
                                                 for(i in 0 until  mainobj.length())
                                                 {
                                                         val item = mainobj[i] as JSONObject
                                                         cats.add(
-                                                                Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), null, item.getInt("amount"))
+                                                                Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), null, item.getString("image"), item.getInt("amount"))
                                                                                                                 )
 
 
@@ -169,6 +172,74 @@ class CatalogViewModel
                                 }
                         )
                         queue.add(sRequest1)
+                }
+
+        fun searchCourses(context: Context, url: String)
+        {
+                        val courses_ar = arrayListOf<CoursePreview>()
+                        val url1 = "https://lk.mzpo-s.ru/mobile/search?q=$url"
+                        Log.d("MyLog", url1)
+
+                        val queue = Volley.newRequestQueue(context)
+                        val sRequest = StringRequest(
+                                Request.Method.GET,
+                                url1,
+                                {
+                                                response ->
+                                        Log.d("MyLog", response)
+                                        val mainobj = JSONArray(response)
+                                        for(i in 0 until  mainobj.length())
+                                        {
+                                                val item = mainobj[i] as JSONObject
+                                                val prices = item.getJSONObject("prices")
+                                                courses_ar.add(CoursePreview(
+                                                        item.getInt("id"),
+                                                        item.getString("image"),
+                                                        item.getString("name"),
+                                                        item.getString("prefix"),
+                                                        item.getInt("hours"),
+                                                        Prices(
+                                                                try {
+                                                                        prices.getInt("sale15")
+                                                                } catch (e: Exception)
+                                                                {
+                                                                        null
+                                                                },
+                                                                try {
+                                                                        prices.getInt("ind")
+                                                                } catch (e: Exception)
+                                                                {
+                                                                        null
+                                                                },
+                                                                try {
+                                                                        prices.getInt("weekend")
+                                                                } catch (e: Exception)
+                                                                {
+                                                                        null
+                                                                },
+                                                                try {
+                                                                        prices.getInt("dist")
+                                                                } catch (e: Exception)
+                                                                {
+                                                                        null
+                                                                },
+                                                        ),
+                                                        item.getInt("category"),
+                                                        item.getString("doctype")
+
+
+                                                ))
+
+                                        }
+                                        courses.value = courses_ar
+                                        courses_selected.value = courses_ar
+                                },
+                                {
+                                        Log.d("MyLog", "VolleyError: $it")
+                                }
+                        )
+                        queue.add(sRequest)
+
                 }
 
 
