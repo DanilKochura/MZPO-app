@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -38,15 +39,18 @@ import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -80,6 +84,7 @@ import lk.mzpo.ru.ui.components.PriceTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Blue_BG
+import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CatalogViewModel
 
@@ -129,18 +134,23 @@ fun CatalogScreen(
         bottomBar = { BottomNavigationMenu(navController = navHostController) },
         content = {padding ->
             val ctxx = LocalContext.current
-            if(catalogViewModel.courses_selected.value.isEmpty())
-            {
-                if(string.take(1) == "_")
+            val listState = rememberScrollState()
+            LaunchedEffect(key1 = catalogViewModel.loaded.value, block = {
+                if(!catalogViewModel.loaded.value)
                 {
-                    catalogViewModel.searchCourses(ctxx, string)
+                    coroutineScope.launch{
+                        if(string.take(1) == "_")
+                        {
 
-                } else
-                {
+                            catalogViewModel.searchCourses(ctxx, string.trimStart('_'))
 
-                    catalogViewModel.getCourses(ctxx, string)
+                        } else
+                        {
+                            catalogViewModel.getCourses(ctxx, string)
+                        }
+                    }
                 }
-            }
+            })
 
             Box(
                 Modifier
@@ -166,7 +176,14 @@ fun CatalogScreen(
                             .fillMaxWidth()
                             .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 5.dp)
                     ) {
-                        SearchViewPreview(navHostController);
+                        val search = remember {
+                            mutableStateOf("")
+                        }
+                        if(string.take(1) == "_")
+                        {
+                            search.value = search.value.trimStart('_')
+                        }
+                        SearchViewPreview(navHostController, search);
                         IconButton(onClick = { /*TODO*/ }) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
@@ -181,7 +198,6 @@ fun CatalogScreen(
                             .fillMaxWidth()
                             .padding(bottom = 15.dp)
                     ){
-
                         itemsIndexed(catalogViewModel.categories.value)
                         {
                                 index, item ->
@@ -202,8 +218,13 @@ fun CatalogScreen(
                                 )
                                 .clickable {
                                     catalogViewModel.selected_cat.value = item.id
+                                    catalogViewModel.h1.value = item.name
                                     catalogViewModel.courses_selected.value =
                                         catalogViewModel.courses.value.filter { course -> course.category == item.id }
+                                    coroutineScope.launch {
+                                        listState.animateScrollTo(1)
+                                    }
+
 //                                    Log.d(
 //                                        "MyLog",
 //                                        catalogViewModel.courses_selected.value.size.toString()
@@ -222,26 +243,52 @@ fun CatalogScreen(
                             .fillMaxSize()
                             .background(
                                 color = Color.White,
-                                shape = RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)
+                                shape = RoundedCornerShape(
+                                    topStart = MainRounded,
+                                    topEnd = MainRounded
+                                )
                             )
-                            .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
+                            .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
                     ) {
-                            if (catalogViewModel.courses.value.isEmpty())
+                            if(!catalogViewModel.loaded.value)
                             {
-                                    Text(text = "Ничего не найдено", fontSize = 22.sp, modifier = Modifier
-                                        .padding(10.dp)
-                                        .fillMaxSize(), textAlign = TextAlign.Center)
-                            }
-                            if(catalogViewModel.courses_selected.value.isEmpty())
+                                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator()
+                                }
+                            } else
                             {
-                                Text(text = "Ничего не найдено(((")
+                                if (catalogViewModel.courses.value.isEmpty())
+                                {
+                                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Column (
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 50.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(imageVector = Icons.Default.Search, contentDescription = "No Schedule Icon", Modifier.size(80.dp), tint = Color.Gray)
+                                            Text(text = "Ничего не найдено", fontSize = 22.sp)
+                                        }
+                                    }
+                                }
+                                if(catalogViewModel.courses_selected.value.isEmpty())
+                                {
+                                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Column (
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(50.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Icon(imageVector = Icons.Default.Search, contentDescription = "No Schedule Icon", Modifier.size(80.dp), tint = Color.Gray)
+                                            Text(text = "Ничего не нашлось", fontSize = 22.sp)
+                                            Text(text = "Попробуйте изменить фильтры или выбрать другую категорию", fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center)
+                                        }
+                                    }
+                                }
                             }
                         Text(text = catalogViewModel.h1.value, fontSize = 20.sp, modifier = Modifier
                             .padding(10.dp)
                             .fillMaxWidth(), textAlign = TextAlign.Center)
                         Column (modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState()) ) {
+                            .verticalScroll(listState) ) {
                             for (i in 0 until catalogViewModel.courses_selected.value.size step 2)
                             {
                                 Row (

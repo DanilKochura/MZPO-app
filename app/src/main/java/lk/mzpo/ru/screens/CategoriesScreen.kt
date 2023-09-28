@@ -1,7 +1,9 @@
 package lk.mzpo.ru.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,11 +54,13 @@ import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
+import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.ui.theme.Primary_Green_BG
 import lk.mzpo.ru.ui.theme.Second_Green
 import lk.mzpo.ru.ui.theme.Third_green
 import lk.mzpo.ru.viewModel.CategoriesViewModel
+import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,9 +134,9 @@ fun CategoriesScreen(
                             .fillMaxSize()
                             .background(
                                 color = Color.White,
-                                shape = RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)
+                                shape = RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded)
                             )
-                            .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
+                            .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
                             ) {
 
                         LazyColumn(modifier = Modifier
@@ -146,7 +150,7 @@ fun CategoriesScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable {
                                         navHostController.navigate(BottomItem.Cats.route + "?name=" + item.url)
                                     }) {
-                                        androidx.compose.material3.Text(text = "перейти", fontSize = 12.sp, color = Aggressive_red)
+                                        androidx.compose.material3.Text(text = "все    ", fontSize = 12.sp, color = Aggressive_red)
                                         Icon(
                                             imageVector = Icons.Default.ArrowForward,
                                             contentDescription = "next",
@@ -258,7 +262,6 @@ fun CatCard(category: Category, navHostController: NavHostController, modifier: 
 @Composable
 fun CatCardAlternate(category: Category, navHostController: NavHostController, modifier: Modifier = Modifier)
 {
-
     var painter_res = R.drawable.mas1
     var color_bg = Second_Green
     if(category.parent == 7)
@@ -292,7 +295,58 @@ fun CatCardAlternate(category: Category, navHostController: NavHostController, m
                     text = category.name,
                     style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight(600)),
                     maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,color = Color.White, modifier = Modifier.fillMaxSize(0.7f)
+                    overflow = TextOverflow.Ellipsis,color = Color.White, modifier = Modifier.fillMaxSize(0.6f)
+                )
+//                Text(text = "")
+
+//                Row (/*horizontalArrangement = Arrangement.Center, */modifier = Modifier.fillMaxWidth().padding(top = 20.dp)){
+//                    androidx.compose.material3.Text(text = category.amount.toString(), color = Color.White, style = TextStyle(fontSize = 12.sp))
+//                    androidx.compose.material3.Text(text = " курсов ", style = TextStyle(fontSize = 12.sp),color = Color.White)
+//
+//                }
+            }
+
+        }
+    }
+}
+
+@Composable
+fun CatCardMainScreen(category: Category, navHostController: NavHostController, modifier: Modifier = Modifier)
+{
+    var painter_res = R.drawable.mas1
+    var color_bg = Second_Green
+    if(category.parent == 7)
+    {
+        color_bg = Primary_Green_BG
+        painter_res = R.drawable.kos
+    } else if(category.parent == 11)
+    {
+        color_bg = Third_green
+        painter_res = R.drawable.med
+    }
+    Surface (modifier = modifier
+        .shadow(1.dp, RoundedCornerShape(10.dp))
+        .border(1.dp, Primary_Green, RoundedCornerShape(10.dp))
+        .clickable {
+            navHostController.navigate("catalog?name=" + category.url)
+        }) {
+
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .background(color = color_bg, shape = RoundedCornerShape(10.dp)).height(150.dp))
+        {
+            AsyncImage(model = category.image, contentDescription = "", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            Column(
+//                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier
+                    .padding(start = 10.dp, top = 10.dp)
+                    .fillMaxSize()
+            ) {
+                androidx.compose.material3.Text(
+                    text = category.name,
+                    style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight(600)),
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,color = Color.Black, modifier = Modifier.fillMaxSize(0.6f)
                 )
 //                Text(text = "")
 

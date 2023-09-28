@@ -67,7 +67,7 @@ class CatalogViewModel
         val courses: MutableState<List<CoursePreview>> = mutableStateOf(emptyList())
         val courses_selected: MutableState<List<CoursePreview>> = mutableStateOf(emptyList())
 
-
+        val loaded = mutableStateOf(false)
         val categories: MutableState<List<Category>> = mutableStateOf(emptyList())
         val h1 = mutableStateOf("")
         val selected_cat = mutableStateOf(0)
@@ -82,7 +82,6 @@ class CatalogViewModel
                                 url1,
                                 {
                                                 response ->
-
                                         val mainobj = JSONArray(response)
 
                                         for(i in 0 until  mainobj.length())
@@ -130,8 +129,11 @@ class CatalogViewModel
                                         }
                                         courses.value = courses_ar
                                         courses_selected.value = courses_ar
+                                        loaded.value = true
+
                                 },
                                 {
+
                                         Log.d("MyLog", "VolleyError: $it")
                                 }
                         )
@@ -166,12 +168,16 @@ class CatalogViewModel
 
 
                                         categories.value = cats
+
+
+
                                 },
                                 {
                                         Log.d("MyLog", "VolleyError: $it")
                                 }
                         )
-                        queue.add(sRequest1)
+
+                queue.add(sRequest1)
                 }
 
         fun searchCourses(context: Context, url: String)
@@ -233,6 +239,9 @@ class CatalogViewModel
                                         }
                                         courses.value = courses_ar
                                         courses_selected.value = courses_ar
+                                        loaded.value = true
+                                        h1.value = "Вот что мы нашли по запросу \"$url\""
+
                                 },
                                 {
                                         Log.d("MyLog", "VolleyError: $it")
