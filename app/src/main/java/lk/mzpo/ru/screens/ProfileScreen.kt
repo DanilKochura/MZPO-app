@@ -1,6 +1,7 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -27,8 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,19 +36,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.google.gson.Gson
-import lk.mzpo.ru.InDev
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
-import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -80,10 +76,16 @@ fun ProfileScreen(
         bottomBar = { BottomNavigationMenu(navController = navHostController) },
         content = { padding ->
             val ctx = LocalContext.current
-            if(profileViewModel.user.value.id == 0)
-            {
-                profileViewModel.getData(token = token, ctx)
-            }
+            profileViewModel.testAuth(ctx, navHostController)
+            LaunchedEffect(key1 = profileViewModel.auth_tested.value, block = {
+                if (profileViewModel.auth_tested.value == true)
+                {
+                    if(profileViewModel.user.value.id == 0)
+                    {
+                        profileViewModel.getData(token = token, ctx)
+                    }
+                }
+            })
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -177,7 +179,8 @@ fun ProfileScreen(
                                 {
                                     Row(
                                         Modifier
-                                            .fillMaxWidth().clickable {
+                                            .fillMaxWidth()
+                                            .clickable {
                                                 val gson = Gson()
                                                 val user = gson.toJson(
                                                     profileViewModel.user.value,
@@ -211,6 +214,7 @@ fun ProfileScreen(
                                     Text(text = "Выйти")
                                 }
                             }
+
                         }
 
                     }

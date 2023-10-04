@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,17 +32,22 @@ import androidx.navigation.navArgument
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.gson.Gson
 import lk.mzpo.ru.models.BottomItem
+import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.UserData
+import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.screens.CartScreen
 import lk.mzpo.ru.screens.CatalogScreen
 import lk.mzpo.ru.screens.CategoriesScreen
+import lk.mzpo.ru.screens.ContractsScreen
 import lk.mzpo.ru.screens.CourseScreen
 import lk.mzpo.ru.screens.LoginScreen
 import lk.mzpo.ru.screens.Main
 import lk.mzpo.ru.screens.ProfileScreen
+import lk.mzpo.ru.screens.StudyModuleScreen
 import lk.mzpo.ru.screens.StudyScreen
 import lk.mzpo.ru.screens.VideoScreen
+import lk.mzpo.ru.screens.profile.BillsScreen
 import lk.mzpo.ru.screens.profile.PrivateScreen
 import lk.mzpo.ru.screens.profile.UserDataScreen
 
@@ -84,6 +90,73 @@ fun NavGraph(
                     PrivateScreen(user = userObject, navHostController = navHostController)
                 }
             }
+            composable("profile/bills"
+            ){
+//                val userJson =  it.arguments?.getString("user")
+//
+                val userJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("USER")
+                val gson = Gson()
+                val userObject = gson.fromJson(userJson, User::class.java)
+                if(userObject !== null)
+                {
+                    BillsScreen(user = userObject, navHostController = navHostController)
+                }
+            }
+            composable("profile/reviews"
+            ){
+//                val userJson =  it.arguments?.getString("user")
+//
+                val userJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("USER")
+                val gson = Gson()
+                val userObject = gson.fromJson(userJson, User::class.java)
+                if(userObject !== null)
+                {
+                    BillsScreen(user = userObject, navHostController = navHostController)
+                }
+            }
+            composable("profile/jobs"
+            ){
+//                val userJson =  it.arguments?.getString("user")
+//
+                val userJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("USER")
+                val gson = Gson()
+                val userObject = gson.fromJson(userJson, User::class.java)
+                if(userObject !== null)
+                {
+                    BillsScreen(user = userObject, navHostController = navHostController)
+                }
+            }
+            composable("profile/help"
+            ){
+//                val userJson =  it.arguments?.getString("user")
+//
+                val userJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("USER")
+                val gson = Gson()
+                val userObject = gson.fromJson(userJson, User::class.java)
+                if(userObject !== null)
+                {
+                    BillsScreen(user = userObject, navHostController = navHostController)
+                }
+            }
+            composable("profile/docs"
+            ){
+//                val userJson =  it.arguments?.getString("user")
+//
+                val userJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("USER")
+                val gson = Gson()
+                val userObject = gson.fromJson(userJson, User::class.java)
+                if(userObject !== null)
+                {
+                    BillsScreen(user = userObject, navHostController = navHostController)
+                }
+            }
+            composable("profile/contacts"
+            ){
+//                val userJson =  it.arguments?.getString("user")
+//
+                val uriHandler = LocalUriHandler.current
+                uriHandler.openUri("https://www.mzpo-s.ru/contacts")
+            }
             composable("profile/user_data"
             ){
 //                val userJson =  it.arguments?.getString("user")
@@ -100,7 +173,7 @@ fun NavGraph(
             {
                 CategoriesScreen(navHostController = navHostController)
             }
-            composable("study") {
+            composable("contracts") {
                 val context = LocalContext.current
                 val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
                 val token = test.getString("token_lk", "")
@@ -116,9 +189,38 @@ fun NavGraph(
                 } else
                 {
                     Log.d("MyLog", token.toString())
-                    StudyScreen(navHostController = navHostController)
+                    ContractsScreen(navHostController = navHostController)
                 }
 
+            }
+            composable("study")
+            {
+                val contractJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Contract")
+                val gson = Gson()
+                val  contract = gson.fromJson( contractJson, Contract::class.java)
+                if(contract !== null)
+                {
+                    StudyScreen(contract = contract, navHostController = navHostController)
+                } else
+                {
+                    ContractsScreen(navHostController = navHostController)
+                }
+            }
+            composable("study/module")
+            {
+                val contractJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Contract")
+                val gson = Gson()
+                val  contract = gson.fromJson( contractJson, Contract::class.java)
+
+                val moduleJson = navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("StudyModule")
+                val  module = gson.fromJson( moduleJson, StudyModule::class.java)
+                if(contract !== null && module !== null)
+                {
+                    StudyModuleScreen(module = module, contract = contract, navHostController = navHostController)
+                } else
+                {
+                    ContractsScreen(navHostController = navHostController)
+                }
             }
             composable("notifications") {
                 InDev()
@@ -150,15 +252,17 @@ fun NavGraph(
                 }
             }
             composable(
-                route = "video/{id}",
-                arguments = listOf(navArgument("id")
+                route = "video?url={url}",
+                arguments = listOf(navArgument("url")
                 {
-                    type = NavType.IntType
+                    type = NavType.StringType
+                    defaultValue = "url"
+                    nullable = true
                 })
             ) {
-                val id = it.arguments?.getInt("id")
-                if (id != null) {
-                    VideoScreen(navHostController = navHostController, id = id)
+                val url = it.arguments?.getString("url")
+                if (url != null) {
+                    VideoScreen(navHostController = navHostController, url = url)
 //                CoursePage(id = id, navController = navHostController)
                 }
             }

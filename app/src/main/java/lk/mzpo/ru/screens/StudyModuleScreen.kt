@@ -35,6 +35,7 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -88,7 +89,8 @@ import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StudyScreen(
+fun StudyModuleScreen(
+    module: StudyModule,
     contract: Contract,
     navHostController: NavHostController,
     studyViewModel: StudyViewModel = viewModel()
@@ -117,8 +119,6 @@ fun StudyScreen(
             val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
             val token = test.getString("token_lk", "")
 
-            studyViewModel.contract = contract
-            studyViewModel.getData(context)
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -157,71 +157,64 @@ fun StudyScreen(
                             .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
                     ) {
 
-
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp)) {
-                            Text(text = contract.course!!.name, modifier = Modifier.weight(2f), fontSize = 20.sp, maxLines = 3)
-                            AsyncImage(model = contract.course!!.image, contentDescription = "", modifier = Modifier
-                                .weight(1f)
-                                .clip(
-                                    RoundedCornerShape(10.dp)
-                                ))
-                        }
-                        Row(Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Row {
-                                Text(text = "Тесты: ", color = Primary_Green)
-                                Text(text = contract.progress!!.tests!!)
-                            }
-                            Row {
-                                Text(text = "Видео: ", color = Primary_Green)
-                                Text(text = contract.progress!!.video!!)
-                            }
-                            Row {
-                                Text(text = "Файлы: ", color = Primary_Green)
-                                Text(text = contract.progress!!.files!!)
-                            }
-                        }
-                        LinearProgressIndicator(
-                            progress = contract.progress!!.total!!.toFloat().div(100f),
-                            Modifier
-                                .fillMaxWidth()
+                        Text(
+                            text = module.name!!, textAlign = TextAlign.Center, modifier = Modifier
                                 .padding(10.dp)
-                                .height(10.dp)
-                                .clip(
-                                    RoundedCornerShape(50)
-                                ),
-                            color = Primary_Green,
-                            trackColor = Color.LightGray
-                        ) //70% progress
+                                .fillMaxWidth(), fontSize = 18.sp
+                        )
                         LazyColumn(content = {
-                            itemsIndexed(studyViewModel.studyModules.value)
-                            {
-                                i, item ->
-                                module(studyModule = item, int = i, navHostController, onClick = {
-                                    val gson = Gson()
-                                    val contractJson = gson.toJson(
-                                        contract,
-                                        Contract::class.java
-                                    )
-                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                        "Contract",
-                                        contractJson
-                                    )
-                                    val smJson = gson.toJson(
-                                        item,
-                                        StudyModule::class.java
-                                    )
-                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                        "StudyModule",
-                                        smJson
-                                    )
+                            itemsIndexed(module.activeMaterials)
+                            { _, i ->
+                                if (i.activeFile !== null) {
+                                    if (i.activeFile!!.type == "video") {
+                                        Card(
+                                            modifier = Modifier
+                                                .padding(vertical = 10.dp, horizontal = 20.dp)
+                                                .shadow(2.dp, RoundedCornerShape(10.dp)),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.White
+                                            )
+                                        ) {
+                                            if (i.activeFile!!.image !== null) {
+                                                Box(modifier = Modifier.fillMaxWidth())
+                                                {
+                                                    AsyncImage(
+                                                        model = "https://lk.mzpo-s.ru/build/images/videos/${i.activeFile!!.image}",
+                                                        contentDescription = "",
+                                                        modifier = Modifier
+                                                            .fillMaxWidth(), contentScale = ContentScale.FillWidth
+                                                    )
+                                                    if(i.activeFile!!.userProgress !== null && i.activeFile!!.userProgress!!.progress !== null)
+                                                    {
+                                                        if(i.activeFile!!.userProgress?.progress == i.activeFile!!.size)
+                                                        {
+                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Color.Green, modifier = Modifier.padding(5.dp))
 
-                                    navHostController.navigate("study/module")
-                                })
+                                                        } else
+                                                        {
+                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Color.Yellow, modifier = Modifier.padding(5.dp))
+
+                                                        }
+                                                    }
+                                                    IconButton(onClick = { navHostController.navigate("video?url=${i.activeFile!!.upload}") }, modifier = Modifier.align(
+                                                        Alignment.Center)) {
+                                                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "", modifier = Modifier.background(Primary_Green).padding(10.dp).clip(
+                                                            RoundedCornerShape(10.dp)
+                                                        ), tint = Color.White)
+                                                    }
+                                                }
+                                                Text(text = i.name!!, textAlign = TextAlign.Center, modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(10.dp))
+
+                                            }
+                                        }
+
+
+                                    }
+                                }
                             }
-                        }, modifier = Modifier.padding(horizontal = 10.dp))
+                        }, modifier = Modifier.fillMaxWidth())
                     }
                 }
             }
@@ -229,18 +222,26 @@ fun StudyScreen(
     )
 }
 
-
-@Composable fun module(studyModule: StudyModule, int: Int, navHostController: NavHostController, onClick: () -> Unit = {})
-{
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp)) {
-        Text(text = "${int+1}.${studyModule.name}", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.clickable {
-           onClick.invoke()
-        })
-
-
-        Divider()
-    }
-}
+//Column (Modifier.fillMaxWidth()){
+//
+//    Box(modifier = Modifier
+//        .fillMaxWidth()
+//        .padding(10.dp))
+//    {
+//
+//
+//        if(i.activeFile!!.userProgress !== null)
+//        {
+//            if(i.activeFile!!.userProgress!!.progress == i.activeFile!!.size)
+//            {
+//                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Color.Green)
+//
+//            } else
+//            {
+//                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Color.Yellow)
+//
+//            }
+//        }
+//    }
+//    Text(text = i.name!!)
+//}

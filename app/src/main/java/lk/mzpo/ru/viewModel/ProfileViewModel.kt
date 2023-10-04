@@ -23,6 +23,7 @@ import lk.mzpo.ru.models.Module
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.UserData
 import lk.mzpo.ru.network.retrofit.AuthData
+import lk.mzpo.ru.network.retrofit.AuthService
 import org.json.JSONArray
 import org.json.JSONObject
 import java.nio.charset.Charset
@@ -35,6 +36,8 @@ class ProfileViewModel  (
 ): ViewModel()
 {
     val courses = mutableStateListOf<CoursePreview>()
+
+    val auth_tested = mutableStateOf(false)
 
     val user = mutableStateOf(User(0,"",""))
 
@@ -184,4 +187,40 @@ class ProfileViewModel  (
 
 
     }
+
+    fun testAuth(context: Context, navHostController: NavHostController){
+        val url = "https://lk.mzpo-s.ru/api/testAuth"
+        val queue = Volley.newRequestQueue(context)
+        val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+        val token = test.getString("token_lk", "")
+        val stringReq: StringRequest =
+            object : StringRequest(
+                Method.GET, url,
+                Response.Listener { response ->
+                    val resp = JSONArray(response)
+                    if(resp.getString(0).equals("guest"))
+                    {
+                        val test =  context.getSharedPreferences("session", Context.MODE_PRIVATE)
+                        val gson = Gson()
+                        val data: AuthData = gson.fromJson(test.getString("auth_data", ""), AuthData::class.java);
+                        AuthService.login(data, context, navHostController)
+                    }
+                    auth_tested.value = true
+
+                },
+                Response.ErrorListener { error ->
+                    Log.i("mylog", "error = " + error)
+                }
+            ) {
+                override fun getHeaders(): MutableMap<String, String> {
+                    val headers = HashMap<String, String>()
+                    headers["Authorization"] = "Bearer "+token?.trim('"')
+                    return headers
+                }
+
+            }
+        queue.add(stringReq)
+    }
+
+
 }
