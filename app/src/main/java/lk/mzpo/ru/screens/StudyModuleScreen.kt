@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -82,6 +83,7 @@ import lk.mzpo.ru.ui.components.PieChart
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
+import lk.mzpo.ru.ui.theme.Orange
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.ContractsViewModel
 import lk.mzpo.ru.viewModel.StudyViewModel
@@ -118,6 +120,7 @@ fun StudyModuleScreen(
             val context = LocalContext.current
             val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
             val token = test.getString("token_lk", "")
+            val uriHandler = LocalUriHandler.current
 
             Box(
                 Modifier
@@ -166,7 +169,7 @@ fun StudyModuleScreen(
                             itemsIndexed(module.activeMaterials)
                             { _, i ->
                                 if (i.activeFile !== null) {
-                                    if (i.activeFile!!.type == "video") {
+
                                         Card(
                                             modifier = Modifier
                                                 .padding(vertical = 10.dp, horizontal = 20.dp)
@@ -175,43 +178,58 @@ fun StudyModuleScreen(
                                                 containerColor = Color.White
                                             )
                                         ) {
-                                            if (i.activeFile!!.image !== null) {
+
                                                 Box(modifier = Modifier.fillMaxWidth())
                                                 {
+                                                    if (i.activeFile!!.image !== null) {
                                                     AsyncImage(
                                                         model = "https://lk.mzpo-s.ru/build/images/videos/${i.activeFile!!.image}",
                                                         contentDescription = "",
                                                         modifier = Modifier
                                                             .fillMaxWidth(), contentScale = ContentScale.FillWidth
                                                     )
+                                                        IconButton(onClick = { navHostController.navigate("video?url=${i.activeFile!!.upload}") }, modifier = Modifier.align(
+                                                        Alignment.Center)) {
+                                                            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "", modifier = Modifier
+                                                                .background(Primary_Green)
+                                                                .padding(10.dp)
+                                                                .clip(
+                                                                    RoundedCornerShape(10.dp)
+                                                                ), tint = Color.White)
+                                                        }
+
+                                                    } else
+                                                    {
+                                                        IconButton(onClick = {
+                                                            Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
+                                                                             uriHandler.openUri("https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
+                                                        }, modifier = Modifier.align(
+                                                            Alignment.Center).padding(10.dp)) {
+                                                            Icon(painter = painterResource(id = R.drawable.doc), contentDescription = "", modifier = Modifier.fillMaxSize(), tint = Primary_Green)
+                                                        }
+                                                    }
                                                     if(i.activeFile!!.userProgress !== null && i.activeFile!!.userProgress!!.progress !== null)
                                                     {
                                                         if(i.activeFile!!.userProgress?.progress == i.activeFile!!.size)
                                                         {
-                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Color.Green, modifier = Modifier.padding(5.dp))
+                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Primary_Green, modifier = Modifier.padding(5.dp))
 
                                                         } else
                                                         {
-                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Color.Yellow, modifier = Modifier.padding(5.dp))
+                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Orange, modifier = Modifier.padding(5.dp))
 
                                                         }
                                                     }
-                                                    IconButton(onClick = { navHostController.navigate("video?url=${i.activeFile!!.upload}") }, modifier = Modifier.align(
-                                                        Alignment.Center)) {
-                                                        Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "", modifier = Modifier.background(Primary_Green).padding(10.dp).clip(
-                                                            RoundedCornerShape(10.dp)
-                                                        ), tint = Color.White)
-                                                    }
+
                                                 }
                                                 Text(text = i.name!!, textAlign = TextAlign.Center, modifier = Modifier
                                                     .fillMaxWidth()
                                                     .padding(10.dp))
 
-                                            }
+
                                         }
 
 
-                                    }
                                 }
                             }
                         }, modifier = Modifier.fillMaxWidth())

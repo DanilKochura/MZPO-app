@@ -18,6 +18,7 @@ class StudyViewModel: ViewModel() {
 
     lateinit var contract: Contract
 
+    val auth_tested = mutableStateOf(false)
 
     val studyModules = mutableStateOf(listOf<StudyModule>())
 

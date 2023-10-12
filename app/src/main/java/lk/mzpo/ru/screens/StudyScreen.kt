@@ -63,11 +63,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.google.android.material.tooltip.TooltipDrawable
 import com.google.gson.Gson
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
@@ -81,6 +83,7 @@ import lk.mzpo.ru.ui.components.PieChart
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
+import lk.mzpo.ru.ui.theme.Orange
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.ContractsViewModel
 import lk.mzpo.ru.viewModel.StudyViewModel
@@ -162,14 +165,17 @@ fun StudyScreen(
                             Modifier
                                 .fillMaxWidth()
                                 .padding(10.dp)) {
-                            Text(text = contract.course!!.name, modifier = Modifier.weight(2f), fontSize = 20.sp, maxLines = 3)
+                            Text(text = contract.course!!.name, modifier = Modifier.weight(2f), fontSize = 20.sp, maxLines = 3, fontWeight = FontWeight.Bold)
                             AsyncImage(model = contract.course!!.image, contentDescription = "", modifier = Modifier
                                 .weight(1f)
                                 .clip(
                                     RoundedCornerShape(10.dp)
                                 ))
                         }
-                        Row(Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Row {
                                 Text(text = "Тесты: ", color = Primary_Green)
                                 Text(text = contract.progress!!.tests!!)
@@ -179,7 +185,7 @@ fun StudyScreen(
                                 Text(text = contract.progress!!.video!!)
                             }
                             Row {
-                                Text(text = "Файлы: ", color = Primary_Green)
+                                Text(text = "Пособия: ", color = Primary_Green)
                                 Text(text = contract.progress!!.files!!)
                             }
                         }
@@ -195,10 +201,12 @@ fun StudyScreen(
                             color = Primary_Green,
                             trackColor = Color.LightGray
                         ) //70% progress
+                        Divider()
                         LazyColumn(content = {
                             itemsIndexed(studyViewModel.studyModules.value)
                             {
                                 i, item ->
+
                                 module(studyModule = item, int = i, navHostController, onClick = {
                                     val gson = Gson()
                                     val contractJson = gson.toJson(
@@ -232,15 +240,76 @@ fun StudyScreen(
 
 @Composable fun module(studyModule: StudyModule, int: Int, navHostController: NavHostController, onClick: () -> Unit = {})
 {
-    Column(
+
+    var sum = 0;
+    var checked = 0;
+    for(i in studyModule.activeMaterials)
+    {
+        if (i.activeFile!!.type == "video")
+        {
+            sum+=i.activeFile!!.size ?: 0
+        } else if(i.activeFile!!.type == "file")
+        {
+            sum+=(i.activeFile!!.size ?: 0)*120
+
+        } else if(i.activeFile!!.type == "test")
+        {
+            sum+= 1200
+
+        }
+
+        if(i.activeFile!!.userProgress !== null)
+        {
+            if(checked != 1)
+            {
+                if (i.activeFile!!.userProgress?.viewed == "1")
+                {
+                    checked = 1;
+                }
+                if (i.activeFile!!.userProgress?.viewed == "2")
+                {
+                    checked = 2;
+                }
+            }
+        } else
+        {
+            if(checked != 0)
+            {
+                checked = 1
+            }
+        }
+    }
+
+    Row(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 10.dp)) {
-        Text(text = "${int+1}.${studyModule.name}", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.clickable {
-           onClick.invoke()
-        })
+            .clickable {
+                onClick.invoke()
+            }, horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            Modifier
+                .fillMaxWidth(0.9f)
+                .padding(vertical = 20.dp)
+        ) {
+            Text(text = "${int+1}.  ${studyModule.name} ", fontWeight = FontWeight.Bold, fontSize = 18.sp
+                )
+            Text(text = "~ ${sum.div(60).toInt()} мин.")
 
+        }
+        Box (modifier = Modifier.fillMaxSize()){
+            if(checked == 2)
+            {
+                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Primary_Green, modifier = Modifier.align(
+                    Alignment.Center))
+            } else if (checked == 1)
+            {
+                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Orange, modifier = Modifier.align(
+                    Alignment.Center))
 
-        Divider()
+            }
+        }
     }
+    Divider()
+
+
 }
