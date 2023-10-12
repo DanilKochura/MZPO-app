@@ -61,7 +61,8 @@ fun StoryImageMultipleIndicator(url: String,
                                 onRightClick: () -> Unit,
                                 onSwitch: () -> Unit,
                                 flag: MutableTransitionState<Boolean> = MutableTransitionState(false),
-                                paused: MutableState<Boolean>
+                                paused: MutableState<Boolean>,
+                                exit: MutableTransitionState<Boolean>
 ) {
     val screenWidth = LocalContext.current.resources.displayMetrics.widthPixels
     val ctx = LocalContext.current
@@ -97,7 +98,7 @@ fun StoryImageMultipleIndicator(url: String,
 
             }
             IconButton(onClick = {
-                    ctx.startActivity(Intent(ctx, MainActivity::class.java))
+                exit.targetState = false
 
             }) {
                 Icon(imageVector = Icons.Default.Close, contentDescription = "", tint = Color.White)

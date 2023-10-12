@@ -29,8 +29,10 @@ fun Story(
     indicator: Indicator = StoryIndicator.singleIndicator(),
     stories: MutableTransitionState<Boolean> = MutableTransitionState(false),
     onAllStoriesShown: () -> Unit,
-    pause: MutableState<Boolean> = mutableStateOf(false)
-) {
+    pause: MutableState<Boolean> = mutableStateOf(false),
+    exit: MutableTransitionState<Boolean>,
+
+    ) {
 
     if (urlList.isEmpty()) throw Exception("List of image urls cannot be empty")
 
@@ -135,7 +137,8 @@ fun Story(
                     onAllStoriesShown()
                 }
             },
-            paused = pause
+            paused = pause,
+             exit= exit
         )
     }
 }
