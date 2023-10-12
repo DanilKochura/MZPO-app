@@ -30,6 +30,7 @@ import java.nio.charset.Charset
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.log
 
 
 class ProfileViewModel  (
@@ -41,6 +42,7 @@ class ProfileViewModel  (
 
     val user = mutableStateOf(User(0,"",""))
 
+    val loaded = mutableStateOf(false)
     fun getData(token: String, context: Context)
     {
         val url = "https://lk.mzpo-s.ru/mobile/user/test"
@@ -49,9 +51,8 @@ class ProfileViewModel  (
             object : StringRequest(
                 Method.GET, url,
                 Response.Listener { response ->
-
                     user.value = getUser(response)
-
+                    loaded.value = true
 
                 },
                 Response.ErrorListener { error ->
@@ -140,13 +141,13 @@ class ProfileViewModel  (
             Method.POST,
             "https://lk.mzpo-s.ru/mobile/user/userData",
             Response.Listener { response ->
-                Log.d("MyLog", response)
+                Log.d("userData", response)
                 Toast.makeText(ctx,"Данные успешно сохранены!", Toast.LENGTH_SHORT).show()
             },
 
             Response.ErrorListener { error ->
                 Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже", Toast.LENGTH_SHORT).show()
-                Log.d("MyLog", error.localizedMessage?.toString() ?: "")
+                Log.d("userData", error.localizedMessage?.toString() ?: "")
                 error.printStackTrace()
             }) {
             override fun getBodyContentType(): String {
@@ -159,7 +160,7 @@ class ProfileViewModel  (
 //                headers["Content-Type"] = "application/x-www-form-urlencoded"
                 val test = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
                 val token = test.getString("token_lk", "")
-                Log.d("MyLog", "Bearer "+token?.trim('"'))
+                Log.d("userData", "Bearer "+token?.trim('"'))
                 headers["Authorization"] = "Bearer "+token?.trim('"')
                 return headers
             }
@@ -188,39 +189,6 @@ class ProfileViewModel  (
 
     }
 
-    fun testAuth(context: Context, navHostController: NavHostController){
-        val url = "https://lk.mzpo-s.ru/api/testAuth"
-        val queue = Volley.newRequestQueue(context)
-        val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-        val token = test.getString("token_lk", "")
-        val stringReq: StringRequest =
-            object : StringRequest(
-                Method.GET, url,
-                Response.Listener { response ->
-                    val resp = JSONArray(response)
-                    if(resp.getString(0).equals("guest"))
-                    {
-                        val test =  context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                        val gson = Gson()
-                        val data: AuthData = gson.fromJson(test.getString("auth_data", ""), AuthData::class.java);
-                        AuthService.login(data, context, navHostController)
-                    }
-                    auth_tested.value = true
-
-                },
-                Response.ErrorListener { error ->
-                    Log.i("mylog", "error = " + error)
-                }
-            ) {
-                override fun getHeaders(): MutableMap<String, String> {
-                    val headers = HashMap<String, String>()
-                    headers["Authorization"] = "Bearer "+token?.trim('"')
-                    return headers
-                }
-
-            }
-        queue.add(stringReq)
-    }
 
 
 }

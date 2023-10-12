@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,6 +46,7 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
+import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -76,9 +78,9 @@ fun ProfileScreen(
         bottomBar = { BottomNavigationMenu(navController = navHostController) },
         content = { padding ->
             val ctx = LocalContext.current
-            profileViewModel.testAuth(ctx, navHostController)
+            AuthService.testAuth(ctx,  navHostController, profileViewModel.auth_tested)
             LaunchedEffect(key1 = profileViewModel.auth_tested.value, block = {
-                if (profileViewModel.auth_tested.value == true)
+                if (profileViewModel.auth_tested.value)
                 {
                     if(profileViewModel.user.value.id == 0)
                     {
@@ -86,6 +88,12 @@ fun ProfileScreen(
                     }
                 }
             })
+
+
+
+
+
+
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -130,6 +138,16 @@ fun ProfileScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 10.dp)) {
+                            if(!profileViewModel.loaded.value)
+                            {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
 
                             Row (
                                 Modifier
@@ -207,7 +225,8 @@ fun ProfileScreen(
                                 Button(onClick = {
 
                                     val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                                    val token = test.edit().remove("token_lk").apply()
+                                    test.edit().remove("token_lk").apply()
+                                    test.edit().remove("auth_data").apply()
                                     navHostController.navigate("profile")
 
                                 }, colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)) {
