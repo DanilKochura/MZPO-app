@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,6 +32,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,7 +50,9 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
+import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -57,7 +63,8 @@ import lk.mzpo.ru.viewModel.ProfileViewModel
 fun ProfileScreen(
     token: String,
     navHostController: NavHostController,
-    profileViewModel: ProfileViewModel = viewModel()
+    profileViewModel: ProfileViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -75,15 +82,13 @@ fun ProfileScreen(
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
             val ctx = LocalContext.current
-            AuthService.testAuth(ctx,  navHostController, profileViewModel.auth_tested)
+            AuthService.testAuth(ctx, navHostController, profileViewModel.auth_tested)
             LaunchedEffect(key1 = profileViewModel.auth_tested.value, block = {
-                if (profileViewModel.auth_tested.value)
-                {
-                    if(profileViewModel.user.value.id == 0)
-                    {
+                if (profileViewModel.auth_tested.value == AuthStatus.AUTH  ) {
+                    if (profileViewModel.user.value.id == 0) {
                         profileViewModel.getData(token = token, ctx)
                     }
                 }
@@ -133,13 +138,12 @@ fun ProfileScreen(
                     ) {
 
 
-
                         Column(
                             Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 10.dp)) {
-                            if(!profileViewModel.loaded.value)
-                            {
+                                .padding(horizontal = 10.dp)
+                        ) {
+                            if (!profileViewModel.loaded.value) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -149,43 +153,70 @@ fun ProfileScreen(
                                 }
                             }
 
-                            Row (
+                            Row(
                                 Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    .padding(vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Column(Modifier.padding(start = 10.dp)) {
-                                    Text(text = profileViewModel.user.value.name, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        text = profileViewModel.user.value.name,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                     Text(text = profileViewModel.user.value.userData?.phone.toString())
-                                    Text(text = "Редактировать профиль", color = Color.LightGray, modifier = Modifier
-                                        .padding(vertical = 10.dp)
-                                        .clickable {
-                                            val gson = Gson()
-                                            val user = gson.toJson(
-                                                profileViewModel.user.value,
-                                                User::class.java
-                                            )
-                                            navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                "USER",
-                                                user
-                                            )
+                                    Text(text = "Редактировать профиль",
+                                        color = Color.LightGray,
+                                        modifier = Modifier
+                                            .padding(vertical = 10.dp)
+                                            .clickable {
+                                                val gson = Gson()
+                                                val user = gson.toJson(
+                                                    profileViewModel.user.value,
+                                                    User::class.java
+                                                )
+                                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                    "USER",
+                                                    user
+                                                )
 
-                                            navHostController.navigate("profile/private")
-                                        })
+                                                navHostController.navigate("profile/private")
+                                            })
                                 }
                                 Column(Modifier) {
-                                    AsyncImage(model = "https://lk.mzpo-s.ru/build/images/"+profileViewModel.user.value.userData?.avatar, contentDescription = "", modifier = Modifier
+                                    if (profileViewModel.user.value.userData?.avatar !== null) {
+                                        AsyncImage(
+                                            model = "https://lk.mzpo-s.ru/build/images/" + profileViewModel.user.value.userData?.avatar,
+                                            contentDescription = "",
+                                            modifier = Modifier
 
-                                        .size(80.dp)
-                                        .clip(
-                                            CircleShape
-                                        ))
+                                                .size(80.dp)
+                                                .clip(
+                                                    CircleShape
+                                                )
+                                        )
+                                    } else {
+                                        Box(modifier = Modifier
+                                            .clip(CircleShape)
+                                            .border(1.dp, Color.LightGray, CircleShape).padding(5.dp))
+                                        {
+                                            Icon(
+                                                imageVector = Icons.Default.Person,
+                                                contentDescription = "",
+                                                tint = Color.LightGray,
+                                                modifier = Modifier
+                                                    .size(70.dp).padding(10.dp)
+
+                                            )
+                                        }
+                                    }
                                 }
                             }
                             Divider()
                             val context = LocalContext.current
                             val Nav = listOf(
                                 ProfileItem.Private,
-                              ProfileItem.Bills,
+                                ProfileItem.Bills,
                                 ProfileItem.Jobs,
                                 ProfileItem.Reviews,
                                 ProfileItem.Help,
@@ -193,8 +224,7 @@ fun ProfileScreen(
                                 ProfileItem.Contacts
                             );
                             Column {
-                                for (i in Nav)
-                                {
+                                for (i in Nav) {
                                     Row(
                                         Modifier
                                             .fillMaxWidth()
@@ -211,25 +241,44 @@ fun ProfileScreen(
 
                                                 navHostController.navigate(i.route)
                                             }
-                                            .padding(horizontal = 5.dp, vertical = 15.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                            .padding(horizontal = 5.dp, vertical = 15.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween) {
                                         Row {
-                                            Icon(painter = painterResource(id = i.icon), contentDescription = i.title, tint = Color.Gray)
-                                            Text(text = i.title, Modifier.padding(start = 5.dp    ))
+                                            Icon(
+                                                painter = painterResource(id = i.icon),
+                                                contentDescription = i.title,
+                                                tint = Color.Gray
+                                            )
+                                            Text(text = i.title, Modifier.padding(start = 5.dp))
                                         }
-                                        Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "")
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowForward,
+                                            contentDescription = ""
+                                        )
                                     }
                                     Divider()
                                 }
                             }
-                            Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
-                                Button(onClick = {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Button(
+                                    onClick = {
 
-                                    val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                                    test.edit().remove("token_lk").apply()
-                                    test.edit().remove("auth_data").apply()
-                                    navHostController.navigate("profile")
+                                        val test = context.getSharedPreferences(
+                                            "session",
+                                            Context.MODE_PRIVATE
+                                        )
+                                        test.edit().remove("token_lk").apply()
+                                        test.edit().remove("auth_data").apply()
+                                        FirebaseHelpers.getCartSum(token, cart_sum)
 
-                                }, colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)) {
+                                        navHostController.navigate("profile")
+
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
+                                ) {
                                     Text(text = "Выйти")
                                 }
                             }
@@ -244,25 +293,37 @@ fun ProfileScreen(
 }
 
 
-@Composable fun ProfileHeader(navHostController: NavHostController)
-{
+@Composable
+fun ProfileHeader(navHostController: NavHostController) {
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 15.dp)
-        , verticalAlignment = Alignment.CenterVertically) {
+            .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 15.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         IconButton(onClick = { navHostController.navigateUp() }, modifier = Modifier.weight(1f)) {
             Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "", tint = Color.White)
         }
-        Row ( modifier = Modifier.weight(7f), horizontalArrangement = Arrangement.Center){
-            Image(painter = painterResource(id = R.drawable.mirk_logo), contentDescription = "MirkLogo", modifier = Modifier.padding(horizontal = 10.dp))
-            Image(painter = painterResource(id = R.drawable.mzpo_logo), contentDescription = "MzpoLogo", modifier = Modifier.padding(horizontal = 10.dp))
+        Row(modifier = Modifier.weight(7f), horizontalArrangement = Arrangement.Center) {
+            Image(
+                painter = painterResource(id = R.drawable.mirk_logo),
+                contentDescription = "MirkLogo",
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
+            Image(
+                painter = painterResource(id = R.drawable.mzpo_logo),
+                contentDescription = "MzpoLogo",
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
         }
         IconButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(1f)) {
-            Icon(imageVector = Icons.Default.Notifications,
+            Icon(
+                imageVector = Icons.Default.Notifications,
                 contentDescription = "bell",
                 tint = Color.White,
-                modifier = Modifier.size(40.dp))
+                modifier = Modifier.size(40.dp)
+            )
         }
     }
 }

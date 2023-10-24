@@ -24,6 +24,7 @@ import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.UserData
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
 import org.json.JSONObject
 import java.nio.charset.Charset
@@ -38,7 +39,7 @@ class ProfileViewModel  (
 {
     val courses = mutableStateListOf<CoursePreview>()
 
-    val auth_tested = mutableStateOf(false)
+    val auth_tested = mutableStateOf(AuthStatus.TEST)
 
     val user = mutableStateOf(User(0,"",""))
 
