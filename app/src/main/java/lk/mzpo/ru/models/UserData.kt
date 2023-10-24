@@ -29,5 +29,5 @@ data class UserData(
     @SerializedName("registration_card" ) var registrationCard : String? = null,
     @SerializedName("id_1c"             ) var id1c             : String? = null,
     @SerializedName("amo_id"            ) var amoId            : String? = null,
-    @SerializedName("job_access"        ) var jobAccess        : String? = null
+    @SerializedName("job_access"        ) var jobAccess        : Int? = null
 )

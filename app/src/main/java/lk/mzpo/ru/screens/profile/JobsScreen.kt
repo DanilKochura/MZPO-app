@@ -10,11 +10,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.magnifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +27,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,14 +38,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,9 +59,7 @@ import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.screens.ProfileHeader
-import lk.mzpo.ru.ui.components.CustomTextField
 import lk.mzpo.ru.ui.components.DatePickerDemo
-import lk.mzpo.ru.ui.components.DateTextField
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
@@ -61,16 +68,18 @@ import lk.mzpo.ru.ui.components.checkPhone
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
+import lk.mzpo.ru.viewModel.BillsViewModel
+import lk.mzpo.ru.viewModel.JobsViewModel
 import lk.mzpo.ru.viewModel.ProfileViewModel
+import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserDataScreen(
+fun JobsScreen(
     user: User,
     navHostController: NavHostController,
-    profileViewModel: ProfileViewModel = viewModel(),
+    jobsViewModel: JobsViewModel = viewModel(),
     cart_sum: MutableState<Int> = mutableStateOf(0)
-
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -92,30 +101,26 @@ fun UserDataScreen(
         content = { padding ->
             val ctx = LocalContext.current
 
-            profileViewModel.user.value = user
 
+            val uriHandler = LocalUriHandler.current
 
-            val snils = remember {
-                mutableStateOf(TextFieldValue(user.userData?.snils.toString()))
+            val email = remember {
+                mutableStateOf(TextFieldValue(user.email))
             }
 
-            val seria = remember {
-                mutableStateOf(TextFieldValue(user.userData?.passSeries.toString()))
+            val phone = remember {
+                mutableStateOf(checkPhone(user.userData?.phone.toString()))
             }
-            val number = remember {
-                mutableStateOf(TextFieldValue(user.userData?.passNumber.toString()))
+            val name = remember {
+                mutableStateOf(TextFieldValue(user.name))
             }
-            val place_given = remember {
-                mutableStateOf(TextFieldValue(user.userData?.passPoi.toString()))
+            val isError = remember {
+                mutableStateOf(false)
             }
-            val place_living = remember {
-                mutableStateOf(TextFieldValue(user.userData?.passRegistration.toString()))
-            }
-            val code = remember {
-                mutableStateOf(TextFieldValue(user.userData?.passDpt.toString()))
-            }
-            val date_given = remember {
-                mutableStateOf(TextFieldValue(user.userData?.passDoi.toString().replace("-", "")))
+            Log.d("JobLog", user.userData!!.jobAccess.toString())
+            if(user.userData!!.jobAccess == 1)
+            {
+                jobsViewModel.auth.value = true
             }
 
             Box(
@@ -165,60 +170,74 @@ fun UserDataScreen(
 
                            Column {
                                Text(
-                                   text = "Редактировать профиль",
+                                   text = "Трудоустройство",
                                    textAlign = TextAlign.Center,
                                    fontSize = 20.sp,
                                    modifier = Modifier
                                        .fillMaxWidth()
                                        .padding(vertical = 10.dp)
                                )
+                               Spacer(modifier = Modifier.height(30.dp))
+                               if (!jobsViewModel.auth.value) {
+                                   Text(text = "Зарегистрируйтесь на портале трудоустройства МЦПО и МИРК для поиска работы.",
+                                       Modifier
+                                           .fillMaxWidth()
+                                           .padding(10.dp), textAlign = TextAlign.Center)
+                                   Text(text = "Регистрация произойдет автоматически.",
+                                       Modifier
+                                           .fillMaxWidth()
+                                           .padding(10.dp), textAlign = TextAlign.Center)
 
-                               CustomTextField(name = "СНИЛС", placeholder = "СНИЛС", value = snils,modifier = Modifier.fillMaxWidth())
-                               Row(Modifier.fillMaxWidth()) {
-                                   CustomTextField(name = "Серия паспорта", placeholder = "XXXX", value = seria ,modifier = Modifier
-                                       .fillMaxWidth(0.5f)
-                                       .padding(end = 5.dp))
-                                   CustomTextField(name = "Номер паспорта", placeholder = "XXXXXX", value = number ,modifier = Modifier
-                                       .fillMaxWidth()
-                                       .padding(start = 5.dp))
+                                   Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
+                                       Checkbox(
+                                           checked = jobsViewModel.agreement.value,
+                                           onCheckedChange = { jobsViewModel.agreement.value = it }
+                                       )
+                                       Text(text = "Согласен с условиями")
+                                       Text(
+                                           text = "Договора оферты",
+                                           modifier = Modifier.clickable {
+                                            uriHandler.openUri("https://lk.mzpo-s.ru/build/documents/oferta_aplicant.pdf")
+                                       },
+                                           color = Color.Blue)
+
+                                   }
+                                   Row(
+                                       Modifier
+                                           .fillMaxWidth()
+                                           .padding(20.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                       Button(onClick = {
+                                           if(jobsViewModel.agreement.value)
+                                           {
+                                               jobsViewModel.register(ctx)
+                                           }
+                                       }, colors = ButtonDefaults.buttonColors(containerColor = Primary_Green)) {
+                                           Text(text = "Зарегистрироваться")
+                                       }
+                                   }
+                               } else {
+                                   Text(text = "Вы уже зарегистрированы на портале. Данные для входа отправлены на вашу почту.",
+                                       Modifier
+                                           .fillMaxWidth()
+                                           .padding(10.dp), textAlign = TextAlign.Center)
+                                   Row(
+                                       Modifier
+                                           .fillMaxWidth()
+                                           .padding(20.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                       Button(onClick = {
+                                           uriHandler.openUri("https://jobs.mzpo-s.ru/applicant")
+                                       }, colors = ButtonDefaults.buttonColors(containerColor = Primary_Green)) {
+                                           Text(text = "Перейти")
+                                       }
+                                   }
+                               }
+
+
 
                                }
-                               CustomTextField(name = "Место выдачи паспорта", placeholder = "СНИЛС", value = place_given,modifier = Modifier.fillMaxWidth())
-                               Row(Modifier.fillMaxWidth()) {
-                                   DateTextField(name = "Дата выдачи", value = date_given,modifier = Modifier
-                                       .fillMaxWidth(0.5f)
-                                       .padding(end = 5.dp))
-                                   CustomTextField(name = "Код подразделения", placeholder = "ул. Кузекцкий мост 21/5", value = code,modifier = Modifier
-                                       .fillMaxWidth()
-                                       .padding(start = 5.dp))
-                               }
-                               CustomTextField(name = "Место регистрации", placeholder = "XXX-XXX", value = place_given,modifier = Modifier.fillMaxWidth())
-                           }
 
 
 
-                            Row (horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
-                                Button(onClick = {
-                                                 val date_pass = date_given.value.text.substring(0,4) + "-" + date_given.value.text.substring(4,6) + "-" + date_given.value.text.substring(6,8)
-                                                    val data = user.userData
-                                                    if(data !== null)
-                                                    {
-                                                        data.passDoi = date_pass
-                                                        data.snils = snils.value.text
-                                                        data.passSeries = seria.value.text
-                                                        data.passNumber = number.value.text
-                                                        data.passPoi = place_given.value.text
-                                                        data.passRegistration = place_living.value.text
-                                                        data.passDpt = code.value.text
-                                                        profileViewModel.userData(data, ctx);
-                                                    }
-
-                                                 }, modifier = Modifier
-                                    .padding(15.dp)
-                                    .width(250.dp), colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)) {
-                                    Text(text = "Сохранить")
-                                }
-                            }
                         }
 
                     }
