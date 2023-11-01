@@ -1,17 +1,47 @@
 package lk.mzpo.ru.ui.components
 
+import android.Manifest.permission.CAMERA
+import android.Manifest.permission.MANAGE_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
 import android.app.DatePickerDialog
+import android.content.ContentUris
+import android.content.Context
+import android.content.pm.PackageManager
+import android.database.Cursor
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.icu.util.Calendar
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.util.Log
-import android.view.ContextThemeWrapper
-import android.widget.CalendarView
 import android.widget.DatePicker
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Surface
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
@@ -20,23 +50,33 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -45,39 +85,26 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import coil.compose.AsyncImage
 import lk.mzpo.ru.R
+import lk.mzpo.ru.network.retrofit.UploadImage
+import lk.mzpo.ru.network.retrofit.UploadRequestBody
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
-import java.lang.Error
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import kotlin.math.log
-import android.content.Context
-import android.graphics.drawable.Icon
-import android.os.Bundle
-import android.service.autofill.DateTransformation
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import java.util.*
+import lk.mzpo.ru.ui.theme.Transparent_Green
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Response
+import java.io.File
+import java.util.Date
+
+
 @Composable
 fun RedButton(onClick: () -> Unit, unit: @Composable () -> Unit)
 {
@@ -87,7 +114,7 @@ fun RedButton(onClick: () -> Unit, unit: @Composable () -> Unit)
 }
 
 @Composable
-fun EmailTextField(email: MutableState<TextFieldValue>, isError: MutableState<Boolean>, modifier: Modifier = Modifier)
+fun EmailTextField(email: MutableState<TextFieldValue>, isError: MutableState<Boolean>, modifier: Modifier = Modifier, readonly: Boolean = false)
 {
     OutlinedTextField(
         value = email.value,
@@ -104,7 +131,10 @@ fun EmailTextField(email: MutableState<TextFieldValue>, isError: MutableState<Bo
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
         isError = isError.value,
-        singleLine = true
+        singleLine = true,
+        readOnly = readonly,
+        enabled = !readonly,
+
     )
 }
 @Composable
@@ -150,7 +180,8 @@ fun PriceTextField(price: MutableState<String>, placeholder: String, label: Stri
         label = { Text(text = label) },
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
-        singleLine = true
+        singleLine = true,
+
     )
 }
 
@@ -176,7 +207,8 @@ fun PhoneTextField(phone: MutableState<String>, isError: MutableState<Boolean>, 
         visualTransformation =  PhoneVisualTransformation(mask, maskNumber),
         isError = isError.value,
         singleLine = true,
-        readOnly = readonly
+        readOnly = readonly,
+        enabled = !readonly,
     )
 }
 
@@ -453,7 +485,7 @@ fun DatePickerDemo(context: Context) {
 fun PieChart(
     data: Map<String, Int>,
     radiusOuter: Dp = 90.dp,
-    chartBarWidth: Dp = 10.dp,
+    chartBarWidth: Dp = 5.dp,
     animDuration: Int = 1000,
 ) {
 
@@ -471,7 +503,7 @@ fun PieChart(
     // add the colors as per the number of data(no. of pie chart entries)
     // so that each data will get a color
     val colors = listOf(
-        Primary_Green, Color.LightGray
+        Primary_Green, Transparent_Green
     )
 
     var animationPlayed = remember { mutableStateOf(false) }
@@ -613,4 +645,309 @@ fun DetailsPieChartItem(
 
     }
 
+}
+
+@Composable
+fun CircularProgressbar2(
+    number: Float = 60f,
+    numberStyle: TextStyle = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp
+    ),
+    size: Dp = 120.dp,
+    thickness: Dp = 14.dp,
+    animationDuration: Int = 1000,
+    animationDelay: Int = 200,
+    foregroundIndicatorColor: Color = Color(0xFF35898f),
+    backgroundIndicatorColor: Color = foregroundIndicatorColor.copy(alpha = 0.5f),
+    extraSizeForegroundIndicator: Dp = 12.dp
+) {
+
+    // It remembers the number value
+    var numberR = remember {
+        mutableStateOf(-1f)
+    }
+
+    // Number Animation
+    val animateNumber = animateFloatAsState(
+        targetValue = numberR.value,
+        animationSpec = tween(
+            durationMillis = animationDuration,
+            delayMillis = animationDelay
+        )
+    )
+
+    // This is to start the animation when the activity is opened
+    LaunchedEffect(Unit) {
+        numberR.value = number
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(size = size)
+    ) {
+        Canvas(
+            modifier = Modifier
+                .size(size = size)
+        ) {
+
+            // Background circle
+            drawCircle(
+                color = backgroundIndicatorColor,
+                radius = size.toPx() / 2,
+                style = Stroke(width = thickness.toPx(), cap = StrokeCap.Round)
+            )
+
+            val sweepAngle = (animateNumber.value / 100) * 360
+
+            // Foreground circle
+            drawArc(
+                color = foregroundIndicatorColor,
+                startAngle = -90f,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                style = Stroke((thickness + extraSizeForegroundIndicator).toPx(), cap = StrokeCap.Butt)
+            )
+        }
+
+        // Text that shows number inside the circle
+        Text(
+            text = (animateNumber.value).toInt().toString()+"%",
+            style = numberStyle
+        )
+    }
+
+
+
+}
+
+@Composable
+fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
+    val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val context = LocalContext.current
+    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val launcher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+            imageUri.value = uri
+        }
+    val disabled  = remember {
+        mutableStateOf(false)
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        imageUri.let {
+            imageUri.value = it.value
+            if(it.value !== null)
+            {
+                if (Build.VERSION.SDK_INT < 28) {
+                    bitmap.value = MediaStore.Images
+                        .Media.getBitmap(context.contentResolver, it.value)
+
+                } else {
+                    val source = ImageDecoder
+                        .createSource(context.contentResolver, it.value!!)
+                    bitmap.value = ImageDecoder.decodeBitmap(source)
+                }
+            }
+
+
+        }
+        if(bitmap.value !== null){
+            Image(
+                bitmap = bitmap.value!!.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(100.dp)
+                    .padding(20.dp)
+            )
+        } else {
+            if(loaded !== null)
+            {
+                AsyncImage(
+                    model = "https://lk.mzpo-s.ru/build/images/$loaded",
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(100.dp)
+                        .padding(20.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(onClick = {
+            val permissionCheck = ContextCompat.checkSelfPermission(
+                context,
+                READ_EXTERNAL_STORAGE
+            )
+            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                launcher.launch("image/*")
+            } else
+            {
+                Toast.makeText(context, "Разрешите приложению доступ к галерее", Toast.LENGTH_SHORT).show()
+            }
+
+        }) {
+            Text(text = "Выбрать")
+        }
+
+        if (imageUri.value !== null)
+        {
+            Button(onClick = {
+                Log.d("MyLog", imageUri.value!!.path.toString())
+                Log.d("MyLog", imageUri.value!!.query.toString())
+                val uriPathHelper = URIPathHelper()
+                val filePath = uriPathHelper.getPath(context, imageUri.value!!)
+                val file: File = File(filePath.toString())
+                val test = RequestBody.create("multipart/form-data".toMediaTypeOrNull(), file)
+                val body = UploadRequestBody(file, "image")
+                val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+                val token = pref.getString("token_lk", "")
+                UploadImage().uploadImage(
+                    "Bearer "+token?.trim('"'),
+                    MultipartBody.Part.createFormData(
+                        "files[0]",
+                        file.name, body
+                    ), contract, admission).enqueue( object : retrofit2.Callback<ResponseBody> {
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        Log.e("API Request", "I got an error and i don't know why :(")
+                        Log.e("API Request", t.message.toString())
+                    }
+
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        Log.d("API Request", response.body().toString())
+                        Log.d("API Request", response.message())
+                        Log.d("API Request", response.errorBody().toString())
+                        Log.d("API Request", response.raw().body.toString())
+                        if(response.isSuccessful)
+                        {
+                            Toast.makeText(context, "Документ отправлен на проверку", Toast.LENGTH_SHORT).show()
+                            disabled.value = true
+
+                        }
+                    }
+                })
+
+
+            }, enabled = !disabled.value) {
+                Text("Загрузить")
+            }
+        }
+    }
+
+
+
+
+
+
+}
+
+
+
+
+@Composable
+fun LoadableScreen(loaded: MutableState<Boolean>, page: @Composable () -> Unit = {})
+{
+    if(!loaded.value)
+    {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator()
+        }
+    } else
+    {
+        page.invoke()
+    }
+}
+
+
+class URIPathHelper {
+
+    fun getPath(context: Context, uri: Uri): String? {
+        // DocumentProvider
+        if (DocumentsContract.isDocumentUri(context, uri)) {
+            val uri1 = uri.path
+            // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                Log.i("MyLog", "ext")
+
+                val docId = DocumentsContract.getDocumentId(uri)
+                val split = docId.split(":".toRegex()).toTypedArray()
+                val type = split[0]
+                if ("primary".equals(type, ignoreCase = true)) {
+                    return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
+                }
+
+            } else if (isDownloadsDocument(uri)) {
+                Log.i("MyLog", "dwn")
+
+                val id = DocumentsContract.getDocumentId(uri)
+                val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/"), java.lang.Long.valueOf(id))
+                return getDataColumn(context, contentUri, null, null)
+            } else if (isMediaDocument(uri)) {
+                Log.i("MyLog", "media $uri")
+
+                val docId = DocumentsContract.getDocumentId(uri)
+
+                val split = docId.split(":".toRegex()).toTypedArray()
+                val type = split[0]
+                var contentUri: Uri? = null
+                if ("image" == type) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                } else if ("video" == type) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+                } else if ("audio" == type) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+                }
+                val selection = "_id=?"
+                val selectionArgs = arrayOf(split[1])
+                Log.d("MyLog", contentUri.toString()+" "+selection+" "+selectionArgs[0])
+                return getDataColumn(context, contentUri, selection, selectionArgs)
+            }
+        } else if ("content".equals(uri.scheme, ignoreCase = true)) {
+            return getDataColumn(context, uri, null, null)
+        } else if ("file".equals(uri.scheme, ignoreCase = true)) {
+            return uri.path
+        }
+        return null
+    }
+
+    fun getDataColumn(context: Context, uri: Uri?, selection: String?, selectionArgs: Array<String>?): String? {
+        var cursor: Cursor? = null
+        val column = "_data"
+        val projection = arrayOf(column)
+        try {
+            cursor = uri?.let { context.contentResolver.query(it, projection, selection, selectionArgs,null) }
+            if (cursor != null && cursor.moveToFirst()) {
+                val column_index: Int = cursor.getColumnIndexOrThrow(column)
+                return cursor.getString(column_index)
+            }
+        } finally {
+            if (cursor != null) cursor.close()
+        }
+        return null
+    }
+
+    fun isExternalStorageDocument(uri: Uri): Boolean {
+        return "com.android.externalstorage.documents" == uri.authority
+    }
+
+    fun isDownloadsDocument(uri: Uri): Boolean {
+        return "com.android.providers.downloads.documents" == uri.authority
+    }
+
+    fun isMediaDocument(uri: Uri): Boolean {
+        return "com.android.providers.media.documents" == uri.authority
+    }
 }

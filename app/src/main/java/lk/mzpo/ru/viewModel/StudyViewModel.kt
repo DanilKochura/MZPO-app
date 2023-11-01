@@ -10,7 +10,10 @@ import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
+import lk.mzpo.ru.models.study.Admission
 import lk.mzpo.ru.models.study.StudyModule
+import lk.mzpo.ru.models.study.UserDocument
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -18,11 +21,13 @@ class StudyViewModel: ViewModel() {
 
     lateinit var contract: Contract
 
-    val auth_tested = mutableStateOf(false)
+    val auth_tested = mutableStateOf(AuthStatus.TEST)
 
     val studyModules = mutableStateOf(listOf<StudyModule>())
 
+    val admissions = mutableListOf<Admission>()
 
+    val documents = mutableListOf<UserDocument>()
     fun getData(context: Context)
     {
         val url = "https://lk.mzpo-s.ru/mobile/user/contract/${contract.id}"
@@ -34,12 +39,26 @@ class StudyViewModel: ViewModel() {
                 Method.GET, url,
                 Response.Listener { response ->
                     val gson = Gson();
-                    val json = JSONObject(response).getJSONArray("studyModules")
+                    val main = JSONObject(response)
+                    val json = main.getJSONArray("studyModules")
+                    val admJson = main.getJSONArray("adm")
+                    val docsJson = main.getJSONArray("documents")
                     val array = arrayListOf<StudyModule>()
                     for (i in 0 until  json.length())
                     {
                         val string = json[i].toString()
                         array.add(gson.fromJson(string, StudyModule::class.java))
+                    }
+
+                    for (i in 0 until  admJson.length())
+                    {
+                        val string = admJson[i].toString()
+                        admissions.add(gson.fromJson(string, Admission::class.java))
+                    }
+                    for (i in 0 until  docsJson.length())
+                    {
+                        val string = docsJson[i].toString()
+                        documents.add(gson.fromJson(string, UserDocument::class.java))
                     }
                     this.studyModules.value = array
                 },
