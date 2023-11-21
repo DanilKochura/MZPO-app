@@ -42,35 +42,10 @@ class JobsViewModel  (
 
     val auth = mutableStateOf(false)
 
-    private fun getContracts(response: String?): List<Contract> {
-        val array = arrayListOf<Contract>()
-        if (response.isNullOrEmpty()) return listOf()
-        val mainObject = JSONArray(response)
-        val gson = Gson()
-        for(i in 0 until mainObject.length())
-        {
-            array.add(gson.fromJson(mainObject[i].toString(), Contract::class.java))
-        }
-        return array
-    }
-
-    fun getUser(response: String): User {
-        if (response.isEmpty()) return User(0,"","")
-        val mainObject = JSONObject(response)
-        val data = mainObject.getJSONObject("auth_user_data")
-        val gson = Gson()
-        var mUser = gson.fromJson(data.toString(), UserData::class.java)
-        return User(
-            mainObject.getInt("id"),
-            mainObject.getString("name"),
-            mainObject.getString("email"),
-            mUser
-        )
-
-    }
-
-
-
+    /**
+     * Регистрация пользователя через api jobs.mzpo-s.ru
+     * @param ctx - Контекст для очереди
+     */
     fun register(ctx: Context)
     {
         val queue = Volley.newRequestQueue(ctx)

@@ -13,6 +13,7 @@ import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -20,12 +21,20 @@ import org.json.JSONObject
 class ContractsViewModel  (
 ): ViewModel()
 {
-    val courses = mutableStateOf(listOf<Contract>())
+    val contracts = mutableStateOf(listOf<Contract>()) // список заказов
 
     val user = mutableStateOf(User(0,"",""))
-    val selected = mutableStateOf("Активные")
+    val selected = mutableStateOf("Активные") // активная вкладка меню
 
-    val auth_tested = mutableStateOf(false)
+    val auth_tested = mutableStateOf(AuthStatus.TEST) //статус авторизации
+
+    val loaded = mutableStateOf(false) //флаг полной загрузки контента
+
+    /**
+     * Получение списка заказов
+     * @param token - ЛК AUTH токен
+     * @param context - Контекст для очереди
+     */
     fun getData(token: String, context: Context)
     {
         val url = "https://lk.mzpo-s.ru/mobile/user/study"
@@ -34,6 +43,7 @@ class ContractsViewModel  (
             object : StringRequest(
                 Method.GET, url,
                 Response.Listener { response ->
+                    Log.d("getData", response)
                     val gson = Gson();
                     val json = JSONArray(response)
                     val array = arrayListOf<Contract>()
@@ -42,52 +52,8 @@ class ContractsViewModel  (
                         val string = json[i].toString()
                         array.add(gson.fromJson(string, Contract::class.java))
                     }
-                    this.courses.value = array
-                },
-                Response.ErrorListener { error ->
-                    Log.i("mylog", "error = " + error)
-                }
-            ) {
-                override fun getHeaders(): MutableMap<String, String> {
-                    val headers = HashMap<String, String>()
-                    headers["Authorization"] = "Bearer "+token.trim('"')
-                    return headers
-                }
-
-            }
-        queue.add(stringReq)
-    }
-
-    fun getUser(response: String): User {
-
-
-        if (response.isEmpty()) return User(0,"","")
-        val mainObject = JSONObject(response)
-        return User(
-            mainObject.getInt("id"),
-            mainObject.getString("name"),
-            mainObject.getString("email")
-        )
-
-    }
-
-
-    fun testAuth(context: Context, token: String, navHostController: NavHostController){
-        val url = "https://lk.mzpo-s.ru/api/testAuth"
-        val queue = Volley.newRequestQueue(context)
-        val stringReq: StringRequest =
-            object : StringRequest(
-                Method.GET, url,
-                Response.Listener { response ->
-                    val resp = JSONArray(response)
-                    if(resp.getString(0).equals("guest"))
-                    {
-                        val test =  context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                        val gson = Gson()
-                        val data: AuthData = gson.fromJson(test.getString("auth_data", ""), AuthData::class.java);
-                        AuthService.login(data, context, navHostController)
-                    }
-                    auth_tested.value = true
+                    this.contracts.value = array
+                    loaded.value = true
 
                 },
                 Response.ErrorListener { error ->
@@ -103,6 +69,4 @@ class ContractsViewModel  (
             }
         queue.add(stringReq)
     }
-
-
 }

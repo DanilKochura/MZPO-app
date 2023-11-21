@@ -3,6 +3,7 @@ package lk.mzpo.ru.viewModel
 import CoursePreview
 import Prices
 import android.R.attr.password
+import android.R.attr.targetActivity
 import android.accounts.AccountManager.KEY_PASSWORD
 import android.content.Context
 import android.util.Log
@@ -30,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
 import com.android.volley.RequestQueue
@@ -39,6 +42,10 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +56,7 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.models.Course
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.network.retrofit.Data2Amo
 import lk.mzpo.ru.network.retrofit.DataToAmoApi
 import lk.mzpo.ru.ui.components.RedButton
@@ -63,182 +71,198 @@ import kotlin.math.log
 
 
 class MainViewModel
-        (
-        ): ViewModel()
-{
-        val bottomText = mutableStateOf("")
-        val Story_lables = listOf(listOf("Акции", R.drawable.group_30),listOf("Мероприятия", R.drawable.group_29),listOf("Подборки", R.drawable.group_32),listOf("Преподаватели", R.drawable.group_31))
-        private val _courses: MutableState<List<CoursePreview>> = mutableStateOf(listOf())
+    (
+) : ViewModel() {
+    val auth_tested = mutableStateOf(AuthStatus.TEST) //флаг аунтификации
+    val bottomText = mutableStateOf("") // динамический текст для модального окна
+    val Story_lables = listOf(
+        listOf("Акции", R.drawable.group_30),
+        listOf("Мероприятия", R.drawable.group_29),
+        listOf("Подборки", R.drawable.group_32),
+        listOf("Преподаватели", R.drawable.group_31)
+    ) //икноки для сториз
+    private val _courses: MutableState<List<CoursePreview>> = mutableStateOf(listOf())
+    val analytics: FirebaseAnalytics = Firebase.analytics
+    val courses: List<CoursePreview> get() = _courses.value
 
-        val courses: List<CoursePreview> get() = _courses.value
+    val form_title = mutableStateOf("")
 
-        val form_title = mutableStateOf("")
-
-        val stories: MutableState<List<List<Story>>> = mutableStateOf(emptyList())
-        val step = mutableStateOf(0);
-
-        val banner_sliser = mutableStateOf(listOf<String>())
-        val cats_main = mutableStateOf(listOf<Category>())
-
-
-
-        val _storyState  = MutableTransitionState(false).apply {
-                        targetState = false // start the animation immediately
-                }
-        val story_position = mutableStateOf(0)
-        val paused = mutableStateOf(false)
-        val openDialog = MutableTransitionState(false).apply {
-                targetState = false // start the animation immediately
-        }
-        @OptIn(ExperimentalMaterialApi::class)
-        val bottomSheetState = mutableStateOf(false)
+    val stories: MutableState<List<List<Story>>> = mutableStateOf(emptyList()) // список историй
+    val step = mutableStateOf(0);
 
 
-
-        @OptIn(ExperimentalMaterialApi::class)
-        fun getStories(context: Context)
-        {
-                        val url = "https://lk.mzpo-s.ru/mobile/main"
-                        val queue = Volley.newRequestQueue(context)
-                        val sRequest = StringRequest(
-                                Request.Method.GET,
-                                url,
-                                {
-                                                response ->
-
-                                        val mainobj = JSONObject(response)
-                                        val events = mainobj.getJSONArray("events")
-                                        val promos = mainobj.getJSONArray("promos")
-                                        val cats = mainobj.getJSONArray("cats")
-                                        val popular = mainobj.getJSONArray("popular")
-                                        val teachers = mainobj.getJSONArray("teachers")
-                                        val dictionary = listOf("promos", "events", "popular", "teachers")
-                                        val list = arrayListOf<List<Story>>()
-                                        val api = listOf(promos, events, events, teachers)
-                                        for(i in dictionary.indices)
-                                        {
-                                                val item = mainobj.getJSONArray(dictionary[i])
-                                                val cat = arrayListOf<Story>()
-                                                for (j in 0 until item.length())
-                                                {
-
-                                                        val story = item[j] as JSONObject
-                                                        Log.d("MyLog", story.toString())
-                                                        try {
-                                                                cat.add(
-                                                                        Story(
-                                                                                story.getString("image")
-                                                                        ) {
-                                                                                if(i == 0 || i == 1)
-                                                                                {
-                                                                                        Button(
-                                                                                                onClick = {
-                                                                                                        bottomText.value = story.getString("description")
-                                                                                                        paused.value = true
-//                                                                                                        openDialog.targetState = true
-                                                                                                        bottomSheetState.value = true
-                                                                                                        form_title.value = story.getString("name")
-                                                                                                },
-                                                                                                colors = ButtonDefaults.buttonColors(backgroundColor = Color(android.graphics.Color.parseColor(story.getString("btn_color")))),
-                                                                                                shape = RoundedCornerShape(50),
-                                                                                                modifier = Modifier.fillMaxWidth(0.7f).padding(bottom = 10.dp)
-                                                                                        ) {
-                                                                                                Text(text = story.getString("btn_text"), color = Color.White)
-                                                                                        }
-                                                                                }
-
-                                                                        }
-                                                                )
-                                                        } catch (e: Exception)
-                                                        {
-                                                                Log.d("MyLog1", e.toString())
-                                                        }
-                                                }
-                                                list.add(cat)
-                                        }
-                                        stories.value = list
-                                        val previewList = arrayListOf<CoursePreview>()
-                                        for (i in 0 until popular.length())
-                                        {
-                                                val item = popular[i] as JSONObject
-                                                val prices = item.getJSONObject("prices")
-
-                                                previewList.add(
-                                                        CoursePreview(
-                                                                item.getInt("id"),
-                                                                item.getString("image"),
-                                                                item.getString("name"),
-                                                                item.getString("prefix"),
-                                                                item.getInt("hours"),
-                                                                Prices(
-                                                                        try {
-                                                                                prices.getInt("sale15")
-                                                                        } catch (e: Exception)
-                                                                        {
-                                                                                null
-                                                                        },
-                                                                        try {
-                                                                                prices.getInt("ind")
-                                                                        } catch (e: Exception)
-                                                                        {
-                                                                                null
-                                                                        },
-                                                                        try {
-                                                                                prices.getInt("weekend")
-                                                                        } catch (e: Exception)
-                                                                        {
-                                                                                null
-                                                                        },
-                                                                        try {
-                                                                                prices.getInt("dist")
-                                                                        } catch (e: Exception)
-                                                                        {
-                                                                                null
-                                                                        }
+    val banner_sliser = mutableStateOf(listOf<String>()) //список ссылок на баннеры для слайдера
+    val cats_main = mutableStateOf(listOf<Category>()) //категории для блока с направлениями
 
 
+    //region Вспомогательные переменные для историй
+    val _storyState = MutableTransitionState(false).apply {
+        targetState = false // start the animation immediately
+    }
+    val story_position = mutableStateOf(0)
+    val paused = mutableStateOf(false)
+    //endregion
 
-                                                                ),
-                                                                item.getInt("category"),
-                                                                item.getString("doctype")
+    val openDialog = MutableTransitionState(false).apply {
+        targetState = false // start the animation immediately
+    }
+
+    @OptIn(ExperimentalMaterialApi::class)
+    val bottomSheetState = mutableStateOf(false)
+
+    lateinit var navHostController: NavHostController
 
 
-                                                        )
+    /**
+     * Получение всей информации для главной страницы
+     */
+    @OptIn(ExperimentalMaterialApi::class)
+    fun getStories(context: Context) {
+        val url = "https://lk.mzpo-s.ru/mobile/main"
+        val queue = Volley.newRequestQueue(context)
+        val sRequest = StringRequest(
+            Request.Method.GET,
+            url,
+            { response ->
+
+                val mainobj = JSONObject(response)
+                val events = mainobj.getJSONArray("events")
+                val promos = mainobj.getJSONArray("promos")
+                    val gson = Gson()
+                val cats = mainobj.getJSONArray("cats")
+                val popular = mainobj.getJSONArray("popular")
+                val teachers = mainobj.getJSONArray("teachers")
+                val dictionary = listOf("promos", "events", "recomended", "teachers")
+                val list = arrayListOf<List<Story>>()
+                val api = listOf(promos, events, events, teachers)
+
+                //region Stories
+                for (i in dictionary.indices) {
+                    val item = mainobj.getJSONArray(dictionary[i])
+                    val cat = arrayListOf<Story>()
+                    for (j in 0 until item.length()) {
+
+                        val story = item[j] as JSONObject
+                        try {
+                            cat.add(
+                                Story(
+                                    story.getString("image")
+                                ) {
+                                    if ((i == 0 || i == 1 || i == 3)) {
+                                        var btn_text = "Подробнее"
+                                        var btn_color = Aggressive_red
+                                        try {
+                                            btn_color = Color(
+                                                android.graphics.Color.parseColor(
+                                                    story.getString("btn_color")
                                                 )
+                                            )
+                                        } catch (_: Exception) {
                                         }
-                                        _courses.value = previewList
-                                        val banners = mainobj.getJSONArray("mainPromoBanner")
-                                        val ban_list = arrayListOf<String>()
-                                        for (i in 0 until banners.length())
-                                        {
-                                                ban_list.add(banners[i] as String)
+                                        try {
+                                            btn_text = story.getString("btn_text");
+                                        } catch (_: Exception) {
                                         }
-                                        banner_sliser.value = ban_list
-                                        val cats_list = arrayListOf<Category>()
-                                        for (i in 0 until  cats.length())
-                                        {
-                                              val item = cats.getJSONObject(i)
-                                              cats_list.add(Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), null, item.getString("image")))
-
+                                        Button(
+                                            onClick = {
+                                                bottomText.value = story.getString("description")
+                                                paused.value = true
+//                                                                                                        openDialog.targetState = true
+                                                bottomSheetState.value = true
+                                                form_title.value = story.getString("name")
+                                            },
+                                            colors = ButtonDefaults.buttonColors(backgroundColor = btn_color),
+                                            shape = RoundedCornerShape(50),
+                                            modifier = Modifier
+                                                .fillMaxWidth(
+                                                    0.7f
+                                                )
+                                                .padding(
+                                                    bottom = 10.dp
+                                                )
+                                        ) {
+                                            Text(text = btn_text, color = Color.White)
                                         }
-                                        cats_main.value = cats_list
+                                    } else if (i == 2) {
+                                        Button(
+                                            onClick = {
+                                                navHostController.navigate(
+                                                    "course/" + story.getString(
+                                                        "course_alias"
+                                                    )
+                                                )
+                                            },
+                                            colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                                            shape = RoundedCornerShape(50),
+                                            modifier = Modifier
+                                                .fillMaxWidth(
+                                                    0.7f
+                                                )
+                                                .padding(
+                                                    bottom = 10.dp
+                                                )
+                                        ) {
+                                            Text(text = "Записаться", color = Color.White)
+                                        }
 
+                                    }
 
-                                },
-                                {
-                                        Log.d("MyLog", "VolleyError: $it")
                                 }
-                        )
-                        queue.add(sRequest)
+                            )
+                        } catch (e: Exception) {
+                            Log.d("MyLog1", e.toString())
+                        }
+                    }
+                    list.add(cat)
                 }
+                stories.value = list
+                //endregion
+
+                //region Courses
+                val previewList = arrayListOf<CoursePreview>()
+                for (i in 0 until popular.length()) {
+                    val item = popular[i] as JSONObject
+                    val prices = item.getJSONObject("prices")
+
+                    previewList.add(
+                        gson.fromJson(item.toString(), CoursePreview::class.java)
+                    )
+                }
+                _courses.value = previewList
+                //endregion
+
+                //region Banners
+                val banners = mainobj.getJSONArray("mainPromoBanner")
+                val ban_list = arrayListOf<String>()
+                for (i in 0 until banners.length()) {
+                    ban_list.add(banners[i] as String)
+                }
+                banner_sliser.value = ban_list
+                //endregion
+
+                //region Banners
+                val cats_list = arrayListOf<Category>()
+                for (i in 0 until cats.length()) {
+                    val item = cats.getJSONObject(i)
+                    cats_list.add(
+                        gson.fromJson(item.toString(), Category::class.java)
+                    )
+
+                }
+                cats_main.value = cats_list
+                //endregion
 
 
+            },
+            {
+                Log.d("MyLog", "VolleyError: $it")
+            }
+        )
+        queue.add(sRequest)
+    }
 
 
-
-
-
-        }
+}
 
 
 

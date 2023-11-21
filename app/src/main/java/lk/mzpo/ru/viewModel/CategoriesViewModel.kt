@@ -34,6 +34,7 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CoroutineScope
@@ -62,13 +63,14 @@ class CategoriesViewModel
         ): ViewModel()
 {
 
-        val stories: MutableState<List<Category>> = mutableStateOf(emptyList())
+        val categories: MutableState<List<Category>> = mutableStateOf(emptyList()) // массив категорий (вложенный)
 
 
-
-
-
-        fun getStories(context: Context)
+        /**
+         * Получение списка категорий
+         * @param context - Контекст для очереди
+         */
+        fun getCategories(context: Context)
         {
                         val cats = arrayListOf<Category>()
                         val url = "https://lk.mzpo-s.ru/mobile/categories"
@@ -84,17 +86,11 @@ class CategoriesViewModel
                                         for(i in 0 until  mainobj.length())
                                         {
                                                 val item = mainobj[i] as JSONObject
-                                                val children = item.getJSONArray("children")
-                                                val child = arrayListOf<Category>()
-                                                for(j in  0 until children.length())
-                                                {
-                                                        val it = children[j] as JSONObject
-                                                        child.add(Category(it.getInt("id"),it.getString("name"), it.getString("alias"), it.getInt("parent_id"), null, it.getString("image"),it.getInt("amount")))
-                                                }
-                                                cats.add(Category(item.getInt("id"),item.getString("name"), item.getString("alias"), item.getInt("parent_id"), child))
+                                                val gson = Gson()
+                                                cats.add(gson.fromJson(item.toString(), Category::class.java))
 
                                         }
-                                        stories.value = cats
+                                        categories.value = cats
                                 },
                                 {
                                         Log.d("MyLog", "VolleyError: $it")

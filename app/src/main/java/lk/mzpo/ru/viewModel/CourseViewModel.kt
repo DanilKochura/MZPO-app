@@ -4,15 +4,20 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.models.Document
 import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.models.Module
 import lk.mzpo.ru.models.Prices
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
@@ -22,17 +27,26 @@ import java.time.format.DateTimeFormatter
 class CourseViewModel   (
 ): ViewModel(){
 
-    val courses = mutableStateOf(listOf<Course>())
-    val modalForm = mutableStateOf(false)
-    val tabIndex = mutableStateOf("Инфо")
+    val auth_tested = mutableStateOf(AuthStatus.TEST) // флаг аунтификации
+    val courses = mutableStateOf(listOf<Course>()) // курс
+    val modalForm = mutableStateOf(false) // флаг для диалогового окна с формой
+    val tabIndex = mutableStateOf("Инфо") // активная вкладка меню
 
     val monthes = listOf("Декабрь", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь")
+    var isDist = mutableStateOf(false)
+    val availible_months = mutableStateOf(listOf<Int>()) // список доступных месяцев для расписания
+    val admissions = mutableStateOf(listOf<String>())
+    val selectedPrice = mutableStateOf(0) //выбранная цена для главной
+    val selectedType = mutableStateOf("sale15") //выбранный тип цены для главной
+    val selectedMonth = mutableStateOf(0) // выбранный месяц для расписания
+    val db = Firebase.firestore
 
-    val availible_months = mutableStateOf(listOf<Int>());
 
-    val selectedPrice = mutableStateOf(0);
-    val selectedMonth = mutableStateOf(0);
-
+    /**
+     * Парсинг курса после получения
+     * @param response - JSON-ответ сервера
+     * @see Course
+     */
     fun getCourse(response: String): List<Course> {
 
 
@@ -47,13 +61,18 @@ class CourseViewModel   (
                 val prices = item.getJSONObject("prices")
                 var groups = JSONArray()
                 var docs = JSONArray()
+                var adms = JSONArray()
             var month = JSONArray();
             try {
                 groups = item.getJSONArray("groups")
             } catch (_: Exception)
             {
             }
-
+            try {
+                adms = item.getJSONArray("docs_admissions")
+            } catch (_: Exception)
+            {
+            }
                 val grAr = arrayListOf<Group>()
             try {
                 docs = item.getJSONArray("documents")
@@ -62,6 +81,7 @@ class CourseViewModel   (
             }
 
                 val docAr = arrayListOf<Document>()
+                val admsArr = arrayListOf<String>()
                 var mods = JSONArray()
             try {
                 mods = item.getJSONArray("modules")
@@ -85,16 +105,30 @@ class CourseViewModel   (
                         }
                     } catch (e: Exception)
                     {
-                        Log.d("MyLog", e.toString())
+                        Log.e("MyLogE", e.toString())
                     }
                 }
+            if(adms.length() > 0)
+            {
+                Log.d("MyLog", adms.toString())
+                try {
+                    for (j in 0 until adms.length())
+                    {
+
+                        val gr = adms[j] as String
+                        admsArr.add(gr)
+                    }
+                } catch (e: Exception)
+                {
+                    Log.e("MyLogE", e.toString())
+                }
+            }
                 if(groups.length() > 0)
                 {
                     try {
                         for (j in 0 until groups.length())
                         {
                             val gr = groups[j] as JSONObject
-
                             grAr.add(
                                 Group(
                                     gr.getInt("id"),
@@ -149,6 +183,7 @@ class CourseViewModel   (
                         images,
                         grAr,
                         docAr,
+                        admsArr,
                         modulesAr,
                         item.getString("doctype")
 
@@ -182,6 +217,10 @@ class CourseViewModel   (
     }
 
 
+    /**
+     * Получение списка модулей для курса
+     * @see Module
+     */
     fun getModules(obj: JSONArray): ArrayList<Module> {
         var list = arrayListOf<Module>()
         for (i in 0 until obj.length())
@@ -227,15 +266,27 @@ class CourseViewModel   (
         {
 
         }
+
         if(this.selectedPrice.value == 0)
         {
-
-            this.selectedPrice.value = if (sale15 != 0) sale15 else ind;
+            if( dist != 0)
+            {
+                isDist.value = true
+                this.selectedPrice.value = dist
+            } else
+            {
+                this.selectedPrice.value = if (sale15 != 0) sale15 else ind;
+            }
         }
-        Log.d("MyLog", this.selectedPrice.value.toString())
         return Prices(sale15, dist, ind, weekend)
     }
-     fun getData(id: Int, context: Context,)
+
+    /**
+     * Получение курса из ЛК по ID
+     * @param id - ЛК ID
+     * @param context - Контекст для очереди
+     */
+    fun getData(id: Int, context: Context,)
     {
         Log.d("MyLog1", id.toString())
 
