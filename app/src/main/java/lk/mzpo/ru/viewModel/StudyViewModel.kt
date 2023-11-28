@@ -9,8 +9,11 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import lk.mzpo.ru.models.Contract
+import lk.mzpo.ru.models.PracticeData
+import lk.mzpo.ru.models.PracticeOchno
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.study.Admission
+import lk.mzpo.ru.models.study.CourseSchedule
 import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.models.study.UserDocument
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -26,8 +29,14 @@ class StudyViewModel: ViewModel() {
     val studyModules = mutableStateOf(listOf<StudyModule>())
 
     val admissions = mutableListOf<Admission>()
+    val schedules = mutableListOf<CourseSchedule>()
+    val practiceData = mutableListOf<PracticeData>()
+
+    val practiceOcno = mutableListOf<PracticeOchno>()
 
     val documents = mutableListOf<UserDocument>()
+
+    val selected = mutableStateOf("Расписание")
     fun getData(context: Context)
     {
         val url = "https://lk.mzpo-s.ru/mobile/user/contract/${contract.id}"
@@ -39,11 +48,34 @@ class StudyViewModel: ViewModel() {
                 Method.GET, url,
                 Response.Listener { response ->
                     val gson = Gson();
+
+
                     val main = JSONObject(response)
                     val json = main.getJSONArray("studyModules")
                     val admJson = main.getJSONArray("adm")
                     val docsJson = main.getJSONArray("documents")
-                    val array = arrayListOf<StudyModule>()
+                    val schedJson = main.getJSONArray("sched")
+//                    Log.d("MyLog", main.getJSONObject("practiceData").toString())
+                    try {
+                        val pr = main.getJSONArray("practiceData");
+                        for (i in 0 until pr.length())
+                        {
+
+                            practiceData.add(gson.fromJson(pr[i].toString(), PracticeData::class.java))
+                        }
+                    } catch (e: Exception)
+                    {
+                        Log.d("MyLog", e.toString())
+                    }
+                    try {
+                        val pr = main.getJSONObject("practiceOchno");
+                        practiceOcno.add(gson.fromJson(main.getJSONObject("practiceOchno").toString(), PracticeOchno::class.java))
+                    } catch (e: Exception)
+                    {
+                        Log.d("MyLog", e.toString())
+
+                    }
+                     val array = arrayListOf<StudyModule>()
                     for (i in 0 until  json.length())
                     {
                         val string = json[i].toString()
@@ -54,6 +86,12 @@ class StudyViewModel: ViewModel() {
                     {
                         val string = admJson[i].toString()
                         admissions.add(gson.fromJson(string, Admission::class.java))
+                    }
+
+                    for (i in 0 until  schedJson.length())
+                    {
+                        val string = schedJson[i].toString()
+                        schedules.add(gson.fromJson(string, CourseSchedule::class.java))
                     }
                     for (i in 0 until  docsJson.length())
                     {
