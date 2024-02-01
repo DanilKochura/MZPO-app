@@ -168,13 +168,35 @@ fun ContractsScreen(
                             modifier = Modifier.fillMaxWidth(),
 
                             ) {
-                            list.forEachIndexed { index, text ->
+
+                            Tab(
+                                selected = contractsViewModel.selected.value == "Активные",
+                                onClick = {
+                                    contractsViewModel.selected.value = "Активные"
+                                },
+                                text = { Text(text = "Активные") },
+                                selectedContentColor = Aggressive_red,
+                                unselectedContentColor = Primary_Green
+                            )
+                            Tab(
+                                selected = contractsViewModel.selected.value == "Завершенные",
+                                onClick = {
+                                    contractsViewModel.selected.value = "Завершенные"
+                                },
+                                text = { Text(text = "Завершенные") },
+                                selectedContentColor = Aggressive_red,
+                                unselectedContentColor = Primary_Green
+                            )
+                            val courses_refund =
+                                contractsViewModel.contracts.value.filter { it.status == 2 }
+                            if(courses_refund.isNotEmpty())
+                            {
                                 Tab(
-                                    selected = contractsViewModel.selected.value == text,
+                                    selected = contractsViewModel.selected.value == "Возвраты",
                                     onClick = {
-                                        contractsViewModel.selected.value = text
+                                        contractsViewModel.selected.value = "Возвраты"
                                     },
-                                    text = { Text(text = text) },
+                                    text = { Text(text = "Возвраты") },
                                     selectedContentColor = Aggressive_red,
                                     unselectedContentColor = Primary_Green
                                 )
@@ -372,7 +394,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
         ) {
             Text(
                 contract.course!!.name,
-                maxLines = 3,
+                maxLines = 2,
                 fontSize = 18.sp,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.Bold,
@@ -400,7 +422,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                             Text(text = contract.progress!!.files!!)
                         }
                     }
-                    CircularProgressbar2(contract.progress!!.total!!.toFloat())
+                    CircularProgressbar2(contract.progress!!.total!!.toFloat(), size = conf.screenHeightDp.dp.div(10))
 
                 }
             } else if (contract.status!! > 3) {
