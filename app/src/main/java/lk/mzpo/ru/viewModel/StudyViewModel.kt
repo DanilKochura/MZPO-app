@@ -19,6 +19,7 @@ import lk.mzpo.ru.models.study.UserDocument
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlin.math.log
 
 class StudyViewModel: ViewModel() {
 
@@ -39,6 +40,7 @@ class StudyViewModel: ViewModel() {
     val selected = mutableStateOf("Расписание")
     fun getData(context: Context)
     {
+        Log.d("MyLog", "Here")
         val url = "https://lk.mzpo-s.ru/mobile/user/contract/${contract.id}"
         val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         val token = test.getString("token_lk", "")
@@ -81,13 +83,13 @@ class StudyViewModel: ViewModel() {
                         val string = json[i].toString()
                         array.add(gson.fromJson(string, StudyModule::class.java))
                     }
-
+                    admissions.clear()
                     for (i in 0 until  admJson.length())
                     {
                         val string = admJson[i].toString()
                         admissions.add(gson.fromJson(string, Admission::class.java))
                     }
-
+                    schedules.clear()
                     for (i in 0 until  schedJson.length())
                     {
                         val string = schedJson[i].toString()
