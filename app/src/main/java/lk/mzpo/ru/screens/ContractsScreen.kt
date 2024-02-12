@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,14 +50,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.extractor.text.webvtt.WebvttCssStyle.FontSizeUnit
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.google.gson.Gson
@@ -174,7 +179,7 @@ fun ContractsScreen(
                                 onClick = {
                                     contractsViewModel.selected.value = "Активные"
                                 },
-                                text = { Text(text = "Активные") },
+                                text = { Text(text = "Активные", fontSize = 13.sp) },
                                 selectedContentColor = Aggressive_red,
                                 unselectedContentColor = Primary_Green
                             )
@@ -183,7 +188,7 @@ fun ContractsScreen(
                                 onClick = {
                                     contractsViewModel.selected.value = "Завершенные"
                                 },
-                                text = { Text(text = "Завершенные") },
+                                text = { Text(text = "Завершенные", fontSize = 13.sp) },
                                 selectedContentColor = Aggressive_red,
                                 unselectedContentColor = Primary_Green
                             )
@@ -196,7 +201,7 @@ fun ContractsScreen(
                                     onClick = {
                                         contractsViewModel.selected.value = "Возвраты"
                                     },
-                                    text = { Text(text = "Возвраты") },
+                                    text = { Text(text = "Возвраты", fontSize = 13.sp) },
                                     selectedContentColor = Aggressive_red,
                                     unselectedContentColor = Primary_Green
                                 )
@@ -288,6 +293,15 @@ fun Login(token: String?, navHostController: NavHostController) {
                 Text("Войти", color = Color.White)
             }
         }
+        Row(
+            modifier = Modifier.padding(all = 8.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            val urlHandler = LocalUriHandler.current
+            Text(text = "Забыли пароль?", color= Color.Blue, textDecoration = TextDecoration.Underline,modifier = Modifier.clickable {
+                urlHandler.openUri("https://lk.mzpo-s.ru/password/reset")
+            })
+        }
     }
 }
 
@@ -295,7 +309,7 @@ fun Login(token: String?, navHostController: NavHostController) {
 @Composable
 fun ActiveTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
     val courses =
-        contractsViewModel.contracts.value.filter { it.status != 0 && it.status != 2 && it.status != 3 }
+        contractsViewModel.contracts.value.filter { it.status != 0 && it.status != 2 && it.status != 3 && it.status != 4 }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -330,7 +344,7 @@ fun ActiveTab(contractsViewModel: ContractsViewModel, navHostController: NavHost
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FinishedTab(contractsViewModel: ContractsViewModel) {
-    val courses = contractsViewModel.contracts.value.filter { it.status == 0 }
+    val courses = contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -350,13 +364,27 @@ fun FinishedTab(contractsViewModel: ContractsViewModel) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RefunedTab(contractsViewModel: ContractsViewModel) {
-    Text(
-        text = "Тут пока ничего нет", modifier = Modifier
-            .padding(10.dp)
-            .fillMaxWidth(), textAlign = TextAlign.Center
-    )
+    val courses = contractsViewModel.contracts.value.filter { it.status == 2 }
+    val listState: LazyListState = rememberLazyListState()
+    if (courses.isNotEmpty()) {
+        LazyRow(
+            content = {
+                itemsIndexed(courses)
+                { i, contract ->
+                    if (contract.course !== null) {
+                        ContractCard(contract)
+                    }
+
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            flingBehavior = rememberSnapFlingBehavior(listState)
+        )
+    }
 //    PickImageFromGallery()
 }
 
@@ -402,7 +430,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                 textAlign = TextAlign.Center
             )
             Text(text = contract.course!!.hours.toString() + " ак.ч.", fontWeight = FontWeight.Bold)
-            if (contract.status != 0 && contract.status != 2 && contract.status != 3) {
+            if (contract.status != 0 && contract.status != 2 && contract.status != 3 && contract.status != 4) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -425,7 +453,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                     CircularProgressbar2(contract.progress!!.total!!.toFloat(), size = conf.screenHeightDp.dp.div(10))
 
                 }
-            } else if (contract.status!! > 3) {
+            } else if (contract.status!! > 4) {
                 Column(
                     modifier = Modifier.padding(horizontal = 20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -451,7 +479,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                     }
                 }
             }
-            if (contract.notPassed === null) {
+            if (contract.notPassed === null && contract.status!! > 4) {
                 Button(
                     onClick = {
                         onClick.invoke()
