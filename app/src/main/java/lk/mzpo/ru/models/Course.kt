@@ -10,7 +10,7 @@ class Course(
     val description: String,
     val uid: String,
     val images: List<String>,
-    val groups: List<Group>?,
+    val groups: List<GroupCart>?,
     val docs: List<Document>,
     val admissions: List<String>,
     val modules: List<Module>,

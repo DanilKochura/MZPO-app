@@ -71,6 +71,7 @@ import lk.mzpo.ru.InDev
 import lk.mzpo.ru.OrderActivity
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
+import lk.mzpo.ru.models.CartItem
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -161,7 +162,7 @@ fun CartScreen(
                 }
             })
 
-            
+
 
             Box(
                 Modifier
@@ -220,7 +221,7 @@ fun CartScreen(
 
                         LazyColumn(modifier = Modifier)
                         {
-                            item { 
+                            item {
                                 Text(text = "Список покупок", fontSize = 24.sp, modifier = Modifier
                                     .padding(top = 15.dp)
                                     .fillMaxWidth(), textAlign = TextAlign.Center)
@@ -264,7 +265,7 @@ fun CartScreen(
                                     price = course.prices.weekend!!
                                 }
 
-                               CartCourse(course, price = price, {
+                               CartCourse(value, price = price, {
                                     if(value.id == 0)
                                     {
                                         cartViewModel.deleteCartItem(ctx, course.id)
@@ -315,19 +316,19 @@ fun CartScreen(
 
 
 @Composable
-fun CartCourse(course: CoursePreview, price: Int, onDelete: () -> Unit, onImageClick: () -> Unit = {}, onBuy: () -> Unit = {}, modifier: Modifier = Modifier)
+fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: () -> Unit = {}, onBuy: () -> Unit = {}, modifier: Modifier = Modifier)
 {
     var text = "";
-    if(course.prices.dist == price)
+    if(item.course.prices.dist == price)
     {
         text = "Дистанционно"
-    } else if (course.prices.sale15 == price)
+    } else if (item.course.prices.sale15 == price)
     {
         text = "Очно в группе"
-    } else if (course.prices.ind == price)
+    } else if (item.course.prices.ind == price)
     {
         text = "Индивидуально"
-    } else if (course.prices.weekend == price)
+    } else if (item.course.prices.weekend == price)
     {
         text = "Учись в выходной"
     }
@@ -347,7 +348,7 @@ fun CartCourse(course: CoursePreview, price: Int, onDelete: () -> Unit, onImageC
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier
                 .fillMaxWidth()
                 .padding(7.dp)) {
-                AsyncImage(model = course.image, contentDescription = course.id.toString(), modifier = Modifier
+                AsyncImage(model = item.course.image, contentDescription = item.course.id.toString(), modifier = Modifier
                     .height(100.dp)
                     .weight(1f)
                     .fillMaxWidth()
@@ -360,7 +361,7 @@ fun CartCourse(course: CoursePreview, price: Int, onDelete: () -> Unit, onImageC
                     .padding(start = 10.dp)
                     .height(100.dp), verticalArrangement = Arrangement.SpaceBetween) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                        Text(course.name, modifier = Modifier.weight(1f), maxLines = 3, overflow = TextOverflow.Ellipsis, fontSize = 18.sp)
+                        Text(item.course.name, modifier = Modifier.weight(1f), maxLines = 3, overflow = TextOverflow.Ellipsis, fontSize = 18.sp)
                         IconButton(modifier = Modifier.width(25.dp), onClick = {
                             onDelete.invoke()
                         }) {
@@ -373,9 +374,22 @@ fun CartCourse(course: CoursePreview, price: Int, onDelete: () -> Unit, onImageC
                         }
                     }
 
-                    Row{
-                        Text(text = "Форма обучения: ", color = Color.Gray, fontSize = 12.sp)
-                        Text(text = text, color = Aggressive_red, fontSize = 12.sp)
+                    Column {
+                        Row{
+                            if (item.course.isDist())
+                            {
+                                Text(text = "Дата окончания: ", color = Color.Gray, fontSize = 12.sp)
+                                Text(text = item.date!!, color = Aggressive_red, fontSize = 12.sp)
+                            }else
+                            {
+                                Text(text = "Дата начала: ", color = Color.Gray, fontSize = 12.sp)
+                                Text(text = item.group?.start!!, color = Aggressive_red, fontSize = 12.sp)
+                            }
+                        }
+                        Row{
+                            Text(text = "Форма обучения: ", color = Color.Gray, fontSize = 12.sp)
+                            Text(text = text, color = Aggressive_red, fontSize = 12.sp)
+                        }
                     }
 
                 }
@@ -388,8 +402,8 @@ fun CartCourse(course: CoursePreview, price: Int, onDelete: () -> Unit, onImageC
             Divider(Modifier.padding(vertical = 5.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(course.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
-                if (course.prices.dist != 0 && course.prices.dist != null)
+                Text(item.course.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
+                if (item.course.isDist())
                 {
                     Row{
                         Text(text = "Дистанционно: ", fontWeight = FontWeight.Bold)

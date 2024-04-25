@@ -19,6 +19,7 @@ import com.google.gson.Gson
 import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.CartItem
 import lk.mzpo.ru.models.Category
+import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
@@ -59,7 +60,7 @@ class CartViewModel  (
                     try {
                         val item = mainobj[i].toString()
                         val gson = Gson();
-                        courses.add(CartItem(0, cartList.value[i]["type"].toString(), "", 0, gson.fromJson(item, CoursePreview::class.java)))
+                        courses.add(CartItem(0, cartList.value[i]["type"].toString(), "", 0, null, 0, gson.fromJson(item, CoursePreview::class.java)))
                     } catch (_: Exception) {}
                 }
 
@@ -178,7 +179,7 @@ class CartViewModel  (
          * @param context - Контекст для очереди
          * @param id - ЛК ID курса для добавления
          */
-        fun addToCart(context: Context, id: Int)
+        fun addToCart(context: Context, id: Int, group_id : Int? = null)
         {
             val queue = Volley.newRequestQueue(context)
 
@@ -212,6 +213,10 @@ class CartViewModel  (
                     val params: MutableMap<String, String> =
                         HashMap()
                     params["course_id"] = id.toString()
+                    if(group_id !== null)
+                    {
+                        params["group_id"] = group_id.toString()
+                    }
                     return params
                 }
             }

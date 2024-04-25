@@ -11,10 +11,12 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.gson.Gson
 import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.models.Document
 import lk.mzpo.ru.models.Group
+import lk.mzpo.ru.models.GroupCart
 import lk.mzpo.ru.models.Module
 import lk.mzpo.ru.models.Prices
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -73,7 +75,7 @@ class CourseViewModel   (
             } catch (_: Exception)
             {
             }
-                val grAr = arrayListOf<Group>()
+                val grAr = arrayListOf<GroupCart>()
             try {
                 docs = item.getJSONArray("documents")
             } catch (_: Exception)
@@ -123,6 +125,7 @@ class CourseViewModel   (
                     Log.e("MyLogE", e.toString())
                 }
             }
+            val gson = Gson()
                 if(groups.length() > 0)
                 {
                     try {
@@ -130,25 +133,7 @@ class CourseViewModel   (
                         {
                             val gr = groups[j] as JSONObject
                             grAr.add(
-                                Group(
-                                    gr.getInt("id"),
-                                    gr.getInt("course_id"),
-                                    gr.getString("title"),
-                                    LocalDate.parse(gr.getString("start_date")),
-                                    LocalDate.parse(gr.getString("end_date")),
-                                    LocalTime.parse(gr.getString("time")),
-                                    gr.getString("uid"),
-                                    gr.getString("teacher"),
-                                    if(gr.isNull("teacher_name"))
-                                    {
-                                      "Не указан"
-                                    } else
-                                    {
-                                        gr.getString("teacher_name")
-                                    },
-                                    gr.getInt("month"),
-
-                                    )
+                                gson.fromJson(gr.toString(), GroupCart::class.java)
                             )
                         }
                     } catch (e: Exception)

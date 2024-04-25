@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -74,6 +75,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -105,6 +107,8 @@ import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Course
+import lk.mzpo.ru.models.Group
+import lk.mzpo.ru.models.GroupCart
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -121,6 +125,8 @@ import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CartViewModel
 import lk.mzpo.ru.viewModel.CourseViewModel
 import java.math.RoundingMode
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.log
 import kotlin.time.Duration.Companion.seconds
@@ -776,53 +782,91 @@ fun CourseGroups(course: Course, courseViewModel: CourseViewModel) {
         }
         Column {
             courses.value.forEachIndexed { index, group ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .height(100.dp)
-                        .border(1.dp, Primary_Green, RoundedCornerShape(10))
-                        .clip(RoundedCornerShape(10.dp)),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(Modifier.padding(5.dp)) {
-                        Text(
-                            buildAnnotatedString {
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
-                                {
-                                    append("Начало: ")
-                                }
-                                append(group.start.format(format))
-                            }
-                        )
-                        Text(
-                            buildAnnotatedString {
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
-                                {
-                                    append("Время начала: ")
-                                }
-                                append(group.time.format(formaTime))
-                            }
-                        )
-                        Text(
-                            buildAnnotatedString {
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
-                                {
-                                    append("Преподаватель: ")
-                                }
-                                append(group.teacher_name)
-                            }
-                        )
-
-                    }
-                    AsyncImage(model = group.teacher, contentDescription = "")
-                }
+                CourseGroup(course.id, group)
             }
         }
         Spacer(modifier = Modifier.height(70.dp))
 
     }
 
+}
+
+
+@Preview
+@Composable
+fun CourseGroup(course_id: Int = 0, group: GroupCart = GroupCart(1, 1, "МАС-1-ВХ", "LocalDate.now()", "LocalDate.now()", "LocalTime.now()", "uid", "https://lk.mzpo-s.ru/build/images/teachers/2.jpg","Михайлов Р.С", 1))
+{
+    val ctx = LocalContext.current
+    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val formaTime = DateTimeFormatter.ofPattern("HH:mm")
+    var ok = 0;
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            .height(100.dp)
+            .border(1.dp, Primary_Green, RoundedCornerShape(10))
+            .background(
+                Brush.linearGradient(listOf(Primary_Green, Primary_Green)),
+                RoundedCornerShape(10),
+                0.5f
+            )
+            .clip(RoundedCornerShape(10.dp)),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column (modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly){
+            IconButton(onClick = {
+                CartViewModel.addToCart(ctx, course_id, group.id)
+                if (ok == 0) {
+                    ok = 1
+                    val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    if (vibrator.hasVibrator()) { // Vibrator availability checking
+                        vibrator.vibrate(
+                            VibrationEffect.createOneShot(
+                                200,
+                                VibrationEffect.DEFAULT_AMPLITUDE
+                            )
+                        ) // New vibrate method for API Level 26 or higher
+                    }
+
+                }
+            }, ) {
+                Icon(painter = painterResource(id = R.drawable.baseline_shopping_cart_24), contentDescription = "", tint = Aggressive_red, modifier = Modifier.background(Color.White, RoundedCornerShape(50)).padding(5.dp))
+            }
+        }
+        Column(Modifier.padding(5.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly) {
+            Text(
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
+                    {
+                        append("Начало: ")
+                    }
+                    append(group.start.format(format))
+                }, color = Color.White
+            )
+            Text(
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
+                    {
+                        append("Время начала: ")
+                    }
+                    append(group.time.format(formaTime))
+                }, color = Color.White
+            )
+            Text(
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
+                    {
+                        append("Преподаватель: ")
+                    }
+                    append(group.teacher_name)
+                }, color = Color.White
+            )
+
+        }
+
+        AsyncImage(model = group.teacher, contentDescription = "")
+    }
 }
 
 @Composable
