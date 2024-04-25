@@ -22,13 +22,13 @@ class ContractsViewModel  (
 ): ViewModel()
 {
     val contracts = mutableStateOf(listOf<Contract>()) // список заказов
-
-    val user = mutableStateOf(User(0,"",""))
+    val user = mutableStateOf(User(0,"","", "", ""))
     val selected = mutableStateOf("Активные") // активная вкладка меню
 
     val auth_tested = mutableStateOf(AuthStatus.TEST) //статус авторизации
 
     val loaded = mutableStateOf(false) //флаг полной загрузки контента
+    val error = mutableStateOf(false) //флаг полной загрузки контента
 
     /**
      * Получение списка заказов
@@ -56,8 +56,15 @@ class ContractsViewModel  (
                     loaded.value = true
 
                 },
-                Response.ErrorListener { error ->
-                    Log.i("mylog", "error = " + error)
+                Response.ErrorListener { err ->
+                    loaded.value = true
+                    if(err?.networkResponse !== null)
+                    {
+                        if(err.networkResponse.statusCode == 500)
+                        {
+                            error.value = true
+                        }
+                    }
                 }
             ) {
                 override fun getHeaders(): MutableMap<String, String> {

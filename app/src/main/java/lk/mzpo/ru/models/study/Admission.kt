@@ -16,7 +16,9 @@ data class Admission (
 data class Pivot (
 
     @SerializedName("course_id"    ) var courseId    : Int? = null,
-    @SerializedName("admission_id" ) var admissionId : Int? = null
+    @SerializedName("admission_id" ) var admissionId : Int? = null,
+    @SerializedName("required" ) var required : String? = null,
+    @SerializedName("for_access" ) var for_access : String? = null
 
 )
 

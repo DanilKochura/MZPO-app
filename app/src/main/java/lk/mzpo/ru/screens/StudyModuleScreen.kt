@@ -147,7 +147,7 @@ fun StudyModuleScreen(
                 ) {
 
                     //region Search
-                    ProfileHeader(navHostController = navHostController)
+                    ProfileHeader(navHostController = navHostController, true)
                     //endregion
 
                     Column(

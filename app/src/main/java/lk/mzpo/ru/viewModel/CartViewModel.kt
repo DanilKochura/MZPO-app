@@ -211,7 +211,7 @@ class CartViewModel  (
                 override fun getParams(): Map<String, String> {
                     val params: MutableMap<String, String> =
                         HashMap()
-                    params["course"] = id.toString()
+                    params["course_id"] = id.toString()
                     return params
                 }
             }

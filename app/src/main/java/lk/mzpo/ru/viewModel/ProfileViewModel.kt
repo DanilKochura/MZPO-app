@@ -41,9 +41,10 @@ class ProfileViewModel  (
 
     val auth_tested = mutableStateOf(AuthStatus.TEST)
 
-    val user = mutableStateOf(User(0,"",""))
+    val user = mutableStateOf(User(0,"","", "", ""))
 
     val loaded = mutableStateOf(false)
+    val error = mutableStateOf(false)
     fun getData(token: String, context: Context)
     {
         val url = "https://lk.mzpo-s.ru/mobile/user/test"
@@ -56,8 +57,15 @@ class ProfileViewModel  (
                     loaded.value = true
 
                 },
-                Response.ErrorListener { error ->
-                    Log.i("mylog", "error = " + error)
+                Response.ErrorListener { err ->
+                    loaded.value = true
+                    if(err?.networkResponse !== null)
+                    {
+                        if(err.networkResponse.statusCode == 500)
+                        {
+                            error.value = true
+                        }
+                    }
                 }
             ) {
                 override fun getHeaders(): MutableMap<String, String> {
@@ -72,16 +80,18 @@ class ProfileViewModel  (
 
     fun getUser(response: String): User {
         Log.d("ProfileLog", response)
-        if (response.isEmpty()) return User(0,"","")
+        if (response.isEmpty()) return User(0,"","", "", "")
         val mainObject = JSONObject(response)
-        val data = mainObject.getJSONObject("auth_user_data")
-        val gson = Gson()
-        var mUser = gson.fromJson(data.toString(), UserData::class.java)
+//        val data = mainObject.getJSONObject("auth_user_data")
+//        val gson = Gson()
+//        var mUser = gson.fromJson(data.toString(), UserData::class.java)
         return User(
             mainObject.getInt("id"),
             mainObject.getString("name"),
             mainObject.getString("email"),
-            mUser
+            mainObject.getString("phone"),
+            mainObject.getString("id_1c"),
+            mainObject.getString("avatar")
         )
 
     }

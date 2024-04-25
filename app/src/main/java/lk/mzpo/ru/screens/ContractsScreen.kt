@@ -22,7 +22,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.icons.Icons
@@ -51,13 +54,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -66,6 +74,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.google.gson.Gson
 import lk.mzpo.ru.R
+import lk.mzpo.ru.exceptions.NoConnectionException
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
@@ -116,7 +125,13 @@ fun ContractsScreen(
             val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
             val token = test.getString("token_lk", "")
 
-            AuthService.testAuth(context, navHostController, contractsViewModel.auth_tested)
+            try {
+                AuthService.testAuth(context, navHostController, contractsViewModel.auth_tested)
+            } catch (_: NoConnectionException)
+            {
+                contractsViewModel.error.value = true
+                contractsViewModel.loaded.value = true
+            }
 
             LaunchedEffect(key1 = contractsViewModel.auth_tested.value, block = {
                 if (contractsViewModel.auth_tested.value == AuthStatus.AUTH) {
@@ -193,9 +208,8 @@ fun ContractsScreen(
                                 unselectedContentColor = Primary_Green
                             )
                             val courses_refund =
-                                contractsViewModel.contracts.value.filter { it.status == 2 }
-                            if(courses_refund.isNotEmpty())
-                            {
+                                contractsViewModel.contracts.value.filter { it.status == 5 || it.status == 2 }
+                            if (courses_refund.isNotEmpty()) {
                                 Tab(
                                     selected = contractsViewModel.selected.value == "Возвраты",
                                     onClick = {
@@ -207,7 +221,7 @@ fun ContractsScreen(
                                 )
                             }
                         }
-                        LoadableScreen(loaded = contractsViewModel.loaded)
+                        LoadableScreen(loaded = contractsViewModel.loaded, error = contractsViewModel.error)
 
 
                         when (contractsViewModel.selected.value) {
@@ -298,9 +312,13 @@ fun Login(token: String?, navHostController: NavHostController) {
             horizontalArrangement = Arrangement.Center
         ) {
             val urlHandler = LocalUriHandler.current
-            Text(text = "Забыли пароль?", color= Color.Blue, textDecoration = TextDecoration.Underline,modifier = Modifier.clickable {
-                urlHandler.openUri("https://lk.mzpo-s.ru/password/reset")
-            })
+            Text(
+                text = "Забыли пароль?",
+                color = Color.Blue,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable {
+                    urlHandler.openUri("https://lk.mzpo-s.ru/password/reset")
+                })
         }
     }
 }
@@ -309,7 +327,17 @@ fun Login(token: String?, navHostController: NavHostController) {
 @Composable
 fun ActiveTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
     val courses =
-        contractsViewModel.contracts.value.filter { it.status != 0 && it.status != 2 && it.status != 3 && it.status != 4 }
+        contractsViewModel.contracts.value.filter {
+            it.status!! in intArrayOf(
+                1,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+            )
+        }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -367,7 +395,7 @@ fun FinishedTab(contractsViewModel: ContractsViewModel) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RefunedTab(contractsViewModel: ContractsViewModel) {
-    val courses = contractsViewModel.contracts.value.filter { it.status == 2 }
+    val courses = contractsViewModel.contracts.value.filter { it.status == 5 || it.status == 2 }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -392,6 +420,37 @@ fun RefunedTab(contractsViewModel: ContractsViewModel) {
 @Composable
 fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val conf = LocalConfiguration.current
+    val metodCallText = buildAnnotatedString {
+        val mStr =
+            "Если у вас есть вопросы по документам, свяжитесь с Методическим отделом +7(495)278-11-09 (доб. 302)"
+
+        // word and span to be hyperlinked
+        val mStartIndex = mStr.indexOf("+7(495)278-11-09")
+        val mEndIndex = mStartIndex + 17
+        addStyle(
+            style = ParagraphStyle(textAlign = TextAlign.Center),
+            start = 0,
+            end = mStr.length
+        )
+        append(mStr)
+        addStyle(
+            style = SpanStyle(
+                color = Color.Blue,
+                textDecoration = TextDecoration.Underline
+            ), start = mStartIndex, end = mEndIndex
+        )
+
+        // attach a string annotation that
+        // stores a URL to the text "link"
+        addStringAnnotation(
+            tag = "URL",
+            annotation = "tel:84952781109",
+            start = mStartIndex,
+            end = mEndIndex
+        )
+
+    }
+    val uriHandler = LocalUriHandler.current
     Card(
         modifier = modifier
 
@@ -429,8 +488,19 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                 modifier = Modifier.padding(10.dp),
                 textAlign = TextAlign.Center
             )
-            Text(text = contract.course!!.hours.toString() + " ак.ч.", fontWeight = FontWeight.Bold)
-            if (contract.status != 0 && contract.status != 2 && contract.status != 3 && contract.status != 4) {
+            if (contract.status!! in intArrayOf(
+                    1,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11
+                )) {
+                Text(
+                    text = contract.course!!.hours.toString() + " ак.ч.",
+                    fontWeight = FontWeight.Bold
+                )
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -450,36 +520,105 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                             Text(text = contract.progress!!.files!!)
                         }
                     }
-                    CircularProgressbar2(contract.progress!!.total!!.toFloat(), size = conf.screenHeightDp.dp.div(10))
+                    CircularProgressbar2(
+                        contract.progress!!.total!!.toFloat(),
+                        size = conf.screenHeightDp.dp.div(10)
+                    )
 
                 }
-            } else if (contract.status!! > 4) {
+            } else if (contract.status!! in intArrayOf(
+                    0,
+                    3,
+                    4
+                )) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 20.dp)
+                        .verticalScroll(
+                            rememberScrollState()
+                        ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "Вы успешно прошли обучение!",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 7.dp)
-                    )
-                    if (contract.certs.isNotEmpty()) {
+                    if(contract.status!! == 0)
+                    {
                         Text(
-                            text = "Документ ${contract.certs[0]}",
+                            text = "Вы успешно прошли обучение!",
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 7.dp)
+                            modifier = Modifier.padding(bottom = 7.dp),
+                            color = Aggressive_red
                         )
                     }
+                    Text(
+                        buildAnnotatedString {
+                            append("Документ ")
+                            withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
+                                if (contract.certs.isNotEmpty()) {
+                                    append(contract.certs[0])
+                                } else {
+                                    append("изготавливается")
+                                }
+                            }
+                        }, modifier = Modifier.padding(bottom = 5.dp), textAlign = TextAlign.Center
+                    )
+
                     if (contract.debt != 0) {
                         Text(
                             text = "Для получения документа, Вам необходимо оплатить долг в размере ${contract.debt} руб.",
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 7.dp)
+                            modifier = Modifier.padding(bottom = 7.dp),
+                            fontWeight = FontWeight.Bold
                         )
                     }
+                    if (contract.need_docs) {
+                        Text(
+                            text = "Чтобы получить документ об образовании загрузите документы и ожидайте уведомление о статусе проверки",
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 7.dp),
+                        )
+                        ClickableText(text = metodCallText, onClick = {
+                            metodCallText
+                                .getStringAnnotations("URL", it, it)
+                                .firstOrNull()?.let { stringAnnotation ->
+                                    uriHandler.openUri(stringAnnotation.item)
+                                }
+                        })
+                    }
+
                 }
             }
-            if (contract.notPassed === null && contract.status!! > 4) {
+            if (contract.status == 5 || contract.status == 2) {
+                Text(text = "Отказ от курса", color = Aggressive_red, textAlign = TextAlign.Center)
+
+                if(contract.amount !== null)
+                {
+                    Text(text = buildAnnotatedString {
+                        withStyle(SpanStyle(color = Aggressive_red))
+                        {
+                            if(contract.status == 2)
+                            {
+                                append("Денежные средства возвращены ")
+                            } else
+                            {
+                                append("Частичный возврат денежных средств ")
+                            }
+                        }
+                        append(contract.dateCancel)
+                    }, textAlign = TextAlign.Center)
+                }
+            }
+            if (contract.whyCancel !== null) {
+                Text(text = contract.whyCancel!!, textAlign = TextAlign.Center)
+            }
+            if (contract.notPassed === null && contract.status!! in intArrayOf(
+                    1,
+                    6,
+                    7,
+//                    8,
+                    9,
+                    10,
+                    11
+                )
+            ) {
                 Button(
                     onClick = {
                         onClick.invoke()
@@ -496,7 +635,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                     Text("Перейти", color = Color.White)
 
                 }
-            } else {
+            } else if (contract.status!! in intArrayOf(1, 6, 7, 8, 9, 10, 11)) {
                 Button(
                     onClick = {
                         onClick.invoke()
@@ -512,7 +651,13 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                     ),
                     enabled = false
                 ) {
-                    Text("Доступ закрыт", color = Color.White)
+                    if(contract.status == 8)
+                    {
+                        Text("Обучение приостановлено", color = Color.DarkGray)
+                    } else
+                    {
+                        Text("Доступ закрыт", color = Color.DarkGray)
+                    }
 
                 }
             }

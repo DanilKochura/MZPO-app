@@ -29,6 +29,7 @@ data class Contract (
         @SerializedName("status"          ) var status         : Int? = null,
         @SerializedName("course"          ) var course         : CoursePreview? = null,
         @SerializedName("certs"           ) var certs          : List<String> = emptyList(),
+        @SerializedName("need_docs"       ) var need_docs      : Boolean = false,
         @SerializedName("practiceData"  ) var practiceData   : PracticeData? = null
 
 

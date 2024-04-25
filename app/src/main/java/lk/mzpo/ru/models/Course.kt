@@ -12,6 +12,7 @@ class Course(
     val images: List<String>,
     val groups: List<Group>?,
     val docs: List<Document>,
+    val admissions: List<String>,
     val modules: List<Module>,
     val doctype: String,
 )

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.google.gson.annotations.SerializedName
 import lk.mzpo.ru.ui.components.stories.data.Indicator
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.components.stories.ui.StoryImageMultipleIndicator
@@ -40,7 +41,7 @@ fun Story(
         mutableStateOf(urlList.first())
     }
 
-    val state = rememberPagerState()
+    val state = rememberPagerState(pageCount = {urlList.size})
     val coroutineScope = rememberCoroutineScope()
     val scrollStateList = rememberStoryState(urlList.size)
 
@@ -145,7 +146,16 @@ fun Story(
 
 class Story (val image: String, val button: @Composable () -> Unit = {}) {
 
-
-
-
 }
+
+data class NotificationPromo (
+
+    @SerializedName("id"          ) var id          : Int?    = null,
+    @SerializedName("image"       ) var image       : String? = null,
+    @SerializedName("banner"      ) var banner      : String? = null,
+    @SerializedName("name"        ) var name        : String? = null,
+    @SerializedName("btn_text"    ) var btnText     : String? = null,
+    @SerializedName("description" ) var description : String? = null,
+    @SerializedName("btn_color"   ) var btnColor    : String? = null
+
+)

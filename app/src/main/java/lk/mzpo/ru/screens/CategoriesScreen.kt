@@ -29,6 +29,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,7 +68,9 @@ import kotlin.math.log
 @Composable
 fun CategoriesScreen(
     navHostController: NavHostController,
-    categoriesViewModel: CategoriesViewModel = viewModel()
+    categoriesViewModel: CategoriesViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -84,10 +88,10 @@ fun CategoriesScreen(
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
             val ctx = LocalContext.current
-            categoriesViewModel.getStories(ctx)
+            categoriesViewModel.getCategories(ctx)
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -143,7 +147,7 @@ fun CategoriesScreen(
                             .fillMaxSize()
                             .padding(10.dp))
                         {
-                            itemsIndexed(categoriesViewModel.stories.value)
+                            itemsIndexed(categoriesViewModel.categories.value)
                             { index, item ->
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Text(text = item.name, fontSize = 22.sp, color = Primary_Green, modifier = Modifier.padding(5.dp))

@@ -36,7 +36,7 @@ import kotlin.system.exitProcess
 class JobsViewModel  (
 ): ViewModel()
 {
-    val user = mutableStateOf(User(0,"",""))
+    val user = mutableStateOf(User(0,"","", "", ""))
 
     val agreement = mutableStateOf(false)
 

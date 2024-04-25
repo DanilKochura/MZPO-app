@@ -2,21 +2,27 @@ package lk.mzpo.ru.screens.profile
 
 import android.content.Context
 import android.provider.ContactsContract.CommonDataKinds.Email
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
@@ -32,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -40,6 +47,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,9 +58,7 @@ import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.screens.ProfileHeader
-import lk.mzpo.ru.ui.components.CustomTextField
 import lk.mzpo.ru.ui.components.DatePickerDemo
-import lk.mzpo.ru.ui.components.DateTextField
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
@@ -61,16 +67,20 @@ import lk.mzpo.ru.ui.components.checkPhone
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
+import lk.mzpo.ru.viewModel.BillsViewModel
 import lk.mzpo.ru.viewModel.ProfileViewModel
+import lk.mzpo.ru.viewModel.ScheduleViewModel
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserDataScreen(
+fun ScheduleScreen(
     user: User,
     navHostController: NavHostController,
-    profileViewModel: ProfileViewModel = viewModel(),
+    scheduleViewModel: ScheduleViewModel = viewModel(),
     cart_sum: MutableState<Int> = mutableStateOf(0)
-
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -92,31 +102,8 @@ fun UserDataScreen(
         content = { padding ->
             val ctx = LocalContext.current
 
-            profileViewModel.user.value = user
+            scheduleViewModel.getData(context = ctx)
 
-
-//            val snils = remember {
-//                mutableStateOf(TextFieldValue(user.?.snils.toString()))
-//            }
-//
-//            val seria = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passSeries.toString()))
-//            }
-//            val number = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passNumber.toString()))
-//            }
-//            val place_given = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passPoi.toString()))
-//            }
-//            val place_living = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passRegistration.toString()))
-//            }
-//            val code = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passDpt.toString()))
-//            }
-//            val date_given = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passDoi.toString().replace("-", "")))
-//            }
 
             Box(
                 Modifier
@@ -165,60 +152,51 @@ fun UserDataScreen(
 
                            Column {
                                Text(
-                                   text = "Редактировать профиль",
+                                   text = "Моё расписание",
                                    textAlign = TextAlign.Center,
                                    fontSize = 20.sp,
                                    modifier = Modifier
                                        .fillMaxWidth()
                                        .padding(vertical = 10.dp)
                                )
+                               val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                               val secondFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+                               val timeFrmtEnd = DateTimeFormatter.ofPattern("HH:mm")
+                               LazyColumn(content = {
+                                   item {
+                                       Row(Modifier, horizontalArrangement = Arrangement.SpaceBetween) {
+                                           Text(text = "Курс", modifier = Modifier.weight(2f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Дата", modifier = Modifier.weight(2f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Аудитория", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Преподаватель", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                       }
+                                       Divider()
+                                   }
+                                   itemsIndexed(scheduleViewModel.schedule)
+                                   {
+                                       index, item ->
 
-//                               CustomTextField(name = "СНИЛС", placeholder = "СНИЛС", value = snils,modifier = Modifier.fillMaxWidth())
-//                               Row(Modifier.fillMaxWidth()) {
-//                                   CustomTextField(name = "Серия паспорта", placeholder = "XXXX", value = seria ,modifier = Modifier
-//                                       .fillMaxWidth(0.5f)
-//                                       .padding(end = 5.dp))
-//                                   CustomTextField(name = "Номер паспорта", placeholder = "XXXXXX", value = number ,modifier = Modifier
-//                                       .fillMaxWidth()
-//                                       .padding(start = 5.dp))
-//
-//                               }
-//                               CustomTextField(name = "Место выдачи паспорта", placeholder = "СНИЛС", value = place_given,modifier = Modifier.fillMaxWidth())
-//                               Row(Modifier.fillMaxWidth()) {
-//                                   DateTextField(name = "Дата выдачи", value = date_given,modifier = Modifier
-//                                       .fillMaxWidth(0.5f)
-//                                       .padding(end = 5.dp))
-//                                   CustomTextField(name = "Код подразделения", placeholder = "ул. Кузекцкий мост 21/5", value = code,modifier = Modifier
-//                                       .fillMaxWidth()
-//                                       .padding(start = 5.dp))
-//                               }
-//                               CustomTextField(name = "Место регистрации", placeholder = "XXX-XXX", value = place_given,modifier = Modifier.fillMaxWidth())
-                           }
+                                       Row (Modifier, horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically){
+                                           val date = LocalDateTime.parse(item.date , firstApiFormat)
+                                           Text(text = item.course.toString(), modifier = Modifier.weight(2f))
+
+                                           Column (horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(2f)){
+                                               Text(text = date.format(secondFormatter).toString())
+                                               Text(text = date.format(timeFrmtEnd).toString())
+                                           }
+                                           Text(text = item.auditory.toString(), Modifier.weight(1f))
+                                           Text(text = item.teacher.toString(), modifier =  Modifier.weight(1f))
+                                       }
+                                       Divider()
+                                   }
+
+                               }, modifier = Modifier
+                                   .fillMaxSize()
+                                   )
+                               }
 
 
 
-                            Row (horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
-                                Button(onClick = {
-//                                                 val date_pass = date_given.value.text.substring(0,4) + "-" + date_given.value.text.substring(4,6) + "-" + date_given.value.text.substring(6,8)
-//                                                    val data = user.userData
-//                                                    if(data !== null)
-//                                                    {
-//                                                        data.passDoi = date_pass
-//                                                        data.snils = snils.value.text
-//                                                        data.passSeries = seria.value.text
-//                                                        data.passNumber = number.value.text
-//                                                        data.passPoi = place_given.value.text
-//                                                        data.passRegistration = place_living.value.text
-//                                                        data.passDpt = code.value.text
-//                                                        profileViewModel.userData(data, ctx);
-//                                                    }
-
-                                                 }, modifier = Modifier
-                                    .padding(15.dp)
-                                    .width(250.dp), colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)) {
-                                    Text(text = "Сохранить")
-                                }
-                            }
                         }
 
                     }

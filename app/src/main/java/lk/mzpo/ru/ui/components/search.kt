@@ -70,6 +70,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -110,55 +112,7 @@ fun Search()
 }
 
 @Composable
-fun SearchView(state: MutableState<String>) {
-//    TextField(
-//        value = state.value,
-//        onValueChange = { value ->
-//            state.value = value
-//        },
-//        modifier = Modifier
-//            .height(40.dp),
-//        textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
-//
-//        leadingIcon = {
-//            Icon(
-//                Icons.Default.Search,
-//                contentDescription = "",
-//                modifier = Modifier
-//                    .size(24.dp)
-//            )
-//        },
-//        placeholder = {
-//                      Text(text = "Search...")
-//        },
-//        trailingIcon = {
-//            if (state.value != TextFieldValue("")) {
-//                IconButton(
-//                    onClick = {
-//                        state.value =
-//                            TextFieldValue("") // Remove text from TextField when you press the 'X' icon
-//                    }
-//                ) {
-//                    Icon(
-//                        Icons.Default.Close,
-//                        contentDescription = "",
-//                        modifier = Modifier
-//                            .size(24.dp)
-//                    )
-//                }
-//            }
-//        },
-//        singleLine = true,
-//        shape = RoundedCornerShape(size = 15.dp),
-//        colors = TextFieldDefaults.textFieldColors(
-//            textColor = Color.Black,
-//            cursorColor = Color.Black,
-//            backgroundColor = Color.White,
-//            focusedIndicatorColor = Color.Transparent,
-//            unfocusedIndicatorColor = Color.Transparent,
-//            disabledIndicatorColor = Color.Transparent
-//        )
-//    )
+fun SearchView(state: MutableState<String>, navHostController: NavHostController) {
     MyTextField(
         value = state.value,
         onValueChange = { value ->
@@ -170,12 +124,31 @@ fun SearchView(state: MutableState<String>) {
         textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
 
         leadingIcon = {
-            Icon(
+            if (state.value !="") {
+                Log.d("MyLog", "catalog?search=_"+state.value)
+                IconButton(onClick = {
+                    if (state.value.length > 3)
+                    {
+                        navHostController.navigate("catalog?search=_"+state.value)
+                    }
+                }) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+            } else
+            {
+                Icon(
                 Icons.Default.Search,
                 contentDescription = "",
                 modifier = Modifier
                     .size(24.dp)
             )
+
+            }
         },
 
         trailingIcon = {
@@ -204,14 +177,28 @@ fun SearchView(state: MutableState<String>) {
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent
-        ))
+        ),
+        placeholder = { Text(text = "Поиск...")},
+         keyboardActions = KeyboardActions(onSearch = {
+             if (state.value.length > 3)
+         {
+             navHostController.navigate("catalog?search=_"+state.value)
+         }}),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
+        )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun SearchViewPreview() {
-    val textState = remember { mutableStateOf("fsfsdfsf") }
-    SearchView(textState)
+fun SearchViewPreview(navHostController: NavHostController = rememberNavController(), textState: MutableState<String>? = null) {
+    var ts = remember {
+        mutableStateOf("")
+    }
+    if(textState != null)
+    {
+       ts = textState
+    }
+    SearchView(ts, navHostController = navHostController)
 }
 
 @Composable

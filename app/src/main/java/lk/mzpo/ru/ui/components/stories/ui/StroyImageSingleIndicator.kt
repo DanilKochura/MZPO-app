@@ -35,7 +35,7 @@ fun StoryImageSingleIndicator(
 ) {
 
     HorizontalPager(
-        userScrollEnabled = false, pageCount = size, state = state, modifier = modifier
+        userScrollEnabled = false, state = state, modifier = modifier
     ) {
 
         StoryImageSingleIndicator(

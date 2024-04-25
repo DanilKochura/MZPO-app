@@ -16,24 +16,27 @@ import lk.mzpo.ru.models.study.NotificationNew
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
+import lk.mzpo.ru.ui.components.stories.NotificationPromo
 import org.json.JSONArray
 import org.json.JSONObject
 
 
-class NotificationsViewModel  (
+class NotificationPromoViewModel  (
 ): ViewModel()
 {
 
 
     val auth_tested = mutableStateOf(AuthStatus.TEST)
-
+    val story = mutableStateOf(NotificationPromo())
     val loaded = mutableStateOf(false)
 
     val notifications = mutableListOf<NotificationNew>();
 
-    fun getData(token: String, context: Context)
+    fun getData( context: Context, alias: String)
     {
-        val url = "https://lk.mzpo-s.ru/mobile/user/notifications"
+        val url = "https://lk.mzpo-s.ru/mobile$alias"
+        val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+        val token = test.getString("token_lk", "")
         val queue = Volley.newRequestQueue(context)
         val stringReq: StringRequest =
             object : StringRequest(
@@ -41,12 +44,7 @@ class NotificationsViewModel  (
                 Response.Listener { response ->
                     Log.d("getData", response)
                     val gson = Gson();
-                    val json = JSONArray(response)
-                    for (i in 0 until  json.length())
-                    {
-                        val string = json[i].toString()
-                        notifications.add(gson.fromJson(string, NotificationNew::class.java))
-                    }
+                    story.value = gson.fromJson(response, NotificationPromo::class.java)
                     loaded.value = true
                     Log.d("MyLog", notifications.size.toString())
 
@@ -57,7 +55,7 @@ class NotificationsViewModel  (
             ) {
                 override fun getHeaders(): MutableMap<String, String> {
                     val headers = HashMap<String, String>()
-                    headers["Authorization"] = "Bearer "+token.trim('"')
+                    headers["Authorization"] = "Bearer "+token?.trim('"')
                     return headers
                 }
 

@@ -6,6 +6,7 @@ import android.widget.ProgressBar
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -38,6 +39,7 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
@@ -99,11 +101,14 @@ import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.ui.components.EmailTextField
+import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.components.PasswordTextField
 import lk.mzpo.ru.ui.components.PickImageFromGallery
 import lk.mzpo.ru.ui.components.PieChart
 import lk.mzpo.ru.ui.components.SearchViewPreview
+import lk.mzpo.ru.ui.theme.Active_Green
 import lk.mzpo.ru.ui.theme.Aggressive_red
+import lk.mzpo.ru.ui.theme.Blue_BG
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Orange
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -182,7 +187,7 @@ fun StudyScreen(
                             Text(text = "Загрузить документы", color = Color.White)
                         }
                     }
-                    if (studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) {
+                    if ((studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) && !studyViewModel.verify_docs.value) {
                         FloatingActionButton(
                             onClick = {
                                 coroutineScope.launch {
@@ -338,45 +343,67 @@ fun StudyScreen(
                             }
                         }
                         Divider()
-                        if (studyViewModel.contract.course!!.prices.sale15 !== null) {
-                            var list = listOf("Расписание", "Материалы")
-                            TabRow(
-                                selectedTabIndex = 0,
-                                indicator = {
+                        LoadableScreen(loaded = studyViewModel.loaded, error = studyViewModel.error)
+                        {
+                            if (!studyViewModel.verify_docs.value) {
+                                if (studyViewModel.contract.course!!.prices.sale15 !== null || studyViewModel.passedModules.isNotEmpty()  || studyViewModel.exam.isNotEmpty()) {
+                                    var list = listOf("Расписание", "Материалы")
 
-                                },
-                                contentColor = Primary_Green,
-                                containerColor = Color.White,
-                                modifier = Modifier.fillMaxWidth(),
+                                    TabRow(
+                                        selectedTabIndex = 0,
+                                        indicator = {
 
-                                ) {
-                                list.forEachIndexed { index, text ->
-                                    Tab(
-                                        selected = studyViewModel.selected.value == text,
-                                        onClick = {
-                                            studyViewModel.selected.value = text
                                         },
-                                        text = { Text(text = text) },
-                                        selectedContentColor = Aggressive_red,
-                                        unselectedContentColor = Primary_Green
+                                        contentColor = Primary_Green,
+                                        containerColor = Color.White,
+                                        modifier = Modifier.fillMaxWidth(),
+
+                                        ) {
+                                        list.forEachIndexed { index, text ->
+                                            Tab(
+                                                selected = studyViewModel.selected.value == text,
+                                                onClick = {
+                                                    studyViewModel.selected.value = text
+                                                },
+                                                text = { Text(text = text) },
+                                                selectedContentColor = Aggressive_red,
+                                                unselectedContentColor = Primary_Green
+                                            )
+                                        }
+                                    }
+                                    when (studyViewModel.selected.value) {
+                                        "Расписание" -> Schedule(studyViewModel = studyViewModel)
+                                        "Материалы" -> Materials(
+                                            studyViewModel = studyViewModel,
+                                            navHostController = navHostController,
+                                            contract = contract
+                                        )
+
+                                    }
+                                } else {
+                                    Materials(
+                                        studyViewModel = studyViewModel,
+                                        navHostController = navHostController,
+                                        contract = contract
                                     )
                                 }
-                            }
-                            when (studyViewModel.selected.value) {
-                                "Расписание" -> Schedule(studyViewModel = studyViewModel)
-                                "Материалы" -> Materials(
-                                    studyViewModel = studyViewModel,
-                                    navHostController = navHostController,
-                                    contract = contract
-                                )
+                            } else {
+                                Column(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp)) {
+                                    Text(
+                                        text = "Для доступа к курсу, пожалуйста, загрузите документы для проверки на соответствие к требованию к курсу",
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier
+                                            .background(Blue_BG.copy(0.1f), RoundedCornerShape(10.dp))
+                                            .border(
+                                                2.dp, Blue_BG, RoundedCornerShape(10.dp)
+                                            )
+                                            .padding(10.dp)
+                                    )
 
+                                }
                             }
-                        } else {
-                            Materials(
-                                studyViewModel = studyViewModel,
-                                navHostController = navHostController,
-                                contract = contract
-                            )
                         }
 
                     }
@@ -398,10 +425,15 @@ fun StudyScreen(
                             textAlign = TextAlign.Center
                         )
                         Divider()
+                        if(studyViewModel.verify_docs.value)
+                        {
+                            val list = studyViewModel.admissions.filter { it.pivot!!.for_access == "1" }
+                            studyViewModel.admissions.clear()
+                            studyViewModel.admissions.addAll(list)
+                        }
                         LazyColumn(content = {
                             itemsIndexed(studyViewModel.admissions)
-                            {
-                                index, admission ->
+                            { index, admission ->
                                 var loaded: String? = null
                                 var comment: String? = null
                                 var status: String? = null
@@ -414,31 +446,50 @@ fun StudyScreen(
                                     }
 
                                 }
-                                Text(text = admission.name.toString(), fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                    when(status)
-                                    {
-                                        null -> Text("")
-                                        "0" -> Text(text = "Документ на проверке", modifier = Modifier
-                                            .clip(
-                                                RoundedCornerShape(3.dp)
+                                Text(
+                                    text = admission.name.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                if(loaded !== null)
+                                {
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        when (status) {
+                                            null -> Text("")
+                                            "0" -> Text(
+                                                text = "Документ на проверке", modifier = Modifier
+                                                    .clip(
+                                                        RoundedCornerShape(3.dp)
+                                                    )
+                                                    .background(Color.Blue.copy(0.3f))
+                                                    .padding(3.dp)
                                             )
-                                            .background(Color.Blue.copy(0.3f))
-                                            .padding(3.dp))
-                                        "1" -> Text(text = "Документ принят", modifier = Modifier
-                                            .padding(3.dp)
-                                            .clip(
-                                                RoundedCornerShape(3.dp)
+
+                                            "1" -> Text(
+                                                text = "Документ принят", modifier = Modifier
+                                                    .padding(3.dp)
+                                                    .clip(
+                                                        RoundedCornerShape(3.dp)
+                                                    )
+                                                    .background(Color.Green.copy(0.3f))
+                                                    .padding(3.dp)
                                             )
-                                            .background(Color.Green.copy(0.3f))
-                                            .padding(3.dp))
-                                        "2" -> Text(text = comment.toString(), modifier = Modifier
-                                            .padding(3.dp)
-                                            .clip(
-                                                RoundedCornerShape(3.dp)
+
+                                            "2" -> Text(
+                                                text = comment.toString(), modifier = Modifier
+                                                    .padding(3.dp)
+                                                    .clip(
+                                                        RoundedCornerShape(3.dp)
+                                                    )
+                                                    .background(Aggressive_red.copy(0.3f))
+                                                    .padding(3.dp)
                                             )
-                                            .background(Aggressive_red.copy(0.3f))
-                                            .padding(3.dp))
+                                        }
                                     }
                                 }
                                 PickImageFromGallery(contract.id, admission.id!!, loaded)
@@ -454,7 +505,8 @@ fun StudyScreen(
             //endregion
 
             //region Попап для практики
-            if (studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) {
+            if (studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty())
+            {
                 ModalBottomSheetLayout(
                     sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                     sheetContent = {
@@ -473,8 +525,7 @@ fun StudyScreen(
                             Divider()
                             val uri = LocalUriHandler.current
 
-                            if (studyViewModel.practiceData.isNotEmpty())
-                            {
+                            if (studyViewModel.practiceData.isNotEmpty()) {
                                 Text(
                                     buildAnnotatedString {
                                         append("По вашему курсу предусмотрена производственная практика – ")
@@ -495,14 +546,20 @@ fun StudyScreen(
                                     )
                                     LazyColumn(content = {
                                         itemsIndexed(studyViewModel.practiceData[0].blanks) { index, item ->
-                                            Button(onClick = {
-                                                uri.openUri("https://lk.mzpo-s.ru/" + item.path)
-                                            }, colors = ButtonDefaults.buttonColors(backgroundColor = Primary_Green), modifier = Modifier.padding(vertical = 5.dp)) {
+                                            Button(
+                                                onClick = {
+                                                    uri.openUri("https://lk.mzpo-s.ru/" + item.path)
+                                                },
+                                                colors = ButtonDefaults.buttonColors(backgroundColor = Primary_Green),
+                                                modifier = Modifier.padding(vertical = 5.dp)
+                                            ) {
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Icon(
                                                         painter = painterResource(id = R.drawable.doc),
                                                         contentDescription = "",
-                                                        modifier = Modifier.padding(end = 5.dp).height(20.dp),
+                                                        modifier = Modifier
+                                                            .padding(end = 5.dp)
+                                                            .height(20.dp),
                                                         tint = Color.White
                                                     )
                                                     Text(text = item.file, color = Color.White)
@@ -520,13 +577,13 @@ fun StudyScreen(
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.padding(vertical = 5.dp)
                                     )
-                                    LazyRow(modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 10.dp)
+                                    LazyRow(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 10.dp)
                                     ) {
                                         itemsIndexed(studyViewModel.practiceData[0].courses)
-                                        {
-                                                _, index ->
+                                        { _, index ->
                                             CourseCard(index,
                                                 Modifier
                                                     .width(300.dp)
@@ -540,25 +597,41 @@ fun StudyScreen(
                                 Spacer(modifier = Modifier.height(5.dp))
                                 Divider()
                                 Spacer(modifier = Modifier.height(5.dp))
-                            } else if(studyViewModel.practiceOcno.isNotEmpty())
-                            {
+                            } else if (studyViewModel.practiceOcno.isNotEmpty()) {
                                 Text(text = studyViewModel.practiceOcno[0].text.toString())
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                    Button(onClick = {
-                                        uri.openUri("tel:" + studyViewModel.practiceOcno[0].phone)
-                                    }, colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red), shape = RoundedCornerShape(10.dp), modifier = Modifier.width(200.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            uri.openUri("tel:" + studyViewModel.practiceOcno[0].phone)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.width(200.dp)
+                                    ) {
                                         Text(text = "Позвонить", color = Color.White)
                                     }
                                 }
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                    Button(onClick = {
-                                        uri.openUri(studyViewModel.practiceOcno[0].blank.toString())
-                                    }, colors = ButtonDefaults.buttonColors(backgroundColor = Primary_Green), modifier = Modifier.padding(vertical = 5.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            uri.openUri(studyViewModel.practiceOcno[0].blank.toString())
+                                        },
+                                        colors = ButtonDefaults.buttonColors(backgroundColor = Primary_Green),
+                                        modifier = Modifier.padding(vertical = 5.dp)
+                                    ) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(
                                                 painter = painterResource(id = R.drawable.doc),
                                                 contentDescription = "",
-                                                modifier = Modifier.padding(end = 5.dp, top = 10.dp).height(20.dp),
+                                                modifier = Modifier
+                                                    .padding(end = 5.dp, top = 10.dp)
+                                                    .height(20.dp),
                                                 tint = Color.White
                                             )
                                             Text(text = "Скачать бланк", color = Color.White)
@@ -672,44 +745,127 @@ fun Schedule(studyViewModel: StudyViewModel) {
     val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     val secondFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     val timeFrmtEnd = DateTimeFormatter.ofPattern("HH:mm")
+
     Column(
         Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        for (item in studyViewModel.schedules) {
-            val exam = LocalDate.parse(item.group.exam)
-            Text(
-                text = "Группа " + item.group.title,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Дата экзамена: " + exam.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            )
-            Divider()
-            for (i in item.group.allSchedules) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val date = LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = date.format(secondFormatter).toString())
-                        Text(text = date.format(timeFrmtEnd).toString())
+        if (studyViewModel.passedModules.isNotEmpty()) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            ) {
+                Text(text = "Вы успешно прошли", fontWeight = FontWeight.Bold)
+                Divider()
+                for (item in studyViewModel.passedModules) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "",
+                            tint = Active_Green,
+                        )
+                        Text(
+                            text = item.module.toString(),
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(start = 5.dp)
+                        )
                     }
-                    Text(text = i.auditory.toString())
-                    Text(text = i.teacher?.name.toString(), modifier = Modifier.fillMaxWidth(0.4f))
                 }
                 Divider()
             }
-            Divider(thickness = 3.dp)
-            Spacer(modifier = Modifier.height(10.dp))
+        }
+        if(studyViewModel.exam.isNotEmpty())
+        {
+            Column(modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)) {
+                Text(text = "Экзаменационный билет №"+studyViewModel.exam[0].num, modifier = Modifier
+                    .background(
+                        Primary_Green, RoundedCornerShape(10.dp)
+                    )
+                    .padding(5.dp)
+                    .fillMaxWidth(), textAlign = TextAlign.Center, color = Color.White)
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp))
+                {
+                    Text(text = "Необходимо отправить ответы с компьютера до "+studyViewModel.exam[0].send_answer, modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Blue_BG.copy(0.1f), RoundedCornerShape(10.dp)
+                        )
+                        .padding(5.dp), textAlign = TextAlign.Center)
+                }
+                for (i in 0 until  studyViewModel.exam[0].ticket.size)
+                {
+                    Text(text = "Вопрос №"+(i+1)+" "+studyViewModel.exam[0].ticket[i].question.toString(), fontWeight = FontWeight.Bold)
+
+                }
+                Divider()
+            }
+        }
+        if(studyViewModel.schedules.isNotEmpty())
+        {
+            for (item in studyViewModel.schedules) {
+                val exam = LocalDate.parse(item.group.exam)
+                Text(
+                    text = "Группа " + item.group.title,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Дата экзамена: " + exam.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+                Divider()
+                for (i in item.group.allSchedules) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val date = LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = date.format(secondFormatter).toString())
+                            Text(text = date.format(timeFrmtEnd).toString())
+                        }
+                        Text(text = i.auditory.toString())
+                        Text(text = if(i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан", modifier = Modifier.fillMaxWidth(0.4f))
+                    }
+                    Divider()
+                }
+                Divider(thickness = 3.dp)
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        } else
+        {
+            Box(
+                modifier = Modifier
+                    .padding(10.dp)
+                    .background(Aggressive_red.copy(.1f))
+                    .border(1.dp, Aggressive_red, RoundedCornerShape(5.dp))
+                    .clip(
+                        RoundedCornerShape(5.dp)
+                    )
+            )
+            {
+                Text(
+                    text = "На данный момент вы не записаны в группу. В ближайшее время вас запишут и вы сможете увидеть расписание вашей группы.",
+                    color = Orange,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 5.dp)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(70.dp))
     }
@@ -722,26 +878,47 @@ fun Materials(
     LazyColumn(
         content = {
 
+            if (studyViewModel.contract.status == 10) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .padding(top = 10.dp)
+                            .background(Aggressive_red.copy(.1f))
+                            .border(1.dp, Aggressive_red, RoundedCornerShape(5.dp))
+                            .clip(
+                                RoundedCornerShape(5.dp)
+                            )
+                    )
+                    {
+                        Text(
+                            text = "Доступ к материалам будет открыт после подтверждения оплаты",
+                            color = Aggressive_red,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 5.dp)
+                        )
+                    }
+                }
+            } else {
+                itemsIndexed(studyViewModel.studyModules.value) { i, item ->
 
-            itemsIndexed(studyViewModel.studyModules.value) { i, item ->
+                    module(studyModule = item, int = i, navHostController, onClick = {
+                        val gson = Gson()
+                        val contractJson = gson.toJson(
+                            contract, Contract::class.java
+                        )
+                        navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                            "Contract", contractJson
+                        )
+                        val smJson = gson.toJson(
+                            item, StudyModule::class.java
+                        )
+                        navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                            "StudyModule", smJson
+                        )
 
-                module(studyModule = item, int = i, navHostController, onClick = {
-                    val gson = Gson()
-                    val contractJson = gson.toJson(
-                        contract, Contract::class.java
-                    )
-                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                        "Contract", contractJson
-                    )
-                    val smJson = gson.toJson(
-                        item, StudyModule::class.java
-                    )
-                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                        "StudyModule", smJson
-                    )
-
-                    navHostController.navigate("study/module")
-                })
+                        navHostController.navigate("study/module")
+                    })
+                }
             }
             item {
                 Spacer(modifier = Modifier.padding(50.dp))

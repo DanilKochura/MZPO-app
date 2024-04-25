@@ -15,3 +15,21 @@ data class StudyModule (
     @SerializedName("active_materials" ) var activeMaterials : ArrayList<ActiveMaterials> = arrayListOf(),
 
 )
+
+
+data class Ticket (
+
+    @SerializedName("answer"   ) var answer   : String? = null,
+    @SerializedName("question" ) var question : String? = null
+
+)
+
+data class Exam (
+
+    @SerializedName("send-answer" ) var send_answer : String?           = null,
+    @SerializedName("module_id"   ) var moduleId    : Int?              = null,
+    @SerializedName("answered"    ) var answered    : Int?              = null,
+    @SerializedName("num"         ) var num         : Int?              = null,
+    @SerializedName("ticket"      ) var ticket      : ArrayList<Ticket> = arrayListOf()
+
+)

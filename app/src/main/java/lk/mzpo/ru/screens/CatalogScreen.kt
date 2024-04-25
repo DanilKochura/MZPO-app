@@ -51,6 +51,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -94,7 +96,9 @@ import lk.mzpo.ru.viewModel.CatalogViewModel
 fun CatalogScreen(
     navHostController: NavHostController,
     string: String,
-    catalogViewModel: CatalogViewModel = viewModel()
+    catalogViewModel: CatalogViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+
 ) {
     val bottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -131,7 +135,7 @@ fun CatalogScreen(
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = {padding ->
             val ctxx = LocalContext.current
             val listState = rememberScrollState()
@@ -220,7 +224,7 @@ fun CatalogScreen(
                                     catalogViewModel.selected_cat.value = item.id
                                     catalogViewModel.h1.value = item.name
                                     catalogViewModel.courses_selected.value =
-                                        catalogViewModel.courses.value.filter { course -> course.category == item.id }
+                                        catalogViewModel.courses.filter { course -> course.category == item.id }
                                     coroutineScope.launch {
                                         listState.animateScrollTo(1)
                                     }
@@ -257,7 +261,7 @@ fun CatalogScreen(
                                 }
                             } else
                             {
-                                if (catalogViewModel.courses.value.isEmpty())
+                                if (catalogViewModel.courses.isEmpty())
                                 {
                                     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
                                         Column (
@@ -286,6 +290,14 @@ fun CatalogScreen(
                         Text(text = catalogViewModel.h1.value, fontSize = 20.sp, modifier = Modifier
                             .padding(10.dp)
                             .fillMaxWidth(), textAlign = TextAlign.Center)
+
+
+                        LaunchedEffect(key1 = listState.canScrollForward, block = {
+                            if(listState.canScrollForward == false and catalogViewModel.loaded.value and catalogViewModel.courses.isNotEmpty() and listState.canScrollBackward)
+                            {
+                                catalogViewModel.getCourses(ctxx, string)
+                            }
+                        })
                         Column (modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(listState) ) {
@@ -403,7 +415,7 @@ fun CatalogScreen(
                         Button(onClick = {
                             val fromCost = if (from.value == "") 0 else from.value.toInt()
                             val toCost = if (to.value == "") 100000 else to.value.toInt()
-                            catalogViewModel.courses_selected.value = CourseFilterModel(fromCost, toCost, dist.value, sale.value).filter(catalogViewModel.courses.value);
+                            catalogViewModel.courses_selected.value = CourseFilterModel(fromCost, toCost, dist.value, sale.value).filter(catalogViewModel.courses);
                             coroutineScope.launch { bottomSheetState.hide() }
 
                                          }, colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp)) {

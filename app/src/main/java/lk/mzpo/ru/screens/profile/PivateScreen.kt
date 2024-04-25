@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -64,7 +65,9 @@ import lk.mzpo.ru.viewModel.ProfileViewModel
 fun PrivateScreen(
     user: User,
     navHostController: NavHostController,
-    profileViewModel: ProfileViewModel = viewModel()
+    profileViewModel: ProfileViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -82,7 +85,7 @@ fun PrivateScreen(
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
             val ctx = LocalContext.current
 
@@ -94,7 +97,7 @@ fun PrivateScreen(
             }
 
             val phone = remember {
-                mutableStateOf(checkPhone(user.userData?.phone.toString()))
+                mutableStateOf(checkPhone(user.phone.toString()))
             }
             val name = remember {
                 mutableStateOf(TextFieldValue(user.name))

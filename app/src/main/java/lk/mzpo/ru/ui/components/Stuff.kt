@@ -1,8 +1,10 @@
 package lk.mzpo.ru.ui.components
 
+import android.Manifest
 import android.Manifest.permission.CAMERA
 import android.Manifest.permission.MANAGE_EXTERNAL_STORAGE
 import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.app.DatePickerDialog
 import android.content.ContentUris
 import android.content.Context
@@ -21,6 +23,7 @@ import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -37,7 +40,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
@@ -48,6 +53,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -71,8 +77,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -83,12 +91,21 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
+import lk.mzpo.ru.BuildConfig
+import lk.mzpo.ru.MainActivity
 import lk.mzpo.ru.R
 import lk.mzpo.ru.network.retrofit.UploadImage
 import lk.mzpo.ru.network.retrofit.UploadRequestBody
@@ -102,20 +119,29 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import java.io.File
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Date
 
 
 @Composable
-fun RedButton(onClick: () -> Unit, unit: @Composable () -> Unit)
-{
-    Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)) {
+fun RedButton(onClick: () -> Unit, unit: @Composable () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
+    ) {
         Unit
     }
 }
 
 @Composable
-fun EmailTextField(email: MutableState<TextFieldValue>, isError: MutableState<Boolean>, modifier: Modifier = Modifier, readonly: Boolean = false)
-{
+fun EmailTextField(
+    email: MutableState<TextFieldValue>,
+    isError: MutableState<Boolean>,
+    modifier: Modifier = Modifier,
+    readonly: Boolean = false
+) {
     OutlinedTextField(
         value = email.value,
         placeholder = { Text(text = "courses@example.com", Modifier.alpha(0.5f)) },
@@ -135,11 +161,15 @@ fun EmailTextField(email: MutableState<TextFieldValue>, isError: MutableState<Bo
         readOnly = readonly,
         enabled = !readonly,
 
-    )
+        )
 }
+
 @Composable
-fun PasswordTextField(password: MutableState<TextFieldValue>, isError: MutableState<Boolean>, modifier: Modifier = Modifier)
-{
+fun PasswordTextField(
+    password: MutableState<TextFieldValue>,
+    isError: MutableState<Boolean>,
+    modifier: Modifier = Modifier
+) {
     val pwtr = remember {
         mutableStateOf(false)
     }
@@ -159,19 +189,27 @@ fun PasswordTextField(password: MutableState<TextFieldValue>, isError: MutableSt
         colors = customTextFieldBorderColor(),
         isError = isError.value,
         singleLine = true,
-        visualTransformation = if(!pwtr.value) VisualTransformation.None else PasswordVisualTransformation(),
+        visualTransformation = if (!pwtr.value) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             IconButton(onClick = {
-               pwtr.value = !pwtr.value
+                pwtr.value = !pwtr.value
             }) {
-                Icon(painter = painterResource(id = R.drawable.baseline_visibility_24), contentDescription = "password_eye")
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_visibility_24),
+                    contentDescription = "password_eye"
+                )
             }
         }
     )
 }
+
 @Composable
-fun PriceTextField(price: MutableState<String>, placeholder: String, label: String, modifier: Modifier = Modifier)
-{
+fun PriceTextField(
+    price: MutableState<String>,
+    placeholder: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
     OutlinedTextField(
         value = price.value,
         placeholder = { Text(text = placeholder, Modifier.alpha(0.5f)) },
@@ -182,17 +220,21 @@ fun PriceTextField(price: MutableState<String>, placeholder: String, label: Stri
         colors = customTextFieldBorderColor(),
         singleLine = true,
 
-    )
+        )
 }
 
 @Composable
-fun PhoneTextField(phone: MutableState<String>, isError: MutableState<Boolean>, modifier: Modifier = Modifier, readonly: Boolean = false)
-{
-    val mask =  "+7(000)-000-00-00"
+fun PhoneTextField(
+    phone: MutableState<String>,
+    isError: MutableState<Boolean>,
+    modifier: Modifier = Modifier,
+    readonly: Boolean = false
+) {
+    val mask = "+7(000)-000-00-00"
     val maskNumber = '0'
     OutlinedTextField(
         value = phone.value,
-        placeholder = { Text(text = "+7-988-281-14-07", Modifier.alpha(0.5f))},
+        placeholder = { Text(text = "+7-988-281-14-07", Modifier.alpha(0.5f)) },
         onValueChange = { phone.value = it.take(mask.count { it == maskNumber }) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         leadingIcon = {
@@ -201,10 +243,10 @@ fun PhoneTextField(phone: MutableState<String>, isError: MutableState<Boolean>, 
                 contentDescription = "Email Icon"
             )
         },
-        label = { Text(text = "Телефон")},
+        label = { Text(text = "Телефон") },
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
-        visualTransformation =  PhoneVisualTransformation(mask, maskNumber),
+        visualTransformation = PhoneVisualTransformation(mask, maskNumber),
         isError = isError.value,
         singleLine = true,
         readOnly = readonly,
@@ -214,11 +256,15 @@ fun PhoneTextField(phone: MutableState<String>, isError: MutableState<Boolean>, 
 
 
 @Composable
-fun NameTextField(name: MutableState<TextFieldValue>, isError: MutableState<Boolean> = mutableStateOf(false), modifier: Modifier = Modifier, readonly: Boolean = false)
-{
+fun NameTextField(
+    name: MutableState<TextFieldValue>,
+    isError: MutableState<Boolean> = mutableStateOf(false),
+    modifier: Modifier = Modifier,
+    readonly: Boolean = false
+) {
     OutlinedTextField(
         value = name.value,
-        placeholder = { Text(text = "Иванов Иван Иванович", Modifier.alpha(0.5f))},
+        placeholder = { Text(text = "Иванов Иван Иванович", Modifier.alpha(0.5f)) },
         onValueChange = { name.value = it },
         leadingIcon = {
             Icon(
@@ -226,37 +272,7 @@ fun NameTextField(name: MutableState<TextFieldValue>, isError: MutableState<Bool
                 contentDescription = "Email Icon"
             )
         },
-        label = { Text(text = "ФИО")},
-        modifier = modifier.padding(top = 10.dp),
-        colors = customTextFieldBorderColor(),
-        isError = isError.value,
-        singleLine = true,
-         readOnly = readonly,
-        enabled = !readonly,
-    )
-}
-
-@Composable
-fun CustomTextField(name: String, placeholder: String, icon: ImageVector? = null, value: MutableState<TextFieldValue>, isError: MutableState<Boolean> = mutableStateOf(false), modifier: Modifier = Modifier, readonly: Boolean = false)
-{
-    OutlinedTextField(
-        value = value.value,
-        placeholder = { Text(text = placeholder, Modifier.alpha(0.5f))},
-        onValueChange = { value.value = it },
-//        leadingIcon = {
-//            if (icon != null)
-//            {
-//                Icon(
-//                    imageVector = icon,
-//                    contentDescription = placeholder+" Icon"
-//                )
-//            }
-//            else
-//            {
-//                null
-//            }
-//        },
-        label = { Text(text = name)},
+        label = { Text(text = "ФИО") },
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
         isError = isError.value,
@@ -265,12 +281,20 @@ fun CustomTextField(name: String, placeholder: String, icon: ImageVector? = null
         enabled = !readonly,
     )
 }
+
 @Composable
-fun DateTextField(name: String, icon: ImageVector? = null, value: MutableState<TextFieldValue>, isError: MutableState<Boolean> = mutableStateOf(false), modifier: Modifier = Modifier, readonly: Boolean = false)
-{
+fun CustomTextField(
+    name: String,
+    placeholder: String,
+    icon: ImageVector? = null,
+    value: MutableState<TextFieldValue>,
+    isError: MutableState<Boolean> = mutableStateOf(false),
+    modifier: Modifier = Modifier,
+    readonly: Boolean = false
+) {
     OutlinedTextField(
         value = value.value,
-        placeholder = { Text(text = "2020-02-10", Modifier.alpha(0.5f))},
+        placeholder = { Text(text = placeholder, Modifier.alpha(0.5f)) },
         onValueChange = { value.value = it },
 //        leadingIcon = {
 //            if (icon != null)
@@ -285,7 +309,43 @@ fun DateTextField(name: String, icon: ImageVector? = null, value: MutableState<T
 //                null
 //            }
 //        },
-        label = { Text(text = name)},
+        label = { Text(text = name) },
+        modifier = modifier.padding(top = 10.dp),
+        colors = customTextFieldBorderColor(),
+        isError = isError.value,
+        singleLine = true,
+        readOnly = readonly,
+        enabled = !readonly,
+    )
+}
+
+@Composable
+fun DateTextField(
+    name: String,
+    icon: ImageVector? = null,
+    value: MutableState<TextFieldValue>,
+    isError: MutableState<Boolean> = mutableStateOf(false),
+    modifier: Modifier = Modifier,
+    readonly: Boolean = false
+) {
+    OutlinedTextField(
+        value = value.value,
+        placeholder = { Text(text = "2020-02-10", Modifier.alpha(0.5f)) },
+        onValueChange = { value.value = it },
+//        leadingIcon = {
+//            if (icon != null)
+//            {
+//                Icon(
+//                    imageVector = icon,
+//                    contentDescription = placeholder+" Icon"
+//                )
+//            }
+//            else
+//            {
+//                null
+//            }
+//        },
+        label = { Text(text = name) },
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
         isError = isError.value,
@@ -296,7 +356,6 @@ fun DateTextField(name: String, icon: ImageVector? = null, value: MutableState<T
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
 }
-
 
 
 class DateTransformation() : VisualTransformation {
@@ -318,15 +377,15 @@ fun dateFilter(text: AnnotatedString): TransformedText {
     val numberOffsetTranslator = object : OffsetMapping {
         override fun originalToTransformed(offset: Int): Int {
             if (offset <= 3) return offset
-            if (offset <= 5) return offset +1
-            if (offset <= 8) return offset +2
+            if (offset <= 5) return offset + 1
+            if (offset <= 8) return offset + 2
             return 10
         }
 
         override fun transformedToOriginal(offset: Int): Int {
-            if (offset <=5) return offset
-            if (offset <=8) return offset -1
-            if (offset <=10) return offset -2
+            if (offset <= 5) return offset
+            if (offset <= 8) return offset - 1
+            if (offset <= 10) return offset - 2
             return 8
         }
     }
@@ -335,15 +394,18 @@ fun dateFilter(text: AnnotatedString): TransformedText {
 }
 
 @Composable
-fun customTextFieldBorderColor(): TextFieldColors
-{
+fun customTextFieldBorderColor(): TextFieldColors {
     return TextFieldDefaults.outlinedTextFieldColors(
-        focusedBorderColor = Primary_Green,  cursorColor = Color.Black, unfocusedBorderColor = Color.LightGray, disabledBorderColor = Color.Gray
+        focusedBorderColor = Primary_Green,
+        cursorColor = Color.Black,
+        unfocusedBorderColor = Color.LightGray,
+        disabledBorderColor = Color.Gray
     )
 }
+
 class PhoneVisualTransformation(val mask: String, val maskNumber: Char) : VisualTransformation {
 
-//    private val maxLength = mask.count { it == maskNumber }
+    //    private val maxLength = mask.count { it == maskNumber }
     private val maxLength = 10
 
     override fun filter(text: AnnotatedString): TransformedText {
@@ -398,6 +460,7 @@ private class PhoneOffsetMapper(val mask: String, val numberChar: Char) : Offset
     override fun transformedToOriginal(offset: Int): Int =
         offset - mask.take(offset).count { it != numberChar }
 }
+
 fun isValidEmail(email: String): Boolean {
     val emailRegex = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+".toRegex()
     return email.matches(emailRegex)
@@ -429,16 +492,12 @@ fun DashedDivider(
 }
 
 fun checkPhone(phone: String): String {
-    if(phone.startsWith("+7"))
-    {
+    if (phone.startsWith("+7")) {
         return phone.substring(2)
-    } else if(phone.startsWith("8"))
-    {
+    } else if (phone.startsWith("8")) {
         return phone.trimStart('8')
-    }
-    else return phone
+    } else return phone
 }
-
 
 
 @Composable
@@ -708,21 +767,25 @@ fun CircularProgressbar2(
                 startAngle = -90f,
                 sweepAngle = sweepAngle,
                 useCenter = false,
-                style = Stroke((thickness + extraSizeForegroundIndicator).toPx(), cap = StrokeCap.Butt)
+                style = Stroke(
+                    (thickness + extraSizeForegroundIndicator).toPx(),
+                    cap = StrokeCap.Butt
+                )
             )
         }
 
         // Text that shows number inside the circle
         Text(
-            text = (animateNumber.value).toInt().toString()+"%",
+            text = (animateNumber.value).toInt().toString() + "%",
             style = numberStyle
         )
     }
 
 
-
 }
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
     val imageUri = remember { mutableStateOf<Uri?>(null) }
@@ -732,19 +795,119 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
         rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
             imageUri.value = uri
         }
-    val disabled  = remember {
+    val disabled = remember {
         mutableStateOf(false)
     }
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
 
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            val launcher_ = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    // Permission Accepted: Do something
+                    Log.d("ExampleScreen", "PERMISSION GRANTED")
+
+                } else {
+                    // Permission Denied: Do something
+                    Log.d("ExampleScreen", "PERMISSION DENIED")
+                }
+            }
+            val rem = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { Log.d("MyLogHETE", "TEST") }
+            val cameraPermissionState = rememberPermissionState(
+                android.Manifest.permission.READ_MEDIA_AUDIO
+            )
+
+            Button(
+                onClick = {
+                    // Camera permission state
+
+                    val permissionCheck = ContextCompat.checkSelfPermission(
+                        context,
+                        CAMERA
+                    )
+                    if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                        launcher.launch("image/*")
+                    } else {
+                        rem.launch(CAMERA)
+//                    cameraPermissionState.launchPermissionRequest()
+                        Toast.makeText(
+                            context,
+                            "Разрешите приложению доступ к галерее",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Primary_Green),
+                modifier = Modifier.padding(bottom = 10.dp)
+            ) {
+                Text(text = "Выбрать", color = Color.White)
+            }
+
+            if (imageUri.value !== null) {
+                Button(
+                    onClick = {
+                        Log.d("MyLog", imageUri.value!!.path.toString())
+                        Log.d("MyLog", imageUri.value!!.query.toString())
+                        val uriPathHelper = URIPathHelper()
+                        val filePath = uriPathHelper.getPath(context, imageUri.value!!)
+                        val file: File = File(filePath.toString())
+                        val test =
+                            RequestBody.create("multipart/form-data".toMediaTypeOrNull(), file)
+                        val body = UploadRequestBody(file, "image")
+                        val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+                        val token = pref.getString("token_lk", "")
+                        UploadImage().uploadImage(
+                            "Bearer " + token?.trim('"'),
+                            MultipartBody.Part.createFormData(
+                                "files[0]",
+                                file.name, body
+                            ), contract, admission
+                        ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                Log.e("API Request", "I got an error and i don't know why :(")
+                                Log.e("API Request", t.message.toString())
+                            }
+
+                            override fun onResponse(
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>
+                            ) {
+                                Log.d("API Request", response.body().toString())
+                                Log.d("API Request", response.message())
+                                Log.d("API Request", response.errorBody().toString())
+                                Log.d("API Request", response.raw().body.toString())
+                                if (response.isSuccessful) {
+                                    Toast.makeText(
+                                        context,
+                                        "Документ отправлен на проверку",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    disabled.value = true
+
+                                }
+                            }
+                        })
+
+
+                    },
+                    enabled = !disabled.value,
+                    colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
+                ) {
+                    Text("Загрузить", color = Color.White)
+                }
+            }
+        }
         imageUri.let {
             imageUri.value = it.value
-            if(it.value !== null)
-            {
+            if (it.value !== null) {
                 if (Build.VERSION.SDK_INT < 28) {
                     bitmap.value = MediaStore.Images
                         .Media.getBitmap(context.contentResolver, it.value)
@@ -758,7 +921,7 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
 
 
         }
-        if(bitmap.value !== null){
+        if (bitmap.value !== null) {
             Image(
                 bitmap = bitmap.value!!.asImageBitmap(),
                 contentDescription = null,
@@ -767,97 +930,32 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
                     .padding(20.dp)
             )
         } else {
-            if(loaded !== null)
-            {
+            if (loaded !== null) {
                 AsyncImage(
                     model = "https://lk.mzpo-s.ru/build/images/$loaded",
                     contentDescription = null,
                     modifier = Modifier
-                        .size(100.dp)
+                        .size(150.dp)
                         .padding(20.dp)
                 )
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        Button(onClick = {
-            val permissionCheck = ContextCompat.checkSelfPermission(
-                context,
-                READ_EXTERNAL_STORAGE
-            )
-            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                launcher.launch("image/*")
-            } else
-            {
-                Toast.makeText(context, "Разрешите приложению доступ к галерее", Toast.LENGTH_SHORT).show()
-            }
 
-        }) {
-            Text(text = "Выбрать")
-        }
-
-        if (imageUri.value !== null)
-        {
-            Button(onClick = {
-                Log.d("MyLog", imageUri.value!!.path.toString())
-                Log.d("MyLog", imageUri.value!!.query.toString())
-                val uriPathHelper = URIPathHelper()
-                val filePath = uriPathHelper.getPath(context, imageUri.value!!)
-                val file: File = File(filePath.toString())
-                val test = RequestBody.create("multipart/form-data".toMediaTypeOrNull(), file)
-                val body = UploadRequestBody(file, "image")
-                val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                val token = pref.getString("token_lk", "")
-                UploadImage().uploadImage(
-                    "Bearer "+token?.trim('"'),
-                    MultipartBody.Part.createFormData(
-                        "files[0]",
-                        file.name, body
-                    ), contract, admission).enqueue( object : retrofit2.Callback<ResponseBody> {
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        Log.e("API Request", "I got an error and i don't know why :(")
-                        Log.e("API Request", t.message.toString())
-                    }
-
-                    override fun onResponse(
-                        call: Call<ResponseBody>,
-                        response: Response<ResponseBody>
-                    ) {
-                        Log.d("API Request", response.body().toString())
-                        Log.d("API Request", response.message())
-                        Log.d("API Request", response.errorBody().toString())
-                        Log.d("API Request", response.raw().body.toString())
-                        if(response.isSuccessful)
-                        {
-                            Toast.makeText(context, "Документ отправлен на проверку", Toast.LENGTH_SHORT).show()
-                            disabled.value = true
-
-                        }
-                    }
-                })
-
-
-            }, enabled = !disabled.value) {
-                Text("Загрузить")
-            }
-        }
     }
-
-
-
-
 
 
 }
 
 
-
-
 @Composable
-fun LoadableScreen(loaded: MutableState<Boolean>, page: @Composable () -> Unit = {})
-{
-    if(!loaded.value)
-    {
+fun LoadableScreen(
+    loaded: MutableState<Boolean>,
+    error: MutableState<Boolean> = mutableStateOf(false),
+    page: @Composable () -> Unit = {}
+) {
+    if (!loaded.value) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -865,8 +963,30 @@ fun LoadableScreen(loaded: MutableState<Boolean>, page: @Composable () -> Unit =
         ) {
             CircularProgressIndicator()
         }
-    } else
-    {
+    } else if (error.value) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = "",
+                modifier = Modifier.size(100.dp),
+                tint = Primary_Green
+            )
+            Text(
+                text = "Произошла ошибка, попробуйте позже",
+                fontSize = 16.sp,
+                modifier = Modifier.padding(10.dp)
+            )
+            Text(
+                text = "Версия приложения: " + BuildConfig.VERSION_NAME,
+                color = Color.Gray,
+                fontSize = 10.sp
+            )
+        }
+    } else {
         page.invoke()
     }
 }
@@ -893,7 +1013,10 @@ class URIPathHelper {
                 Log.i("MyLog", "dwn")
 
                 val id = DocumentsContract.getDocumentId(uri)
-                val contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/"), java.lang.Long.valueOf(id))
+                val contentUri = ContentUris.withAppendedId(
+                    Uri.parse("content://downloads/"),
+                    java.lang.Long.valueOf(id)
+                )
                 return getDataColumn(context, contentUri, null, null)
             } else if (isMediaDocument(uri)) {
                 Log.i("MyLog", "media $uri")
@@ -912,7 +1035,7 @@ class URIPathHelper {
                 }
                 val selection = "_id=?"
                 val selectionArgs = arrayOf(split[1])
-                Log.d("MyLog", contentUri.toString()+" "+selection+" "+selectionArgs[0])
+                Log.d("MyLog", contentUri.toString() + " " + selection + " " + selectionArgs[0])
                 return getDataColumn(context, contentUri, selection, selectionArgs)
             }
         } else if ("content".equals(uri.scheme, ignoreCase = true)) {
@@ -923,12 +1046,25 @@ class URIPathHelper {
         return null
     }
 
-    fun getDataColumn(context: Context, uri: Uri?, selection: String?, selectionArgs: Array<String>?): String? {
+    fun getDataColumn(
+        context: Context,
+        uri: Uri?,
+        selection: String?,
+        selectionArgs: Array<String>?
+    ): String? {
         var cursor: Cursor? = null
         val column = "_data"
         val projection = arrayOf(column)
         try {
-            cursor = uri?.let { context.contentResolver.query(it, projection, selection, selectionArgs,null) }
+            cursor = uri?.let {
+                context.contentResolver.query(
+                    it,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null
+                )
+            }
             if (cursor != null && cursor.moveToFirst()) {
                 val column_index: Int = cursor.getColumnIndexOrThrow(column)
                 return cursor.getString(column_index)
@@ -950,4 +1086,38 @@ class URIPathHelper {
     fun isMediaDocument(uri: Uri): Boolean {
         return "com.android.providers.media.documents" == uri.authority
     }
+}
+
+
+fun getDate(string: String): LocalDate {
+    val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    return LocalDate.parse(string, firstApiFormat)
+}
+
+@Composable
+fun Privacy() {
+    val url = LocalUriHandler.current
+    val annotatedString = buildAnnotatedString {
+
+        append("Отправляя заявку, вы даете согласие на обработку персональных данных в соответствии с ")
+
+
+        pushStringAnnotation(tag = "terms", annotation = "https://www.mzpo-s.ru/contacts/privacy")
+
+        withStyle(style = SpanStyle(color = Primary_Green)) {
+            append("политикой конфиденциальности")
+        }
+
+        pop()
+    }
+
+    ClickableText(
+        text = annotatedString,
+        style = TextStyle(textAlign = TextAlign.Center),
+        onClick = { offset ->
+            annotatedString.getStringAnnotations(tag = "terms", start = offset, end = offset)
+                .firstOrNull()?.let {
+                url.openUri(it.item)
+            }
+        })
 }

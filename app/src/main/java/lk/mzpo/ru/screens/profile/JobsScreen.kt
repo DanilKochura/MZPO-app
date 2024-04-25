@@ -109,7 +109,7 @@ fun JobsScreen(
             }
 
             val phone = remember {
-                mutableStateOf(checkPhone(user.userData?.phone.toString()))
+                mutableStateOf(checkPhone(user.phone.toString()))
             }
             val name = remember {
                 mutableStateOf(TextFieldValue(user.name))
@@ -117,8 +117,8 @@ fun JobsScreen(
             val isError = remember {
                 mutableStateOf(false)
             }
-            Log.d("JobLog", user.userData!!.jobAccess.toString())
-            if(user.userData!!.jobAccess == 1)
+            Log.d("JobLog", user.jobAccess.toString())
+            if(user.jobAccess == 1)
             {
                 jobsViewModel.auth.value = true
             }

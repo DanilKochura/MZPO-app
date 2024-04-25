@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -69,6 +70,8 @@ import lk.mzpo.ru.ui.theme.Primary_Green
 @Composable
 fun LoginScreen(
     navHostController: NavHostController,
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -86,7 +89,7 @@ fun LoginScreen(
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
             val ctx = LocalContext.current
             Box(

@@ -2,6 +2,8 @@ package lk.mzpo.ru.screens
 
 import android.content.Context
 import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,8 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -53,6 +57,7 @@ import lk.mzpo.ru.models.User
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
+import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -134,97 +139,135 @@ fun ProfileScreen(
                                     topEnd = MainRounded
                                 )
                             )
+                            .verticalScroll(rememberScrollState())
                             .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
                     ) {
 
+                        val context = LocalContext.current
 
                         Column(
                             Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 10.dp)
                         ) {
-                            if (!profileViewModel.loaded.value) {
-                                Column(
-                                    modifier = Modifier.fillMaxSize(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                            LoadableScreen(loaded = profileViewModel.loaded, error = profileViewModel.error)
+                            {
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    CircularProgressIndicator()
-                                }
-                            }
-
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(Modifier.padding(start = 10.dp)) {
-                                    Text(
-                                        text = profileViewModel.user.value.name,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(text = profileViewModel.user.value.userData?.phone.toString())
-                                    Text(text = "Редактировать профиль",
-                                        color = Color.LightGray,
-                                        modifier = Modifier
-                                            .padding(vertical = 10.dp)
-                                            .clickable {
-                                                val gson = Gson()
-                                                val user = gson.toJson(
-                                                    profileViewModel.user.value,
-                                                    User::class.java
-                                                )
-                                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                    "USER",
-                                                    user
-                                                )
-
-                                                navHostController.navigate("profile/private")
-                                            })
-                                }
-                                Column(Modifier) {
-                                    if (profileViewModel.user.value.userData?.avatar !== null) {
-                                        AsyncImage(
-                                            model = "https://lk.mzpo-s.ru/build/images/" + profileViewModel.user.value.userData?.avatar,
-                                            contentDescription = "",
-                                            modifier = Modifier
-
-                                                .size(80.dp)
-                                                .clip(
-                                                    CircleShape
-                                                )
+                                    Column(Modifier.padding(start = 10.dp)) {
+                                        Text(
+                                            text = profileViewModel.user.value.name,
+                                            fontWeight = FontWeight.Bold
                                         )
-                                    } else {
-                                        Box(modifier = Modifier
-                                            .clip(CircleShape)
-                                            .border(1.dp, Color.LightGray, CircleShape).padding(5.dp))
-                                        {
-                                            Icon(
-                                                imageVector = Icons.Default.Person,
-                                                contentDescription = "",
-                                                tint = Color.LightGray,
-                                                modifier = Modifier
-                                                    .size(70.dp).padding(10.dp)
+                                        Text(text = profileViewModel.user.value.phone)
+                                        Text(text = "Редактировать профиль",
+                                            color = Color.LightGray,
+                                            modifier = Modifier
+                                                .padding(vertical = 10.dp)
+                                                .clickable {
+                                                    val gson = Gson()
+                                                    val user = gson.toJson(
+                                                        profileViewModel.user.value,
+                                                        User::class.java
+                                                    )
+                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "USER",
+                                                        user
+                                                    )
 
+                                                    navHostController.navigate("profile/private")
+                                                })
+                                    }
+                                    Column(Modifier) {
+                                        if (profileViewModel.user.value.avatar !== null) {
+                                            AsyncImage(
+                                                model = "https://lk.mzpo-s.ru/build/images/" + profileViewModel.user.value.avatar,
+                                                contentDescription = "",
+                                                modifier = Modifier
+
+                                                    .size(80.dp)
+                                                    .clip(
+                                                        CircleShape
+                                                    )
                                             )
+                                        } else {
+                                            Box(modifier = Modifier
+                                                .clip(CircleShape)
+                                                .border(1.dp, Color.LightGray, CircleShape)
+                                                .padding(5.dp))
+                                            {
+                                                Icon(
+                                                    imageVector = Icons.Default.Person,
+                                                    contentDescription = "",
+                                                    tint = Color.LightGray,
+                                                    modifier = Modifier
+                                                        .size(70.dp)
+                                                        .padding(10.dp)
+
+                                                )
+                                            }
                                         }
                                     }
                                 }
+                                Divider()
+                                val Nav = listOf(
+//                                    ProfileItem.Private,
+                                    ProfileItem.Bills,
+                                    ProfileItem.Jobs,
+
+                                    ProfileItem.Schedule,
+                                    ProfileItem.Contacts
+                                );
+
+                                Column {
+                                    for (i in Nav) {
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    val gson = Gson()
+                                                    val user = gson.toJson(
+                                                        profileViewModel.user.value,
+                                                        User::class.java
+                                                    )
+                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "USER",
+                                                        user
+                                                    )
+
+                                                    navHostController.navigate(i.route)
+                                                }
+                                                .padding(horizontal = 5.dp, vertical = 15.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween) {
+                                            Row {
+                                                Icon(
+                                                    painter = painterResource(id = i.icon),
+                                                    contentDescription = i.title,
+                                                    tint = Color.Gray
+                                                )
+                                                Text(text = i.title, Modifier.padding(start = 5.dp))
+                                            }
+                                            Icon(
+                                                imageVector = Icons.Default.ArrowForward,
+                                                contentDescription = ""
+                                            )
+                                        }
+                                        Divider()
+                                    }
+                                }
                             }
-                            Divider()
-                            val context = LocalContext.current
-                            val Nav = listOf(
-                                ProfileItem.Private,
-                                ProfileItem.Bills,
-                                ProfileItem.Jobs,
-                                ProfileItem.Reviews,
+
+
+                            val NavError = listOf(
                                 ProfileItem.Help,
-                                ProfileItem.Docs,
-                                ProfileItem.Contacts
-                            );
+                                ProfileItem.Reviews,
+                            )
                             Column {
-                                for (i in Nav) {
+                                for (i in NavError) {
                                     Row(
                                         Modifier
                                             .fillMaxWidth()
@@ -281,6 +324,7 @@ fun ProfileScreen(
                                 ) {
                                     Text(text = "Выйти")
                                 }
+//                                Text(text = "Версия:" + System.getProperty("lk.mzpo-s.com.app-version"))
                             }
 
                         }
@@ -294,7 +338,7 @@ fun ProfileScreen(
 
 
 @Composable
-fun ProfileHeader(navHostController: NavHostController) {
+fun ProfileHeader(navHostController: NavHostController, auth: Boolean = false) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
@@ -317,7 +361,13 @@ fun ProfileHeader(navHostController: NavHostController) {
                 modifier = Modifier.padding(horizontal = 10.dp)
             )
         }
-        IconButton(onClick = { /*TODO*/ }, modifier = Modifier.weight(1f)) {
+        IconButton(onClick = {
+                             if(auth)
+                             {
+                                 navHostController.navigate("notifications")
+                             }
+
+        }, modifier = Modifier.weight(1f)) {
             Icon(
                 imageVector = Icons.Default.Notifications,
                 contentDescription = "bell",

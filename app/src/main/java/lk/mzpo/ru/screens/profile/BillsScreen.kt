@@ -2,7 +2,6 @@ package lk.mzpo.ru.screens.profile
 
 import android.content.Context
 import android.provider.ContactsContract.CommonDataKinds.Email
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,9 +52,7 @@ import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.screens.ProfileHeader
-import lk.mzpo.ru.ui.components.CustomTextField
 import lk.mzpo.ru.ui.components.DatePickerDemo
-import lk.mzpo.ru.ui.components.DateTextField
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
@@ -61,16 +61,16 @@ import lk.mzpo.ru.ui.components.checkPhone
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
+import lk.mzpo.ru.viewModel.BillsViewModel
 import lk.mzpo.ru.viewModel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserDataScreen(
+fun BillsScreen(
     user: User,
     navHostController: NavHostController,
-    profileViewModel: ProfileViewModel = viewModel(),
+    billsViewModel: BillsViewModel = viewModel(),
     cart_sum: MutableState<Int> = mutableStateOf(0)
-
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -92,32 +92,21 @@ fun UserDataScreen(
         content = { padding ->
             val ctx = LocalContext.current
 
-            profileViewModel.user.value = user
+            billsViewModel.getData(context = ctx)
 
+            val email = remember {
+                mutableStateOf(TextFieldValue(user.email))
+            }
 
-//            val snils = remember {
-//                mutableStateOf(TextFieldValue(user.?.snils.toString()))
-//            }
-//
-//            val seria = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passSeries.toString()))
-//            }
-//            val number = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passNumber.toString()))
-//            }
-//            val place_given = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passPoi.toString()))
-//            }
-//            val place_living = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passRegistration.toString()))
-//            }
-//            val code = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passDpt.toString()))
-//            }
-//            val date_given = remember {
-//                mutableStateOf(TextFieldValue(user.userData?.passDoi.toString().replace("-", "")))
-//            }
-
+            val phone = remember {
+                mutableStateOf(checkPhone(user.phone))
+            }
+            val name = remember {
+                mutableStateOf(TextFieldValue(user.name))
+            }
+            val isError = remember {
+                mutableStateOf(false)
+            }
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -165,7 +154,7 @@ fun UserDataScreen(
 
                            Column {
                                Text(
-                                   text = "Редактировать профиль",
+                                   text = "Мои счета",
                                    textAlign = TextAlign.Center,
                                    fontSize = 20.sp,
                                    modifier = Modifier
@@ -173,52 +162,34 @@ fun UserDataScreen(
                                        .padding(vertical = 10.dp)
                                )
 
-//                               CustomTextField(name = "СНИЛС", placeholder = "СНИЛС", value = snils,modifier = Modifier.fillMaxWidth())
-//                               Row(Modifier.fillMaxWidth()) {
-//                                   CustomTextField(name = "Серия паспорта", placeholder = "XXXX", value = seria ,modifier = Modifier
-//                                       .fillMaxWidth(0.5f)
-//                                       .padding(end = 5.dp))
-//                                   CustomTextField(name = "Номер паспорта", placeholder = "XXXXXX", value = number ,modifier = Modifier
-//                                       .fillMaxWidth()
-//                                       .padding(start = 5.dp))
-//
-//                               }
-//                               CustomTextField(name = "Место выдачи паспорта", placeholder = "СНИЛС", value = place_given,modifier = Modifier.fillMaxWidth())
-//                               Row(Modifier.fillMaxWidth()) {
-//                                   DateTextField(name = "Дата выдачи", value = date_given,modifier = Modifier
-//                                       .fillMaxWidth(0.5f)
-//                                       .padding(end = 5.dp))
-//                                   CustomTextField(name = "Код подразделения", placeholder = "ул. Кузекцкий мост 21/5", value = code,modifier = Modifier
-//                                       .fillMaxWidth()
-//                                       .padding(start = 5.dp))
-//                               }
-//                               CustomTextField(name = "Место регистрации", placeholder = "XXX-XXX", value = place_given,modifier = Modifier.fillMaxWidth())
-                           }
+                               LazyColumn(content = {
+                                   item {
+                                       Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                           Text(text = "Договор", modifier = Modifier.weight(2f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Курс", modifier = Modifier.weight(2f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Цена", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Скидка", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                           Text(text = "Долг", color = Aggressive_red, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                       }
+                                       Divider()
+                                   }
+                                   itemsIndexed(billsViewModel.contracts.value){
+                                       i, item ->
+                                       Row (Modifier.fillMaxWidth().padding(vertical = 5.dp), horizontalArrangement = Arrangement.SpaceBetween){
+                                           Text(text = item.contractNumber, modifier = Modifier.weight(2f))
+                                           Text(text = item.course!!.prefix, modifier = Modifier.weight(2f).clickable {
+                                               navHostController.navigate("course/${item.course!!.id}")
+                                           }, color = Color.Blue, textDecoration = TextDecoration.Underline)
+                                           Text(text = item.price.toString(), modifier = Modifier.weight(1f))
+                                           Text(text = item.discount.toString(), modifier = Modifier.weight(1f))
+                                           Text(text = item.debt.toString(), color = Aggressive_red, modifier = Modifier.weight(1f))
+                                       }
+                                   }
+                               }, modifier = Modifier.fillMaxSize())
+                               }
 
 
 
-                            Row (horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()){
-                                Button(onClick = {
-//                                                 val date_pass = date_given.value.text.substring(0,4) + "-" + date_given.value.text.substring(4,6) + "-" + date_given.value.text.substring(6,8)
-//                                                    val data = user.userData
-//                                                    if(data !== null)
-//                                                    {
-//                                                        data.passDoi = date_pass
-//                                                        data.snils = snils.value.text
-//                                                        data.passSeries = seria.value.text
-//                                                        data.passNumber = number.value.text
-//                                                        data.passPoi = place_given.value.text
-//                                                        data.passRegistration = place_living.value.text
-//                                                        data.passDpt = code.value.text
-//                                                        profileViewModel.userData(data, ctx);
-//                                                    }
-
-                                                 }, modifier = Modifier
-                                    .padding(15.dp)
-                                    .width(250.dp), colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)) {
-                                    Text(text = "Сохранить")
-                                }
-                            }
                         }
 
                     }

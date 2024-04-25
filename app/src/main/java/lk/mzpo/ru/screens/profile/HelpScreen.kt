@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,6 +48,7 @@ import androidx.navigation.NavHostController
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.User
+import lk.mzpo.ru.network.retrofit.Feedback
 import lk.mzpo.ru.screens.ProfileHeader
 import lk.mzpo.ru.ui.components.CustomTextField
 import lk.mzpo.ru.ui.components.EmailTextField
@@ -64,7 +66,9 @@ import lk.mzpo.ru.viewModel.HelpViewModel
 fun HelpScreen(
     user: User,
     navHostController: NavHostController,
-    helpViewModel: HelpViewModel = viewModel()
+    helpViewModel: HelpViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+
 ) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
@@ -82,18 +86,18 @@ fun HelpScreen(
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
             val ctx = LocalContext.current
 
-            helpViewModel.getData(context = ctx)
+//            helpViewModel.getData(context = ctx)
 
             val email = remember {
                 mutableStateOf(TextFieldValue(user.email))
             }
 
             val phone = remember {
-                mutableStateOf(checkPhone(user.userData?.phone.toString()))
+                mutableStateOf(checkPhone(user.phone.toString()))
             }
             val name = remember {
                 mutableStateOf(TextFieldValue(user.name))
@@ -176,12 +180,12 @@ fun HelpScreen(
 
 
                                 )
-                            val descrs = listOf(
-                                "(по вопросам обучения, переноса обучения)",
-                                "(по вопросам выдачи документов)",
-                                "",
-                                "(по вопросам неработающего личного кабинета, курса и другим техническим ошибкам личного кабинета)"
-                            )
+                                val descrs = listOf(
+                                    "(по вопросам обучения, переноса обучения)",
+                                    "(по вопросам выдачи документов)",
+                                    "",
+                                    "(по вопросам неработающего личного кабинета, курса и другим техническим ошибкам личного кабинета)"
+                                )
                                 val selectedIndex = remember{mutableStateOf(-1)}
                                 Column {
                                     Text(text = "Выберите тип обращения", modifier = Modifier.padding(top = 10.dp, bottom = 5.dp))
@@ -211,7 +215,18 @@ fun HelpScreen(
                                         Divider()
                                     }
                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                                       Button(onClick = { }, modifier = Modifier
+                                       Button(onClick = {
+                                                        val feedback = Feedback(
+                                                            theme.value.text,
+                                                            text.value.text,
+                                                            null,
+                                                            selectedIndex.value
+                                                        )
+                                                        helpViewModel.sendFeedback(feedback = feedback, ctx)
+
+
+
+                                       }, modifier = Modifier
                                            .padding(vertical = 10.dp)
                                            .width(150.dp), colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red, contentColor = Color.White)) {
                                            Text(text = "Отправить")

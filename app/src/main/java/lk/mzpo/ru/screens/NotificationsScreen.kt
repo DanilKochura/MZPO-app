@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +66,7 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
+import lk.mzpo.ru.models.study.NotificationNew
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -75,6 +77,7 @@ import lk.mzpo.ru.ui.components.PasswordTextField
 import lk.mzpo.ru.ui.components.PickImageFromGallery
 import lk.mzpo.ru.ui.components.PieChart
 import lk.mzpo.ru.ui.components.SearchViewPreview
+import lk.mzpo.ru.ui.components.getDate
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -158,18 +161,55 @@ fun NotificationsScreen(
                             )
                             .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
                     ) {
-                        LazyColumn(content = {
-                            itemsIndexed(notificationsViewModel.notifications){
-                                    index, item ->
-                                Column(modifier = Modifier.fillMaxWidth().padding(10.dp)) {
-                                    if(item.userNotification !== null)
-                                    {
-                                        item.userNotification!!.title?.let { Text(text = it) }
-                                        item.userNotification!!.text?.let { Html(text = it) }
+                        LoadableScreen(loaded = notificationsViewModel.loaded ) {
+                            LazyColumn(content = {
+                                item {
+                                    Text(text = "Уведомления", textAlign = TextAlign.Center, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(5.dp))
+                                }
+
+                                itemsIndexed(notificationsViewModel.notifications){
+                                        index, item ->
+                                    Card(modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp), colors = CardDefaults.cardColors(Color.White), elevation = CardDefaults.cardElevation(5.dp)) {
+                                       Column(
+                                           Modifier
+                                               .padding(10.dp)
+                                               ) {
+                                           Text(text = item.title!!, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp))
+                                           if(item.image !== null)
+                                           {
+                                               AsyncImage(model = item.image, contentDescription = "poster_"+item.id, modifier = Modifier.fillMaxWidth())
+                                           }
+                                           Html(text = item.content!!)
+                                           if (item.link !== null)
+                                           {
+                                               Button(onClick = {
+                                                   navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                       "link", item.link
+                                                   )
+                                                   navHostController.navigate("page") },
+                                                colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red)
+                                                   ) {
+                                                   Text(text = "Подробнее", color = Color.White)
+
+                                               }
+                                           }
+                                           Text(
+                                               text = item.createdAt,
+                                               Modifier.fillMaxWidth(),
+                                               textAlign = TextAlign.End,
+                                               fontSize = 12.sp,
+                                               color = Color.Gray
+                                           )
+                                       }
                                     }
                                 }
-                            }
-                        })
+                            })
+                        }
+
                     }
                 }
             }

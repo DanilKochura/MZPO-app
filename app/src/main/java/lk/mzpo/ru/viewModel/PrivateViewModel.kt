@@ -31,7 +31,7 @@ class PrivateViewModel  (
 ): ViewModel()
 {
 
-    val user = mutableStateOf(User(0,"",""))
+    val user = mutableStateOf(User(0,"","", "", ""))
 
 
 }

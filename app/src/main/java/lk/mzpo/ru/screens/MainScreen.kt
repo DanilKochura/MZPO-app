@@ -1,5 +1,10 @@
+@file:OptIn(ExperimentalTextApi::class)
+
 package lk.mzpo.ru.screens
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Surface
 import CoursePreview
 import Prices
 import android.util.Log
@@ -13,38 +18,29 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
-import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CheckboxDefaults
-import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
@@ -58,28 +54,34 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.UrlAnnotation
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withAnnotation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -87,21 +89,21 @@ import coil.compose.AsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.ireward.htmlcompose.HtmlText
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.models.Category
-import lk.mzpo.ru.models.CourseFilterModel
+import lk.mzpo.ru.network.retrofit.AuthService
+import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.network.retrofit.Data2Amo
 import lk.mzpo.ru.network.retrofit.SendDataToAmo
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
-import lk.mzpo.ru.ui.components.PriceTextField
+import lk.mzpo.ru.ui.components.Privacy
 import lk.mzpo.ru.ui.components.SearchViewPreview
-import lk.mzpo.ru.ui.components.isValidEmail
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.theme.Aggressive_red
@@ -112,7 +114,13 @@ import kotlin.math.abs
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Preview
 @Composable
-fun Main(navHostController: NavHostController = rememberNavController(), padding: PaddingValues = PaddingValues(25.dp), mainViewModel: MainViewModel = viewModel())
+fun Main(
+    navHostController: NavHostController = rememberNavController(),
+    padding: PaddingValues = PaddingValues(25.dp),
+    mainViewModel: MainViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+
+)
 {
     val bottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
@@ -122,6 +130,9 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
             bottomSheetState.show()
         }
     })
+    val rounded = remember {
+        mutableStateOf(30.dp)
+    }
     LaunchedEffect(key1 = bottomSheetState.targetValue, block = {
         if(bottomSheetState.targetValue ==  ModalBottomSheetValue.Hidden)
         {
@@ -130,8 +141,11 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
 
         }
     })
+    mainViewModel.navHostController = navHostController
     val ctx = LocalContext.current
     mainViewModel.getStories(context = ctx)
+
+
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
 //            topBar = {
@@ -148,8 +162,10 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
 //                    }
 //                }
 //            },
-        bottomBar = { BottomNavigationMenu(navController = navHostController) },
+        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = {padding ->
+            val mainscrollstate = rememberScrollState()
+
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -172,7 +188,7 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                         .fillMaxWidth()
                         .padding(top = 5.dp, bottom = 15.dp)){
                         SearchViewPreview(navHostController = navHostController);
-                        IconButton(onClick = { /*TODO*/ }) {
+                        IconButton(onClick = { navHostController.navigate("notifications") }) {
                             Icon(imageVector = Icons.Default.Notifications, contentDescription = "bell", tint = Color.White, modifier = Modifier.size(40.dp))
                         }
                     }
@@ -182,10 +198,18 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                             .fillMaxSize()
                             .background(
                                 color = Color.White,
-                                shape = RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp)
+                                shape = RoundedCornerShape(
+                                    topStart = rounded.value,
+                                    topEnd = rounded.value
+                                )
                             )
-                            .clip(RoundedCornerShape(topStart = 50.dp, topEnd = 50.dp))
-                            .verticalScroll(rememberScrollState())
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = rounded.value,
+                                    topEnd = rounded.value
+                                )
+                            )
+                            .verticalScroll(mainscrollstate)
                             .padding(horizontal = 7.dp)
                     ) {
 
@@ -204,7 +228,23 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                         contentScale = ContentScale.Inside, modifier = Modifier
                                             .clip(RoundedCornerShape(50))
                                             .clickable {
-
+                                                val test = mainViewModel.analytics.logEvent(
+                                                    FirebaseAnalytics.Event.VIEW_PROMOTION
+                                                ) {
+                                                    param(
+                                                        FirebaseAnalytics.Param.PROMOTION_ID,
+                                                        mainViewModel.Story_lables[index][0] as String
+                                                    )
+                                                    param(
+                                                        FirebaseAnalytics.Param.PROMOTION_ID,
+                                                        mainViewModel.Story_lables[index][0] as String
+                                                    )
+                                                    param(
+                                                        FirebaseAnalytics.Param.CONTENT_TYPE,
+                                                        "stories"
+                                                    )
+                                                }
+                                                Log.d("MyLog", "SENDED: $test")
                                                 if (mainViewModel.stories.value[index].isNotEmpty()) {
                                                     mainViewModel._storyState.targetState = true
                                                     mainViewModel.story_position.value = index
@@ -226,8 +266,9 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                             }
 
 
-                        }
-
+                        }   
+                        //endregion
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
                             text = "ПОПУЛЯРНЫЕ КУРСЫ",
                             style = TextStyle(
@@ -251,11 +292,24 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                                     Modifier
                                         .width(300.dp)
                                         .clickable {
+                                            mainViewModel.analytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM) {
+                                                param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
+                                                param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
+                                                param(
+                                                    FirebaseAnalytics.Param.CONTENT_TYPE,
+                                                    "course"
+                                                )
+                                            }
                                             navHostController.navigate("course/" + index.id)
                                         })
                             }
                         }
-                        MainPromoBanner(mainViewModel)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        if(mainViewModel.banner_sliser.value.isNotEmpty())
+                        {
+                            MainPromoBanner(mainViewModel)
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
                         Text(
                             text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
                             style = TextStyle(
@@ -360,7 +414,8 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                         mainViewModel._storyState.targetState = false
                     }
                 },
-                pause = mainViewModel.paused
+                pause = mainViewModel.paused,
+                exit = mainViewModel._storyState
 
             )
 
@@ -488,6 +543,8 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
                     ) {
                         Text("Оставить заявку", color = Color.White)
                     }
+                   Privacy()
+
                 }
 
             }
@@ -498,7 +555,6 @@ fun Main(navHostController: NavHostController = rememberNavController(), padding
 
     }
 }
-
 
 
 @Preview
@@ -553,7 +609,7 @@ fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/bu
                     Text(text = "от "+course.prices.sale15.toString()+" руб.", color = Aggressive_red)
                 }
             }
-            Button(onClick = { /*TODO*/ }, modifier = Modifier
+            Button(onClick = {  }, modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 5.dp), shape = RoundedCornerShape(30), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
                 Text("Купить со скидкой", color = Color.White)
@@ -754,20 +810,34 @@ fun AltFaculties(navHostController: NavHostController, mainViewModel: MainViewMo
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceBetween
         )
         {
-            CatCardAlternate(
-                category = mainViewModel.cats_main.value[i],
-                navHostController = navHostController,
-                modifier = Modifier.weight(1f)
-            )
+
             if(mainViewModel.cats_main.value.size > i+1)
             {
-                CatCardAlternate(
+                CatCardMainScreen(
+                    category = mainViewModel.cats_main.value[i],
+                    navHostController = navHostController,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 5.dp)
+
+                )
+                CatCardMainScreen(
                     category = mainViewModel.cats_main.value[i + 1],
                     navHostController = navHostController,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 5.dp)
+                )
+            } else
+            {
+                CatCardMainScreen(
+                    category = mainViewModel.cats_main.value[i],
+                    navHostController = navHostController,
                     modifier = Modifier.weight(1f)
+
                 )
             }
         }
@@ -831,7 +901,7 @@ fun Faculties() {
             .fillMaxWidth()
             .padding(vertical = 5.dp)
             .shadow(1.dp, RoundedCornerShape(10.dp))){
-            Row() {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Image(
                     painter = painterResource(id = R.drawable.massaj),
                     modifier = Modifier.fillMaxWidth(0.4f),
@@ -936,3 +1006,5 @@ fun SliderView(state: PagerState, viewModel: MainViewModel) {
 
     }
 }
+
+

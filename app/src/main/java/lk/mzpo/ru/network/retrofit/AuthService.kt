@@ -7,6 +7,7 @@ import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.android.volley.AuthFailureError
+import com.android.volley.NoConnectionError
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -32,8 +33,15 @@ class AuthService {
                 },
 
                 Response.ErrorListener { error ->
+                    val test = ctx.getSharedPreferences(
+                        "session",
+                        Context.MODE_PRIVATE
+                    )
+                    test.edit().remove("token_lk").apply()
+                    test.edit().remove("auth_data").apply()
                     Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже", Toast.LENGTH_SHORT).show()
                     error.printStackTrace()
+
                 }) {
                 override fun getBodyContentType(): String {
                     return "application/x-www-form-urlencoded"
@@ -51,6 +59,7 @@ class AuthService {
                 override fun getParams(): Map<String, String> {
                     val params: MutableMap<String, String> =
                         HashMap()
+                    Log.d("MyLog", data.email+" "+data.passrowd+" "+data.device_name)
                     params["email"] = data.email
                     params["password"] = data.passrowd
                     params["device_name"] = data.device_name
@@ -67,8 +76,22 @@ class AuthService {
          * Метод проверки авторизации -
          * отправляет запрос с токеном: в ответ либо guest либо auth
          */
-        fun testAuth(context: Context, navHostController: NavHostController, auth_tested: MutableState<Boolean>, redirect: Boolean = true){
+        fun testAuth(context: Context, navHostController: NavHostController, auth_tested: MutableState<AuthStatus>, redirect: Boolean = true){
             val url = "https://lk.mzpo-s.ru/api/testAuth"
+            val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+            val token = test.getString("token_lk", "")
+            if(token.isNullOrBlank())
+            {
+                auth_tested.value = AuthStatus.GUEST
+                return
+            }
+
+            if (auth_tested.value != AuthStatus.TEST)
+            {
+                return
+            }
+
+
             val queue = Volley.newRequestQueue(context)
             val stringReq: StringRequest =
                 object : StringRequest(
@@ -80,8 +103,8 @@ class AuthService {
                         {
                             Log.d("AuthTest", "guested")
 
-                            val test =  context.getSharedPreferences("session", Context.MODE_PRIVATE)
                             val gson = Gson()
+                            auth_tested.value = AuthStatus.GUEST
                             val authData = test.getString("auth_data", "")
                             if(authData.isNullOrEmpty())
                             {
@@ -93,25 +116,24 @@ class AuthService {
                             {
                                 val data: AuthData = gson.fromJson(authData, AuthData::class.java);
                                 this.login(data, context, navHostController, redirect)
-                                auth_tested.value = true
+                                auth_tested.value = AuthStatus.AUTH
 
                             }
 
                         } else
                         {
-                            auth_tested.value = true
+                            auth_tested.value = AuthStatus.AUTH
                         }
 
 
                     },
                     Response.ErrorListener { error ->
-                        Log.i("mylog", "error = " + error)
+                        Log.i("AuthLog", "error = " + error)
+//                        throw Exception("no connection")
                     }
                 ) {
                     override fun getHeaders(): MutableMap<String, String> {
                         val headers = HashMap<String, String>()
-                        val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                        val token = test.getString("token_lk", "")
                         headers["Authorization"] = "Bearer "+token?.trim('"')
                         return headers
                     }
