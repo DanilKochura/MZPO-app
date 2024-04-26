@@ -2,11 +2,14 @@ package lk.mzpo.ru.screens
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,14 +31,14 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetState
+import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -45,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,12 +58,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -69,31 +71,31 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.extractor.text.webvtt.WebvttCssStyle.FontSizeUnit
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.google.gson.Gson
+import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.exceptions.NoConnectionException
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
-import lk.mzpo.ru.models.User
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
+import lk.mzpo.ru.network.retrofit.ExtendRequest
 import lk.mzpo.ru.ui.components.CircularProgressbar2
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.components.PasswordTextField
-import lk.mzpo.ru.ui.components.PickImageFromGallery
-import lk.mzpo.ru.ui.components.PieChart
-import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.ContractsViewModel
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Response
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ContractsScreen(
     navHostController: NavHostController,
@@ -120,6 +122,8 @@ fun ContractsScreen(
 //            },
         bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
+            val bottomSheetState =
+                rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
             Log.d("StudyLog", "entered")
             val context = LocalContext.current
             val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
@@ -127,8 +131,7 @@ fun ContractsScreen(
 
             try {
                 AuthService.testAuth(context, navHostController, contractsViewModel.auth_tested)
-            } catch (_: NoConnectionException)
-            {
+            } catch (_: NoConnectionException) {
                 contractsViewModel.error.value = true
                 contractsViewModel.loaded.value = true
             }
@@ -221,17 +224,136 @@ fun ContractsScreen(
                                 )
                             }
                         }
-                        LoadableScreen(loaded = contractsViewModel.loaded, error = contractsViewModel.error)
+                        LoadableScreen(
+                            loaded = contractsViewModel.loaded,
+                            error = contractsViewModel.error
+                        )
 
 
                         when (contractsViewModel.selected.value) {
-                            "Активные" -> ActiveTab(contractsViewModel, navHostController)
+                            "Активные" -> ActiveTab(
+                                contractsViewModel,
+                                navHostController,
+                                bottomSheetState
+                            )
+
                             "Завершенные" -> FinishedTab(contractsViewModel)
                             "Возвраты" -> RefunedTab(contractsViewModel)
 
                         }
+
                     }
                 }
+            }
+            ModalBottomSheetLayout(
+                sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                sheetContent = {
+
+                    Column {
+                        Text(
+                            text = "Перенести окончание обучения/экзамен на",
+                            modifier = Modifier.padding(start = 5.dp, top = 5.dp, end = 5.dp)
+                        )
+                    }
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 15.dp, horizontal = 10.dp)
+                            .horizontalScroll(rememberScrollState())
+                    ) {
+                        for (i in contractsViewModel.accessDates) {
+                            Column(
+                                modifier = Modifier
+                                    .height(45.dp)
+                                    .padding(end = 7.dp)
+                                    .clip(
+                                        RoundedCornerShape(20)
+                                    )
+                                    .background(if (contractsViewModel.selectedDate.value == i) Primary_Green else Color.Transparent)
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (contractsViewModel.selectedDate.value == i) Primary_Green else Color.LightGray,
+                                        RoundedCornerShape(20)
+                                    )
+                                    .clickable {
+                                        contractsViewModel.selectedDate.value = i
+//                                    if (scrollstate.value > 800) {
+//                                        scope.launch {
+//                                            scrollstate.animateScrollTo(800)
+//                                        }
+//                                    }
+                                    }, verticalArrangement = Arrangement.Center
+                            )
+                            {
+                                Text(
+                                    text = i,
+                                    Modifier.padding(10.dp),
+                                    color = if (contractsViewModel.selectedDate.value == i) Color.White else Color.Black
+                                )
+                            }
+                        }
+                    }
+//                    Text(text = contractsViewModel.accessOrder.intValue.toString())
+//                    Text(text = contractsViewModel.accessModule.intValue.toString())
+//                    Text(text = contractsViewModel.selectedDate.value.toString())
+                    Button(
+                        onClick = {
+
+                            val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+                            val token_ = pref.getString("token_lk", "")
+                            ExtendRequest().send(
+                                "Bearer " + token_?.trim('"'),
+                                ExtendRequest.PostBody(
+                                    contract_id = contractsViewModel.accessOrder.intValue,
+                                    module_id = contractsViewModel.accessModule.intValue,
+                                    exam_date = contractsViewModel.selectedDate.value
+                                )
+
+                            ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                    Log.e("API Request", "I got an error and i don't know why :(")
+                                    Log.e("API Request", t.message.toString())
+                                    Toast.makeText(context, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                                }
+
+                                override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>
+                                ) {
+                                    Log.d("API Request", response.body().toString())
+                                    Log.d("API Request", response.message())
+                                    Log.d("API Request", response.errorBody().toString())
+                                    Log.d("API Request", response.raw().body.toString())
+                                    if (response.isSuccessful) {
+                                        Toast.makeText(
+                                            context,
+                                            "Вы успешно продили курс",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navHostController.navigate("study")
+
+
+                                    }
+                                }
+                            })
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth().padding(5.dp),
+//                        .padding(vertical = 5.dp),
+                        shape = RoundedCornerShape(30),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Aggressive_red,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Продлить доступ", color = Color.White)
+                    }
+
+                },
+                sheetState = bottomSheetState,
+                modifier = Modifier.padding(padding)
+            ) {
+
             }
         }
     )
@@ -241,10 +363,10 @@ fun ContractsScreen(
 @Composable
 fun Login(token: String?, navHostController: NavHostController) {
     val password = remember {
-        mutableStateOf(TextFieldValue("mkCF4CVa4iLyTd8"))
+        mutableStateOf(TextFieldValue("Melek138&"))
     }
     val login = remember {
-        mutableStateOf(TextFieldValue("kochura2017@yandex.ru"))
+        mutableStateOf(TextFieldValue("krasavcheg.test@mail.ru"))
     }
     val bl = remember {
         mutableStateOf(false)
@@ -323,9 +445,13 @@ fun Login(token: String?, navHostController: NavHostController) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun ActiveTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
+fun ActiveTab(
+    contractsViewModel: ContractsViewModel,
+    navHostController: NavHostController,
+    bottomsheetState: ModalBottomSheetState
+) {
     val courses =
         contractsViewModel.contracts.value.filter {
             it.status!! in intArrayOf(
@@ -345,19 +471,31 @@ fun ActiveTab(contractsViewModel: ContractsViewModel, navHostController: NavHost
                 itemsIndexed(courses)
                 { i, contract ->
                     if (contract.course !== null) {
-                        ContractCard(contract, onClick = {
-                            val gson = Gson()
-                            val contractJson = gson.toJson(
-                                contract,
-                                Contract::class.java
-                            )
-                            navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                "Contract",
-                                contractJson
-                            )
+                        ContractCard(
+                            contract, onClick = {
+                                val gson = Gson()
+                                val contractJson = gson.toJson(
+                                    contract,
+                                    Contract::class.java
+                                )
+                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                    "Contract",
+                                    contractJson
+                                )
 
-                            navHostController.navigate("study")
-                        })
+                                navHostController.navigate("study")
+
+                            },
+                            onAccess = {
+                                contractsViewModel.accessDates.clear()
+                                contractsViewModel.accessDates.addAll(contract.notPassed?.exams!!.toMutableList())
+                                contractsViewModel.accessOrder.intValue = contract.id
+                                contractsViewModel.accessModule.intValue =
+                                    contract.notPassed?.moduleId!!
+                                contractsViewModel.selectedDate.value = contract.notPassed!!.exams[0]
+                            },
+                            bottom = bottomsheetState
+                        )
                     }
 
                 }
@@ -369,7 +507,7 @@ fun ActiveTab(contractsViewModel: ContractsViewModel, navHostController: NavHost
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun FinishedTab(contractsViewModel: ContractsViewModel) {
     val courses = contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 }
@@ -392,7 +530,7 @@ fun FinishedTab(contractsViewModel: ContractsViewModel) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun RefunedTab(contractsViewModel: ContractsViewModel) {
     val courses = contractsViewModel.contracts.value.filter { it.status == 5 || it.status == 2 }
@@ -416,9 +554,15 @@ fun RefunedTab(contractsViewModel: ContractsViewModel) {
 //    PickImageFromGallery()
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
-fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
+fun ContractCard(
+    contract: Contract,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    onAccess: () -> Unit = {},
+    bottom: ModalBottomSheetState? = null
+) {
     val conf = LocalConfiguration.current
     val metodCallText = buildAnnotatedString {
         val mStr =
@@ -496,7 +640,8 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                     9,
                     10,
                     11
-                )) {
+                )
+            ) {
                 Text(
                     text = contract.course!!.hours.toString() + " ак.ч.",
                     fontWeight = FontWeight.Bold
@@ -530,7 +675,8 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                     0,
                     3,
                     4
-                )) {
+                )
+            ) {
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
@@ -539,8 +685,7 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if(contract.status!! == 0)
-                    {
+                    if (contract.status!! == 0) {
                         Text(
                             text = "Вы успешно прошли обучение!",
                             textAlign = TextAlign.Center,
@@ -589,16 +734,13 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
             if (contract.status == 5 || contract.status == 2) {
                 Text(text = "Отказ от курса", color = Aggressive_red, textAlign = TextAlign.Center)
 
-                if(contract.amount !== null)
-                {
+                if (contract.amount !== null) {
                     Text(text = buildAnnotatedString {
                         withStyle(SpanStyle(color = Aggressive_red))
                         {
-                            if(contract.status == 2)
-                            {
+                            if (contract.status == 2) {
                                 append("Денежные средства возвращены ")
-                            } else
-                            {
+                            } else {
                                 append("Частичный возврат денежных средств ")
                             }
                         }
@@ -636,31 +778,40 @@ fun ContractCard(contract: Contract, modifier: Modifier = Modifier, onClick: () 
 
                 }
             } else if (contract.status!! in intArrayOf(1, 6, 7, 8, 9, 10, 11)) {
+
+
+                if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
+                    Text(
+                        text = "У вас " + contract.notPassed?.extendTimes + " бесплатно продлить доступ. Используйте " + contract.notPassed?.left + " до " + contract.notPassed?.extendTill,
+                        textAlign = TextAlign.Center,
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        lineHeight = 15.sp,
+                        modifier = Modifier.padding(top = 5.dp, bottom = 0.dp)
+                    )
+                }
+                val scope = rememberCoroutineScope()
                 Button(
                     onClick = {
-                        onClick.invoke()
-
+                        scope.launch {
+                            bottom?.show()
+                            onAccess.invoke()
+                        }
                     },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 5.dp),
+                        .fillMaxWidth(),
+//                        .padding(vertical = 5.dp),
                     shape = RoundedCornerShape(30),
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.LightGray,
+                        backgroundColor = Aggressive_red,
                         contentColor = Color.White
-                    ),
-                    enabled = false
+                    )
                 ) {
-                    if(contract.status == 8)
-                    {
-                        Text("Обучение приостановлено", color = Color.DarkGray)
-                    } else
-                    {
-                        Text("Доступ закрыт", color = Color.DarkGray)
-                    }
-
+                    Text("Продлить доступ", color = Color.White)
                 }
+
             }
+
         }
     }
 }

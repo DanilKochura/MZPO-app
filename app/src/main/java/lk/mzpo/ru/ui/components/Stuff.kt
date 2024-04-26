@@ -787,7 +787,7 @@ fun CircularProgressbar2(
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
+fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status: String?, count: Int = 0) {
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
@@ -824,36 +824,40 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
                 android.Manifest.permission.READ_MEDIA_AUDIO
             )
 
-            Button(
-                onClick = {
-                    // Camera permission state
+            if(!status.isNullOrEmpty() && status != "1" && count < 4)
+            {
+                Button(
+                    onClick = {
+                        // Camera permission state
 
-                    val permissionCheck = ContextCompat.checkSelfPermission(
-                        context,
-                        CAMERA
-                    )
-                    if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                        launcher.launch("image/*")
-                    } else {
-                        rem.launch(CAMERA)
-//                    cameraPermissionState.launchPermissionRequest()
-                        Toast.makeText(
+                        val permissionCheck = ContextCompat.checkSelfPermission(
                             context,
-                            "Разрешите приложению доступ к галерее",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                            CAMERA
+                        )
+                        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                            launcher.launch("image/*")
+                        } else {
+                            rem.launch(CAMERA)
+//                    cameraPermissionState.launchPermissionRequest()
+                            Toast.makeText(
+                                context,
+                                "Разрешите приложению доступ к галерее",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
 
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Primary_Green),
-                modifier = Modifier.padding(bottom = 10.dp)
-            ) {
-                Text(text = "Выбрать", color = Color.White)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary_Green),
+                    modifier = Modifier.padding(bottom = 10.dp)
+                ) {
+                    Text(text = "Выбрать", color = Color.White)
+                }
             }
 
             if (imageUri.value !== null) {
                 Button(
                     onClick = {
+                        disabled.value = true
                         Log.d("MyLog", imageUri.value!!.path.toString())
                         Log.d("MyLog", imageUri.value!!.query.toString())
                         val uriPathHelper = URIPathHelper()
@@ -874,6 +878,10 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 Log.e("API Request", "I got an error and i don't know why :(")
                                 Log.e("API Request", t.message.toString())
+                                Toast.makeText(context, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                                disabled.value = false
+
+
                             }
 
                             override fun onResponse(
@@ -890,7 +898,6 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
                                         "Документ отправлен на проверку",
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                    disabled.value = true
 
                                 }
                             }
@@ -918,8 +925,6 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?) {
                     bitmap.value = ImageDecoder.decodeBitmap(source)
                 }
             }
-
-
         }
         if (bitmap.value !== null) {
             Image(

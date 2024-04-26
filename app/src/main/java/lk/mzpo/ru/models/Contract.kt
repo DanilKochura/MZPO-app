@@ -16,6 +16,7 @@ data class Contract (
         @SerializedName("price"           ) var price          : Int,
         @SerializedName("discount"        ) var discount       : Int,
         @SerializedName("notPassed"        ) var notPassed       : NotPasssed? = null,
+        @SerializedName("extendPrice"        ) var extendPrice       : Int? = null,
         @SerializedName("debt"            ) var debt           : Int    = 0,
         @SerializedName("total"           ) var total          : Int,
         @SerializedName("uid"             ) var uid            : String? = null,
@@ -55,11 +56,14 @@ data class PracticeOchno(
 
 data class NotPasssed (
 
-        @SerializedName("module_id"   ) var moduleId    : Int?    = null,
-        @SerializedName("module_uid"  ) var moduleUid   : String? = null,
-        @SerializedName("extendTimes" ) var extendTimes : String? = null,
-        @SerializedName("free"        ) var free        : String? = null,
-        @SerializedName("extend_till" ) var extendTill  : String? = null,
-        @SerializedName("exams"       ) var exams       : ArrayList<String>? = null
+        @SerializedName("phone_for_notPaid" ) var phoneForNotPaid : String? = null,
+        @SerializedName("module_id"         ) var moduleId        : Int?    = null,
+        @SerializedName("module_uid"        ) var moduleUid       : String? = null,
+        @SerializedName("free"              ) var free            : String? = null,
+        @SerializedName("exams"             ) var exams           : Array<String> = arrayOf(),
+        @SerializedName("extend_till"       ) var extendTill      : String? = null,
+        @SerializedName("left"              ) var left            : String? = null,
+        @SerializedName("extendTimes"       ) var extendTimes     : String? = null,
+        @SerializedName("status"            ) var status          : Int?    = null
 
 )

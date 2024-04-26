@@ -2,6 +2,7 @@ package lk.mzpo.ru.viewModel
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
@@ -30,6 +31,10 @@ class ContractsViewModel  (
     val loaded = mutableStateOf(false) //флаг полной загрузки контента
     val error = mutableStateOf(false) //флаг полной загрузки контента
 
+    val accessDates = mutableListOf("")
+    val accessOrder = mutableIntStateOf(0)
+    val selectedDate = mutableStateOf("")
+    val accessModule = mutableIntStateOf(0)
     /**
      * Получение списка заказов
      * @param token - ЛК AUTH токен

@@ -14,6 +14,7 @@ data class StudyModule (
     @SerializedName("status"           ) var status          : String?                    = null,
     @SerializedName("active_materials" ) var activeMaterials : ArrayList<ActiveMaterials> = arrayListOf(),
 
+
 )
 
 

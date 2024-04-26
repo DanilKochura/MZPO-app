@@ -1,8 +1,10 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import android.widget.ProgressBar
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -52,6 +54,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -119,6 +122,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.log
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun StudyScreen(
@@ -346,7 +350,7 @@ fun StudyScreen(
                         LoadableScreen(loaded = studyViewModel.loaded, error = studyViewModel.error)
                         {
                             if (!studyViewModel.verify_docs.value) {
-                                if (studyViewModel.contract.course!!.prices.sale15 !== null || studyViewModel.passedModules.isNotEmpty()  || studyViewModel.exam.isNotEmpty()) {
+                                if (studyViewModel.contract.course!!.prices.sale15 !== null || studyViewModel.passedModules.isNotEmpty() || studyViewModel.exam.isNotEmpty()) {
                                     var list = listOf("Расписание", "Материалы")
 
                                     TabRow(
@@ -388,14 +392,19 @@ fun StudyScreen(
                                     )
                                 }
                             } else {
-                                Column(modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(10.dp)) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp)
+                                ) {
                                     Text(
                                         text = "Для доступа к курсу, пожалуйста, загрузите документы для проверки на соответствие к требованию к курсу",
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier
-                                            .background(Blue_BG.copy(0.1f), RoundedCornerShape(10.dp))
+                                            .background(
+                                                Blue_BG.copy(0.1f),
+                                                RoundedCornerShape(10.dp)
+                                            )
                                             .border(
                                                 2.dp, Blue_BG, RoundedCornerShape(10.dp)
                                             )
@@ -425,9 +434,9 @@ fun StudyScreen(
                             textAlign = TextAlign.Center
                         )
                         Divider()
-                        if(studyViewModel.verify_docs.value)
-                        {
-                            val list = studyViewModel.admissions.filter { it.pivot!!.for_access == "1" }
+                        if (studyViewModel.verify_docs.value) {
+                            val list =
+                                studyViewModel.admissions.filter { it.pivot!!.for_access == "1" }
                             studyViewModel.admissions.clear()
                             studyViewModel.admissions.addAll(list)
                         }
@@ -437,14 +446,16 @@ fun StudyScreen(
                                 var loaded: String? = null
                                 var comment: String? = null
                                 var status: String? = null
+                                var count = 0
                                 for (j in studyViewModel.documents) {
                                     if (admission.id == j.admissionId) {
                                         loaded = j.file
                                         status = j.docCondition
                                         comment = j.comment
-                                        break
+                                        if (!loaded.isNullOrEmpty()) {
+                                            count += 1
+                                        }
                                     }
-
                                 }
                                 Text(
                                     text = admission.name.toString(),
@@ -453,8 +464,7 @@ fun StudyScreen(
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                if(loaded !== null)
-                                {
+                                if (loaded !== null) {
                                     Row(
                                         Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.Center
@@ -480,20 +490,31 @@ fun StudyScreen(
                                                     .padding(3.dp)
                                             )
 
-                                            "2" -> Text(
-                                                text = comment.toString(), modifier = Modifier
-                                                    .padding(3.dp)
-                                                    .clip(
-                                                        RoundedCornerShape(3.dp)
-                                                    )
-                                                    .background(Aggressive_red.copy(0.3f))
-                                                    .padding(3.dp)
-                                            )
+                                            "2" -> {
+                                                Text(
+                                                    text = comment.toString(), modifier = Modifier
+                                                        .padding(3.dp)
+                                                        .clip(
+                                                            RoundedCornerShape(3.dp)
+                                                        )
+                                                        .background(Aggressive_red.copy(0.3f))
+                                                        .padding(3.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                                PickImageFromGallery(contract.id, admission.id!!, loaded)
-                                Divider()
+
+                                PickImageFromGallery(
+                                    contract.id,
+                                    admission.id!!,
+                                    loaded,
+                                    status,
+                                    count
+                                )
+
+
+                                HorizontalDivider()
                             }
                         })
                     }
@@ -505,8 +526,7 @@ fun StudyScreen(
             //endregion
 
             //region Попап для практики
-            if (studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty())
-            {
+            if (studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) {
                 ModalBottomSheetLayout(
                     sheetShape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
                     sheetContent = {
@@ -758,7 +778,7 @@ fun Schedule(studyViewModel: StudyViewModel) {
                     .padding(10.dp)
             ) {
                 Text(text = "Вы успешно прошли", fontWeight = FontWeight.Bold)
-                Divider()
+                HorizontalDivider()
                 for (item in studyViewModel.passedModules) {
                     Row(
                         Modifier
@@ -778,41 +798,94 @@ fun Schedule(studyViewModel: StudyViewModel) {
                         )
                     }
                 }
-                Divider()
+                HorizontalDivider()
             }
         }
-        if(studyViewModel.exam.isNotEmpty())
-        {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)) {
-                Text(text = "Экзаменационный билет №"+studyViewModel.exam[0].num, modifier = Modifier
-                    .background(
-                        Primary_Green, RoundedCornerShape(10.dp)
-                    )
-                    .padding(5.dp)
-                    .fillMaxWidth(), textAlign = TextAlign.Center, color = Color.White)
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(5.dp))
-                {
-                    Text(text = "Необходимо отправить ответы с компьютера до "+studyViewModel.exam[0].send_answer, modifier = Modifier
+        if (studyViewModel.contract.status == 7) {
+            Column (Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Blue_BG.copy(0.1f), RoundedCornerShape(10.dp)
+                        .padding(10.dp)
+                        .background(Aggressive_red.copy(.1f))
+                        .border(1.dp, Aggressive_red, RoundedCornerShape(5.dp))
+                        .clip(
+                            RoundedCornerShape(5.dp)
                         )
-                        .padding(5.dp), textAlign = TextAlign.Center)
+                ) {
+                    Text(
+                        text = "Ваше заявление на возврат принято",
+                        color = Aggressive_red,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = 5.dp).fillMaxWidth()
+                    )
                 }
-                for (i in 0 until  studyViewModel.exam[0].ticket.size)
-                {
-                    Text(text = "Вопрос №"+(i+1)+" "+studyViewModel.exam[0].ticket[i].question.toString(), fontWeight = FontWeight.Bold)
-
-                }
-                Divider()
             }
         }
-        if(studyViewModel.schedules.isNotEmpty())
-        {
+        if (studyViewModel.exam.isNotEmpty()) {
+            //region Билеты экзамен
+            if (studyViewModel.exam[0].answered != 1) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = "Экзаменационный билет №" + studyViewModel.exam[0].num,
+                        modifier = Modifier
+                            .background(
+                                Primary_Green, RoundedCornerShape(10.dp)
+                            )
+                            .padding(5.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        color = Color.White
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(5.dp)
+                    )
+                    {
+                        Text(
+                            text = "Необходимо отправить ответы с компьютера до " + studyViewModel.exam[0].send_answer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Blue_BG.copy(0.1f), RoundedCornerShape(10.dp)
+                                )
+                                .padding(5.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    for (i in 0 until studyViewModel.exam[0].ticket.size) {
+                        Text(
+                            text = "Вопрос №" + (i + 1) + " " + studyViewModel.exam[0].ticket[i].question.toString(),
+                            fontWeight = FontWeight.Bold
+                        )
+
+                    }
+                    HorizontalDivider()
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = "Ваш ответ принят!", modifier = Modifier
+                            .background(
+                                Primary_Green, RoundedCornerShape(10.dp)
+                            )
+                            .padding(5.dp)
+                            .fillMaxWidth(), textAlign = TextAlign.Center, color = Color.White
+                    )
+                }
+            }
+            //endregion
+        }
+        if (studyViewModel.schedules.isNotEmpty()) {
             for (item in studyViewModel.schedules) {
                 val exam = LocalDate.parse(item.group.exam)
                 Text(
@@ -840,15 +913,17 @@ fun Schedule(studyViewModel: StudyViewModel) {
                             Text(text = date.format(timeFrmtEnd).toString())
                         }
                         Text(text = i.auditory.toString())
-                        Text(text = if(i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан", modifier = Modifier.fillMaxWidth(0.4f))
+                        Text(
+                            text = if (i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан",
+                            modifier = Modifier.fillMaxWidth(0.4f)
+                        )
                     }
                     Divider()
                 }
                 Divider(thickness = 3.dp)
                 Spacer(modifier = Modifier.height(10.dp))
             }
-        } else
-        {
+        } else {
             Box(
                 modifier = Modifier
                     .padding(10.dp)
