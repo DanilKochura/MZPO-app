@@ -236,10 +236,6 @@ fun Main(
                                                         mainViewModel.Story_lables[index][0] as String
                                                     )
                                                     param(
-                                                        FirebaseAnalytics.Param.PROMOTION_ID,
-                                                        mainViewModel.Story_lables[index][0] as String
-                                                    )
-                                                    param(
                                                         FirebaseAnalytics.Param.CONTENT_TYPE,
                                                         "stories"
                                                     )

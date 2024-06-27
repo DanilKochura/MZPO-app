@@ -181,6 +181,7 @@ class MainViewModel
                                                     bottom = 10.dp
                                                 )
                                         ) {
+                                            Log.d("MyLogStory", "RENDERED")
                                             Text(text = btn_text, color = Color.White)
                                         }
                                     } else if (i == 2) {
