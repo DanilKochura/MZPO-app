@@ -4,10 +4,12 @@ import android.content.Context
 import android.os.Build
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -42,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -216,6 +221,7 @@ fun ProfileScreen(
                                 Divider()
                                 val Nav = listOf(
 //                                    ProfileItem.Private,
+                                    ProfileItem.Certs,
                                     ProfileItem.Bills,
                                     ProfileItem.Jobs,
 
@@ -247,7 +253,8 @@ fun ProfileScreen(
                                                 Icon(
                                                     painter = painterResource(id = i.icon),
                                                     contentDescription = i.title,
-                                                    tint = Color.Gray
+                                                    tint = Color.Gray,
+                                                    modifier =  Modifier.width(25.dp)
                                                 )
                                                 Text(text = i.title, Modifier.padding(start = 5.dp))
                                             }
@@ -290,7 +297,8 @@ fun ProfileScreen(
                                             Icon(
                                                 painter = painterResource(id = i.icon),
                                                 contentDescription = i.title,
-                                                tint = Color.Gray
+                                                tint = Color.Gray,
+                                                modifier = Modifier.width(25.dp)
                                             )
                                             Text(text = i.title, Modifier.padding(start = 5.dp))
                                         }
@@ -303,29 +311,68 @@ fun ProfileScreen(
                                 }
                             }
                             Row(
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Button(
-                                    onClick = {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .pointerInput(Unit) {
+                                        detectTapGestures(
+                                            onLongPress = {
+                                                val test = context.getSharedPreferences(
+                                                    "session",
+                                                    Context.MODE_PRIVATE
+                                                )
+                                                test.edit().remove("token_lk").apply()
+                                                test.edit().remove("auth_data").apply()
+                                                FirebaseHelpers.getCartSum(token, cart_sum)
 
-                                        val test = context.getSharedPreferences(
-                                            "session",
-                                            Context.MODE_PRIVATE
+                                                navHostController.navigate("profile")
+                                            }
                                         )
-                                        test.edit().remove("token_lk").apply()
-                                        test.edit().remove("auth_data").apply()
-                                        FirebaseHelpers.getCartSum(token, cart_sum)
-
-                                        navHostController.navigate("profile")
-
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
-                                ) {
-                                    Text(text = "Выйти")
+                                    }
+                                    .clickable {
+                                       Toast.makeText(context, "Для выхода удерживайте кнопку", Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(horizontal = 5.dp, vertical = 15.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween) {
+                                Row {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Выход",
+                                        tint = Aggressive_red,
+                                        modifier = Modifier.width(25.dp)
+                                    )
+                                    Text(text = "Выйти", Modifier.padding(start = 5.dp), color = Aggressive_red)
                                 }
-//                                Text(text = "Версия:" + System.getProperty("lk.mzpo-s.com.app-version"))
+                                Icon(
+                                    imageVector = Icons.Default.ArrowForward,
+                                    contentDescription = "",
+                                    tint = Aggressive_red
+                                )
                             }
+                            Divider()
+//                            Row(
+//                                horizontalArrangement = Arrangement.Center,
+//                                modifier = Modifier.fillMaxWidth()
+//                            ) {
+//                                Button(
+//                                    onClick = {
+//
+//                                        val test = context.getSharedPreferences(
+//                                            "session",
+//                                            Context.MODE_PRIVATE
+//                                        )
+//                                        test.edit().remove("token_lk").apply()
+//                                        test.edit().remove("auth_data").apply()
+//                                        FirebaseHelpers.getCartSum(token, cart_sum)
+//
+//                                        navHostController.navigate("profile")
+//
+//                                    },
+//                                    colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
+//                                ) {
+//                                    Text(text = "Выйти")
+//                                }
+////                                Text(text = "Версия:" + System.getProperty("lk.mzpo-s.com.app-version"))
+//                            }
 
                         }
 
