@@ -5,6 +5,12 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +43,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -53,10 +60,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -69,6 +78,7 @@ import com.rizzi.bouquet.rememberVerticalPdfReaderState
 import dev.zt64.compose.pdf.component.PdfColumn
 import dev.zt64.compose.pdf.rememberLocalPdfState
 import dev.zt64.compose.pdf.rememberRemotePdfState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
@@ -76,6 +86,7 @@ import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.network.retrofit.ExtendRequest
 import lk.mzpo.ru.network.retrofit.SaveLastPageService
+import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.pdf.PdfViewer
 import lk.mzpo.ru.ui.theme.Active_Green
 import lk.mzpo.ru.ui.theme.Aggressive_red
@@ -87,7 +98,11 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import java.io.File
+import kotlin.math.log
 import kotlin.math.roundToInt
+
+
+
 
 @SuppressLint("UnrememberedMutableInteractionSource", "UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,8 +116,13 @@ fun PdfScreen(
     val ctx = LocalContext.current
     val pdfState = rememberVerticalPdfReaderState(
         resource = ResourceType.Remote("https://lk.mzpo-s.ru/"+material.activeFile?.upload),
-        isZoomEnable = true,
+        isZoomEnable = true
     )
+
+
+
+
+    Log.d("MyLog", material.userProgress.toString())
     val progress = remember {
         mutableStateOf(0)
     }
@@ -111,9 +131,13 @@ fun PdfScreen(
     }
     val pref = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
     val token_ = pref.getString("token_lk", "")
+    val loading = remember {
+        mutableStateOf(false)
+    }
+
 
     LaunchedEffect(key1 = pdfState.currentPage) {
-        if (pdfState.currentPage > progress.value)
+        if (pdfState.currentPage > progress.value && pdfState.currentPage - progress.value < 3)
         {
             SaveLastPageService().send(
                 "Bearer " + token_?.trim('"'),
@@ -142,11 +166,12 @@ fun PdfScreen(
                     }
                 }
             })
+            if (progress.value == pdfState.pdfPageCount)
+            {
+                Toast.makeText(ctx, "Вы просмотрели документ полностью!", Toast.LENGTH_SHORT).show()
+            }
         }
-        if (pdfState.currentPage == pdfState.pdfPageCount)
-        {
-            Toast.makeText(ctx, "Вы просмотрели документ полностью!", Toast.LENGTH_SHORT).show()
-        }
+
     }
     Scaffold(
         floatingActionButton = {
@@ -238,12 +263,33 @@ fun PdfScreen(
                             )
                     ) {
 
-                        VerticalPDFReader(
-                            state = pdfState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(color = Color.Gray)
-                        )
+//                        Log.d("MyLogЕЕЕЕЕ", pdfState.isLoaded.toString())
+//                        Log.d("MyLogЕЕЕЕЕ", pdfState.loadPercent.toString())
+//                        Log.d("MyLogЕЕЕЕЕ", pdfState.loadPercent.toFloat().div(100.0f).toString())
+
+                        if (!pdfState.isLoaded) {
+                            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                Text(text = "Подождите, идет загрузка документа...")
+                                Box(modifier = Modifier.fillMaxWidth(), Alignment.Center)
+                                {
+                                    Text(text = pdfState.loadPercent.toString()+"%")
+                                    CircularProgressIndicator(
+                                        progress =  pdfState.loadPercent.toFloat().div(100.0f),
+                                        modifier = Modifier.padding(10.dp).size(120.dp),
+                                        strokeWidth = 12.dp,
+                                        color = Primary_Green,
+                                        strokeCap = StrokeCap.Round,
+                                        trackColor = Color.White
+                                    )
+                                }
+                            }
+                        } 
+                           VerticalPDFReader(
+                               state = pdfState,
+                               modifier = Modifier
+                                   .fillMaxSize()
+                                   .background(color = Color.Gray)
+                           )
                     }
                 }
             }
