@@ -52,6 +52,7 @@ class NotificationsViewModel  (
 
                 },
                 Response.ErrorListener { error ->
+                    loaded.value = true
                     Log.i("mylog", "error = " + error)
                 }
             ) {

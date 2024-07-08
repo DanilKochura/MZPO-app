@@ -34,7 +34,7 @@ class NotificationPromoViewModel  (
 
     fun getData( context: Context, alias: String)
     {
-        val url = "https://lk.mzpo-s.ru/mobile$alias"
+        val url = "https://lk.mzpo-s.ru/mobile/$alias"
         val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         val token = test.getString("token_lk", "")
         val queue = Volley.newRequestQueue(context)

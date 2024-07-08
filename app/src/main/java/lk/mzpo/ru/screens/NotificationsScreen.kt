@@ -117,11 +117,14 @@ fun NotificationsScreen(
             AuthService.testAuth(context,  navHostController, notificationsViewModel.auth_tested)
 
             LaunchedEffect(key1 = notificationsViewModel.auth_tested.value, block = {
-                if(notificationsViewModel.auth_tested.value == AuthStatus.AUTH)
+                if(notificationsViewModel.auth_tested.value == AuthStatus.AUTH && notificationsViewModel.notifications.isEmpty() )
                 {
                     if (token != null) {
                         notificationsViewModel.getData(token, context = context)
                     }
+                } else if(notificationsViewModel.auth_tested.value == AuthStatus.GUEST )
+                {
+                    notificationsViewModel.loaded.value = true
                 }
             })
             Box(
@@ -205,6 +208,15 @@ fun NotificationsScreen(
                                                color = Color.Gray
                                            )
                                        }
+                                    }
+                                }
+                                
+                                if (notificationsViewModel.notifications.isEmpty())
+                                {
+                                    item { 
+                                        Column {
+                                            Text(text = "Новых уведомлений нет", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                                        }
                                     }
                                 }
                             })

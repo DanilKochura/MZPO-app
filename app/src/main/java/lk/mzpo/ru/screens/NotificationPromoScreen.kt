@@ -190,7 +190,10 @@ fun NotificationPromoScreen(
                                                         email = email.value.text,
                                                         "Записаться на "+promo.name+" с мобильного приложения",
                                                         name.value.text.toString(),
-                                                        phone = phone.value
+                                                        phone = phone.value,
+                                                        event = promo.event,
+                                                        event_name = promo.event_name,
+                                                        pipeline = promo.pipeline
                                                     ), ctx = context)
                                                  },
                                             colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),

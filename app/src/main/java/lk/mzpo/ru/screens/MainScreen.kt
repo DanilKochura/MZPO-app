@@ -10,6 +10,8 @@ import Prices
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
@@ -128,6 +130,9 @@ fun Main(
         if(mainViewModel.bottomSheetState.value)
         {
             bottomSheetState.show()
+        } else
+        {
+            bottomSheetState.hide()
         }
     })
     val rounded = remember {
@@ -265,57 +270,77 @@ fun Main(
                         }   
                         //endregion
                         Spacer(modifier = Modifier.height(10.dp))
-                        Text(
-                            text = "ПОПУЛЯРНЫЕ КУРСЫ",
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight(500),
-                                color = Color(0xFF1D2B4B),
-                                textAlign = TextAlign.Center,
-                            ),
+                        if (mainViewModel.courses.isNotEmpty()) {
+                            Text(
+                                text = "ПОПУЛЯРНЫЕ КУРСЫ",
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight(500),
+                                    color = Color(0xFF1D2B4B),
+                                    textAlign = TextAlign.Center,
+                                ),
 
-                        )
+                            )
 
 
-                        LazyRow(modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp)
-                        ) {
-                            itemsIndexed(mainViewModel.courses)
-                            {
-                                _, index ->
-                                CourseCard(index,
-                                    Modifier
-                                        .width(300.dp)
-                                        .clickable {
-                                            mainViewModel.analytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM) {
-                                                param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
-                                                param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
-                                                param(
-                                                    FirebaseAnalytics.Param.CONTENT_TYPE,
-                                                    "course"
-                                                )
-                                            }
-                                            navHostController.navigate("course/" + index.id)
-                                        })
+                            LazyRow(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                            ) {
+
+                                itemsIndexed(mainViewModel.courses)
+                                {
+                                    _, index ->
+                                    val unit = {
+                                        mainViewModel.analytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM) {
+                                            param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
+                                            param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
+                                            param(
+                                                FirebaseAnalytics.Param.CONTENT_TYPE,
+                                                "course"
+                                            )
+                                        }
+                                        mainViewModel.analytics.logEvent("click_popular") {
+                                            param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
+                                            param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
+                                            param(
+                                                FirebaseAnalytics.Param.CONTENT_TYPE,
+                                                "course"
+                                            )
+                                        }
+                                        navHostController.navigate("course/" + index.id)
+                                    }
+                                    CourseCard(index,
+                                        Modifier
+                                            .width(300.dp)
+                                            .clickable {
+                                                unit.invoke()
+                                            },
+                                        unit
+                                    )
+                                }
                             }
                         }
+
+
                         Spacer(modifier = Modifier.height(10.dp))
                         if(mainViewModel.banner_sliser.value.isNotEmpty())
                         {
                             MainPromoBanner(mainViewModel)
                             Spacer(modifier = Modifier.height(10.dp))
                         }
-                        Text(
-                            text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
-                            style = TextStyle(
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight(500),
-                                color = Color(0xFF1D2B4B),
-                                textAlign = TextAlign.Center,
-                            ),
-                        )
-                        AltFaculties(navHostController = navHostController, mainViewModel)
+                        if (mainViewModel.cats_main.value.isNotEmpty()) {
+                            Text(
+                                text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight(500),
+                                    color = Color(0xFF1D2B4B),
+                                    textAlign = TextAlign.Center,
+                                ),
+                            )
+                            AltFaculties(navHostController = navHostController, mainViewModel)
+                        }
 
 
                     }
@@ -460,10 +485,14 @@ fun Main(
                                     email = email.value.text,
                                     "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
                                     name.value.text.toString(),
-                                    phone = phone.value
+                                    phone = phone.value,
+                                    event = mainViewModel.event.value,
+                                    event_name = mainViewModel.event_name.value
                                 ), ctx = context)
                             mainViewModel.paused.value = false
-                            mainViewModel.openDialog.targetState = false },
+                            mainViewModel.openDialog.targetState = false
+
+                                  },
                         colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
                         shape = RoundedCornerShape(10.dp)
                     ) {
@@ -530,10 +559,12 @@ fun Main(
                                     email = email.value.text,
                                     "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
                                     name.value.text.toString(),
-                                    phone = phone.value
+                                    phone = phone.value,
+                                    event = mainViewModel.event.value,
+                                    event_name = mainViewModel.event_name.value
                                 ), ctx = context)
                             mainViewModel.paused.value = false
-                            mainViewModel.openDialog.targetState = false },
+                            mainViewModel.bottomSheetState.value = false },
                         colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
                         shape = RoundedCornerShape(10.dp)
                     ) {
@@ -555,7 +586,7 @@ fun Main(
 
 @Preview
 @Composable
-fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3, 4), 1,""), modifier: Modifier = Modifier.width(300.dp))
+fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3, 4), 1,""), modifier: Modifier = Modifier.width(300.dp), obClick: () -> Unit = {})
 {
     Card(modifier = modifier
         .padding(end = 5.dp)
@@ -605,7 +636,7 @@ fun CourseCard(course: CoursePreview = CoursePreview(1, "https://lk.mzpo-s.ru/bu
                     Text(text = "от "+course.prices.sale15.toString()+" руб.", color = Aggressive_red)
                 }
             }
-            Button(onClick = {  }, modifier = Modifier
+            Button(onClick = { obClick.invoke() }, modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 5.dp), shape = RoundedCornerShape(30), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
                 Text("Купить со скидкой", color = Color.White)
@@ -623,7 +654,7 @@ fun MainPromoBanner(viewModel: MainViewModel)
         .fillMaxWidth()
         .padding(vertical = 20.dp)
         .clip(RoundedCornerShape(10.dp))) {
-            SliderView(state = state, viewModel = viewModel)
+            SliderView(state = state, viewModel = viewModel, navHostController = viewModel.navHostController)
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
@@ -637,13 +668,14 @@ fun MainPromoBanner(viewModel: MainViewModel)
             }
 
         }
-            LaunchedEffect(key1 = state.currentPage) {
-                delay(3000)
-                var newPosition = state.currentPage + 1
-                if (newPosition > viewModel.banner_sliser.value.size - 1) newPosition = 0
-                // scrolling to the new position.
-                state.animateScrollToPage(newPosition)
+        LaunchedEffect(key1 = state) {
+            while (true) {
+                delay(10000)
+                val newPosition = (state.currentPage + 1) % viewModel.banner_sliser.value.size
+                state.animateScrollToPage(newPosition, animationSpec = tween(durationMillis = 2000, easing = FastOutSlowInEasing))
             }
+        }
+
 
 
 }
@@ -983,7 +1015,7 @@ fun Faculties() {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun SliderView(state: PagerState, viewModel: MainViewModel) {
+fun SliderView(state: PagerState, viewModel: MainViewModel, navHostController: NavHostController) {
 
     val imageUrl =
         remember { mutableStateOf("") }
@@ -996,8 +1028,23 @@ fun SliderView(state: PagerState, viewModel: MainViewModel) {
 
 
             AsyncImage(
-                model = viewModel.banner_sliser.value[page], contentDescription = "", Modifier
-                    .fillMaxSize(), contentScale = ContentScale.FillBounds
+                model = viewModel.banner_sliser.value[page].image, contentDescription = "", Modifier
+                    .fillMaxSize().clickable {
+                        if (!viewModel.banner_sliser.value[page].link.isNullOrEmpty())
+                        {
+                            if (viewModel.banner_sliser.value[page].link?.contains("course") == true)
+                            {
+                                navHostController.navigate(viewModel.banner_sliser.value[page].link!!)
+
+                            } else
+                            {
+                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                    "link", viewModel.banner_sliser.value[page].link
+                                )
+                                navHostController.navigate("page")
+                            }
+                        }
+                    }, contentScale = ContentScale.FillBounds
             )
 
     }

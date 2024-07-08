@@ -48,6 +48,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonParser
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,12 +70,17 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.math.log
 
-
+data class BannerItems(
+    @SerializedName("image") val image: String,
+    @SerializedName("link") val link: String? = null,
+)
 class MainViewModel
     (
 ) : ViewModel() {
     val auth_tested = mutableStateOf(AuthStatus.TEST) //флаг аунтификации
     val bottomText = mutableStateOf("") // динамический текст для модального окна
+    val event_name = mutableStateOf("") // динамический текст для модального окна
+    val event = mutableStateOf(false) // динамический текст для модального окна
     val Story_lables = listOf(
         listOf("Акции", R.drawable.group_30),
         listOf("Мероприятия", R.drawable.group_29),
@@ -91,7 +97,7 @@ class MainViewModel
     val step = mutableStateOf(0);
 
 
-    val banner_sliser = mutableStateOf(listOf<String>()) //список ссылок на баннеры для слайдера
+    val banner_sliser = mutableStateOf(listOf<BannerItems>()) //список ссылок на баннеры для слайдера
     val cats_main = mutableStateOf(listOf<Category>()) //категории для блока с направлениями
 
 
@@ -163,11 +169,23 @@ class MainViewModel
                                             btn_text = story.getString("btn_text");
                                         } catch (_: Exception) {
                                         }
+
+                                        var is_event = false
+                                        var is_event_name = ""
+
+                                        if (i == 1)
+                                        {
+                                            is_event = true
+                                            is_event_name = story.getString("name")
+                                        }
                                         Button(
                                             onClick = {
                                                 bottomText.value = story.getString("description")
                                                 paused.value = true
-//                                                                                                        openDialog.targetState = true
+                                                event.value = is_event
+                                                event_name.value = is_event_name
+//
+//                                                                                                          openDialog.targetState = true
                                                 bottomSheetState.value = true
                                                 form_title.value = story.getString("name")
                                             },
@@ -234,9 +252,9 @@ class MainViewModel
 
                 //region Banners
                 val banners = mainobj.getJSONArray("mainPromoBanner")
-                val ban_list = arrayListOf<String>()
+                val ban_list = arrayListOf<BannerItems>()
                 for (i in 0 until banners.length()) {
-                    ban_list.add(banners[i] as String)
+                    ban_list.add(gson.fromJson(banners[i].toString(), BannerItems::class.java))
                 }
                 banner_sliser.value = ban_list
                 //endregion
