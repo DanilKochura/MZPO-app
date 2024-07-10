@@ -114,6 +114,7 @@ fun StudyModuleScreen(
     cart_sum: MutableState<Int> = mutableStateOf(0)
 
 ) {
+    val gson = Gson()
 
     Scaffold(
 
@@ -173,101 +174,182 @@ fun StudyModuleScreen(
                             { _, i ->
                                 if (i.activeFile !== null) {
 
-                                        Card(
-                                            modifier = Modifier
-                                                .padding(vertical = 10.dp, horizontal = 20.dp)
-                                                .shadow(2.dp, RoundedCornerShape(10.dp)),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = Color.White
-                                            )
-                                        ) {
+                                    Card(
+                                        modifier = Modifier
+                                            .padding(vertical = 10.dp, horizontal = 20.dp)
+                                            .shadow(2.dp, RoundedCornerShape(10.dp))
+                                            .clickable(onClick = {
+                                                if (i.activeFile!!.image !== null) {
+                                                    val video = gson.toJson(
+                                                        i,
+                                                        ActiveMaterials::class.java
+                                                    )
+                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "video",
+                                                        video
+                                                    )
+                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "contract",
+                                                        contract.id.toString()
+                                                    )
 
-                                                Box(modifier = Modifier.fillMaxWidth())
-                                                {
-                                                    if (i.activeFile!!.image !== null) {
-                                                    AsyncImage(
-                                                        model = "https://lk.mzpo-s.ru/build/images/videos/${i.activeFile!!.image}",
+                                                    navHostController.navigate("video")
+                                                } else if (i.activeFile!!.type == "file") {
+                                                    val material = gson.toJson(
+                                                        i,
+                                                        ActiveMaterials::class.java
+                                                    )
+                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "MATERIAL",
+                                                        material
+                                                    )
+
+                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                        "CONTRACT",
+                                                        contract.id
+                                                    )
+                                                    navHostController.navigate("pdf")
+                                                } else if (i.activeFile!!.type == "test") {
+                                                    navHostController.navigate("test/${contract.id}/${i.id}")
+                                                }
+                                            }),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color.White
+                                        )
+                                    ) {
+
+                                        Box(modifier = Modifier.fillMaxWidth())
+                                        {
+                                            if (i.activeFile!!.image !== null) {
+                                                AsyncImage(
+                                                    model = "https://lk.mzpo-s.ru/build/images/videos/${i.activeFile!!.image}",
+                                                    contentDescription = "",
+                                                    modifier = Modifier
+                                                        .fillMaxWidth(),
+                                                    contentScale = ContentScale.FillWidth
+                                                )
+                                                IconButton(
+                                                    onClick = {
+                                                        val video = gson.toJson(
+                                                            i,
+                                                            ActiveMaterials::class.java
+                                                        )
+                                                        navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                            "video",
+                                                            video
+                                                        )
+                                                        navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                            "contract",
+                                                            contract.id.toString()
+                                                        )
+
+                                                        navHostController.navigate("video")
+                                                    }, modifier = Modifier.align(
+                                                        Alignment.Center
+                                                    )
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.PlayArrow,
                                                         contentDescription = "",
                                                         modifier = Modifier
-                                                            .fillMaxWidth(), contentScale = ContentScale.FillWidth
+                                                            .background(Primary_Green)
+                                                            .padding(10.dp)
+                                                            .clip(
+                                                                RoundedCornerShape(10.dp)
+                                                            ),
+                                                        tint = Color.White
                                                     )
-                                                        IconButton(onClick = {
-                                                            val gson = Gson()
-                                                            val video = gson.toJson(
+                                                }
+
+                                            } else {
+                                                if (i.activeFile!!.type == "file") {
+                                                    IconButton(
+                                                        onClick = {
+//                                                               Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
+//                                                               uriHandler.openUri("https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
+//                                                               navHostController.navigate("material/${contract.id}/${i.id}/${token?.trim('\"')}" )
+                                                            val material = gson.toJson(
                                                                 i,
                                                                 ActiveMaterials::class.java
                                                             )
                                                             navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                                "video",
-                                                                video
+                                                                "MATERIAL",
+                                                                material
                                                             )
+
                                                             navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                                "contract",
-                                                                contract.id.toString()
+                                                                "CONTRACT",
+                                                                contract.id
                                                             )
-                                                            navHostController.navigate("video")
-                                                                             }, modifier = Modifier.align(
-                                                        Alignment.Center)) {
-                                                            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "", modifier = Modifier
-                                                                .background(Primary_Green)
-                                                                .padding(10.dp)
-                                                                .clip(
-                                                                    RoundedCornerShape(10.dp)
-                                                                ), tint = Color.White)
-                                                        }
-
-                                                    } else
-                                                    {
-                                                       if(i.activeFile!!.type == "file")
-                                                       {
-                                                           IconButton(onClick = {
-                                                               Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
-                                                               uriHandler.openUri("https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
-                                                           }, modifier = Modifier
-                                                               .align(
-                                                                   Alignment.Center
-                                                               )
-                                                               .padding(10.dp)) {
-                                                               Icon(painter = painterResource(id = R.drawable.doc), contentDescription = "", modifier = Modifier.fillMaxSize(), tint = Primary_Green)
-                                                           }
-                                                       } else if(i.activeFile!!.type == "test")
-                                                        {
-                                                            IconButton(onClick = {
-                                                                navHostController.navigate("test/${contract.id}/${i.id}")
-                                                            }, modifier = Modifier
-                                                                .align(
-                                                                    Alignment.Center
-                                                                )
-                                                                .padding(10.dp)) {
-                                                                Icon(painter = painterResource(id = R.drawable.baseline_quiz_24), contentDescription = "", modifier = Modifier.fillMaxSize(), tint = Primary_Green)
-                                                            }
-                                                        }
+                                                            navHostController.navigate("pdf")
+                                                        }, modifier = Modifier
+                                                            .align(
+                                                                Alignment.Center
+                                                            )
+                                                            .padding(10.dp)
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(id = R.drawable.doc),
+                                                            contentDescription = "",
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            tint = Primary_Green
+                                                        )
                                                     }
-                                                    if(i.activeFile!!.userProgress !== null && i.activeFile!!.userProgress!!.progress !== null)
-                                                    {
-                                                        if(i.activeFile!!.userProgress?.progress == i.activeFile!!.size)
-                                                        {
-                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Primary_Green, modifier = Modifier.padding(5.dp))
-
-                                                        } else
-                                                        {
-                                                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Orange, modifier = Modifier.padding(5.dp))
-
-                                                        }
+                                                } else if (i.activeFile!!.type == "test") {
+                                                    IconButton(
+                                                        onClick = {
+                                                            navHostController.navigate("test/${contract.id}/${i.id}")
+                                                        }, modifier = Modifier
+                                                            .align(
+                                                                Alignment.Center
+                                                            )
+                                                            .padding(10.dp)
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(id = R.drawable.baseline_quiz_24),
+                                                            contentDescription = "",
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            tint = Primary_Green
+                                                        )
                                                     }
+                                                }
+                                            }
+                                            if (i.activeFile!!.userProgress !== null && i.activeFile!!.userProgress!!.progress !== null) {
+                                                if (i.activeFile!!.userProgress?.progress == i.activeFile!!.size) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CheckCircle,
+                                                        contentDescription = "",
+                                                        tint = Primary_Green,
+                                                        modifier = Modifier.padding(5.dp)
+                                                    )
+
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.CheckCircle,
+                                                        contentDescription = "",
+                                                        tint = Orange,
+                                                        modifier = Modifier.padding(5.dp)
+                                                    )
 
                                                 }
-                                                Text(text = i.name!!, textAlign = TextAlign.Center, modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(10.dp))
-
+                                            }
 
                                         }
+                                        Text(
+                                            text = i.name!!,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(10.dp)
+                                        )
+
+
+                                    }
 
 
                                 }
                             }
-                            item { 
+                            item {
                                 Spacer(modifier = Modifier.height(50.dp))
                             }
                         }, modifier = Modifier.fillMaxWidth())

@@ -83,6 +83,8 @@ import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
+import lk.mzpo.ru.models.Gift
+import lk.mzpo.ru.models.study.ActiveFile
 import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.network.retrofit.ExtendRequest
 import lk.mzpo.ru.network.retrofit.SaveLastPageService
@@ -107,15 +109,15 @@ import kotlin.math.roundToInt
 @SuppressLint("UnrememberedMutableInteractionSource", "UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PdfScreen(
+fun PdfGiftScreen(
     navHostController: NavHostController,
-    material: ActiveMaterials,
-    contract: Int,
+    material: ActiveFile,
+    gift: Int,
     fileViewModel: FileViewModel = viewModel(),
 ) {
     val ctx = LocalContext.current
     val pdfState = rememberVerticalPdfReaderState(
-        resource = ResourceType.Remote("https://lk.mzpo-s.ru/"+material.activeFile?.upload),
+        resource = ResourceType.Remote("https://lk.mzpo-s.ru/"+material.upload),
         isZoomEnable = true
     )
 
@@ -123,88 +125,16 @@ fun PdfScreen(
     val progress = remember {
         mutableStateOf(0)
     }
-    if (material.activeFile?.userProgress != null && material.activeFile?.userProgress!!.progress !== null) {
-        progress.value = material.activeFile?.userProgress!!.progress!!
-    }
+
     val pref = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
     val token_ = pref.getString("token_lk", "")
     val loading = remember {
         mutableStateOf(false)
     }
-    pdfState
 
 
-    LaunchedEffect(key1 = pdfState.currentPage) {
-        if (pdfState.currentPage > progress.value && pdfState.currentPage - progress.value < 3)
-        {
-            SaveLastPageService().send(
-                "Bearer " + token_?.trim('"'),
-                SaveLastPageService.PostBody(
-                    material = material.id!!,
-                    contract = contract,
-                    page = pdfState.currentPage
-                )
 
-            ).enqueue(object : retrofit2.Callback<ResponseBody> {
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    Log.e("API Request", "I got an error and i don't know why :(")
-                    Log.e("API Request", t.message.toString())
-                }
-
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-                    Log.d("API Request", response.body().toString())
-                    Log.d("API Request", response.message())
-                    Log.d("API Request", response.errorBody().toString())
-                    Log.d("API Request", response.raw().body.toString())
-                    if (response.isSuccessful) {
-                        progress.value = pdfState.currentPage
-                    }
-                }
-            })
-            if (progress.value == pdfState.pdfPageCount)
-            {
-                Toast.makeText(ctx, "Вы просмотрели документ полностью!", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    }
     Scaffold(
-        floatingActionButton = {
-
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 80.dp, end = 5.dp), contentAlignment = Alignment.TopEnd) {
-                if (pdfState.isLoaded) {
-                    val progress_reading = pdfState.currentPage.toFloat().div(pdfState.pdfPageCount).times(100).roundToInt()
-                    Row(
-                        modifier = Modifier
-                            .width(150.dp)
-                            .height(20.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-
-                        LinearProgressIndicator(
-                            progress = pdfState.currentPage.toFloat().div(pdfState.pdfPageCount),
-                            Modifier
-                                .fillMaxSize()
-                                .clip(
-                                    RoundedCornerShape(50)
-                                ), color = if(progress_reading < 30) Aggressive_red else if (progress_reading < 75) Orange else Primary_Green, backgroundColor = Color.White
-                        ) //70% progress
-
-                    }
-                    Text(
-                        text = "$progress_reading%",
-                        color = if(progress_reading > 90) Color.White else Color.Black,
-                        modifier = Modifier.padding(horizontal = 7.dp),
-                        textAlign = TextAlign.Left
-                    )
-                }
-            }
-        },
         bottomBar = { },
         content = { padding ->
             Box(

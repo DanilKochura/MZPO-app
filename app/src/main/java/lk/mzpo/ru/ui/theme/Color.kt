@@ -30,3 +30,11 @@ val Skin = Color(0xFF75533C)
 val Pink = Color(0xFFD84D43)
 
 val MainRounded = 30.dp
+
+
+val Gold = Color(
+    255,
+    191,
+    0,
+    255
+)

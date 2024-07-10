@@ -20,6 +20,7 @@ data class Contract (
         @SerializedName("debt"            ) var debt           : Int    = 0,
         @SerializedName("total"           ) var total          : Int,
         @SerializedName("uid"             ) var uid            : String? = null,
+        @SerializedName("docs_errors"     ) var docs_errors    : Int = 0,
         @SerializedName("order_date"      ) var orderDate      : String? = null,
         @SerializedName("close_date"      ) var closeDate      : String? = null,
         @SerializedName("progress"        ) var progress       : Progress? = null,
@@ -65,5 +66,19 @@ data class NotPasssed (
         @SerializedName("left"              ) var left            : String? = null,
         @SerializedName("extendTimes"       ) var extendTimes     : String? = null,
         @SerializedName("status"            ) var status          : Int?    = null
+
+)
+
+
+
+data class Gift (
+
+        @SerializedName("id"        ) var id       : Int?    = null,
+        @SerializedName("name"      ) var name     : String? = null,
+        @SerializedName("image"     ) var image    : String? = null,
+        @SerializedName("date_from" ) var dateFrom : String? = null,
+        @SerializedName("date_to"   ) var dateTo   : String? = null,
+        @SerializedName("status"    ) var status   : String? = null,
+        @SerializedName("user_type" ) var userType : String? = null
 
 )

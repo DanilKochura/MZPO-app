@@ -35,6 +35,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Badge
+import androidx.compose.material.BadgedBox
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.ExperimentalMaterialApi
@@ -182,13 +184,28 @@ fun StudyScreen(
                             .height(45.dp),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "",
-                                modifier = Modifier.padding(end = 5.dp)
-                            )
-                            Text(text = "Загрузить документы", color = Color.White)
+                        if (contract.docs_errors > 0)
+                        {
+                            BadgedBox(badge = { Badge { Text(contract.docs_errors.toString()) } }) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "",
+                                        modifier = Modifier.padding(end = 5.dp)
+                                    )
+                                    Text(text = "Загрузить документы", color = Color.White)
+                                }
+                            }
+                        } else
+                        {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "",
+                                    modifier = Modifier.padding(end = 5.dp)
+                                )
+                                Text(text = "Загрузить документы", color = Color.White)
+                            }
                         }
                     }
                     if ((studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) && !studyViewModel.verify_docs.value) {
@@ -346,11 +363,32 @@ fun StudyScreen(
                                 )
                             }
                         }
+                        if (studyViewModel.contract.status == 7) {
+                            Column (Modifier.fillMaxWidth()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp)
+                                        .background(Aggressive_red.copy(.1f))
+                                        .border(1.dp, Aggressive_red, RoundedCornerShape(5.dp))
+                                        .clip(
+                                            RoundedCornerShape(5.dp)
+                                        )
+                                ) {
+                                    Text(
+                                        text = "Ваше заявление на возврат принято",
+                                        color = Aggressive_red,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(vertical = 5.dp).fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
                         Divider()
                         LoadableScreen(loaded = studyViewModel.loaded, error = studyViewModel.error)
                         {
                             if (!studyViewModel.verify_docs.value) {
-                                if (studyViewModel.contract.course!!.prices.sale15 !== null || studyViewModel.passedModules.isNotEmpty() || studyViewModel.exam.isNotEmpty()) {
+                                if (studyViewModel.contract.course!!.prices.sale15 !== null || studyViewModel.passedModules.isNotEmpty() || studyViewModel.exam.isNotEmpty() || studyViewModel.schedules.isNotEmpty()) {
                                     var list = listOf("Расписание", "Материалы")
 
                                     TabRow(
@@ -801,27 +839,7 @@ fun Schedule(studyViewModel: StudyViewModel) {
                 HorizontalDivider()
             }
         }
-        if (studyViewModel.contract.status == 7) {
-            Column (Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                        .background(Aggressive_red.copy(.1f))
-                        .border(1.dp, Aggressive_red, RoundedCornerShape(5.dp))
-                        .clip(
-                            RoundedCornerShape(5.dp)
-                        )
-                ) {
-                    Text(
-                        text = "Ваше заявление на возврат принято",
-                        color = Aggressive_red,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = 5.dp).fillMaxWidth()
-                    )
-                }
-            }
-        }
+
         if (studyViewModel.exam.isNotEmpty()) {
             //region Билеты экзамен
             if (studyViewModel.exam[0].answered != 1) {
@@ -887,19 +905,21 @@ fun Schedule(studyViewModel: StudyViewModel) {
         }
         if (studyViewModel.schedules.isNotEmpty()) {
             for (item in studyViewModel.schedules) {
-                val exam = LocalDate.parse(item.group.exam)
-                Text(
-                    text = "Группа " + item.group.title,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Дата экзамена: " + exam.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold
-                )
+
+                    val exam = LocalDate.parse(item.group.exam)
+                    Text(
+                        text = "Группа " + item.group.title,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Дата экзамена: " + exam.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    )
+
                 Divider()
                 for (i in item.group.allSchedules) {
                     Row(
@@ -907,6 +927,7 @@ fun Schedule(studyViewModel: StudyViewModel) {
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         val date = LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(text = date.format(secondFormatter).toString())
