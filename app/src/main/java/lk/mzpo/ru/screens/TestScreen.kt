@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.webkit.WebView
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Checkbox
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -81,6 +83,7 @@ import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.components.PasswordTextField
+import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Orange
 import lk.mzpo.ru.ui.theme.Primary_Green
@@ -94,8 +97,12 @@ import kotlin.math.log
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TestScreen(
-    navHostController: NavHostController, test: Int, contract: Int, testViewModel: TestViewModel = viewModel()
-, cart_sum: MutableState<Int> = mutableStateOf(0)) {
+    navHostController: NavHostController,
+    test: Int,
+    contract: Int,
+    testViewModel: TestViewModel = viewModel(),
+    cart_sum: MutableState<Int> = mutableStateOf(0)
+) {
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
 //            topBar = {
@@ -114,7 +121,7 @@ fun TestScreen(
 //            },
         bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
         content = { padding ->
-            Log.d("StudyLog", contract.toString()+test.toString())
+            Log.d("StudyLog", contract.toString() + test.toString())
             val context = LocalContext.current
             testViewModel.getData(context, contract, test)
             Box(
@@ -152,121 +159,234 @@ fun TestScreen(
                                     topEnd = MainRounded
                                 )
                             )
-                            .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded)), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceEvenly
+                            .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceEvenly
                     ) {
-                           LoadableScreen(loaded = testViewModel.loaded)
-                           {
-                               if(testViewModel.material.value !== null)
-                               {
+                        LoadableScreen(loaded = testViewModel.loaded)
+                        {
+                            if (testViewModel.material.value !== null) {
 
-                                   if(!testViewModel.testStarted.value)
-                                   {
-                                       Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                                           Text(text = "Тест по теме:")
-                                           Text(text = testViewModel.material.value!!.name.toString())
-                                           Spacer(modifier = Modifier.height(20.dp))
-                                           Text(text = "Количество вопросов: "+testViewModel.questionCount.value.toString())
-                                           Text(text = "Осталось попыток: "+testViewModel.attemptsLeft.value.toString())
-                                           Button(onClick = { testViewModel.testStarted.value = true }, colors = ButtonDefaults.buttonColors(backgroundColor = Primary_Green_BG, contentColor = Color.White), enabled = (testViewModel.question.value !== null)) {
-                                               if(testViewModel.hasNotFinishedAttempt.value)
-                                               {
-                                                   Text(text = "Продолжить тест", color = Color.White)
-                                               } else
-                                               {
-                                                   Text(text = "Начать тест", color = Color.White)
-                                               }
-                                           }
-                                       }
-                                   } else
-                                   {
+                                if (!testViewModel.finished.value) {
 
-                                       if(testViewModel.question.value!!.multiple == "no")
-                                       {
-                                           val selected = remember {
-                                               mutableStateOf(-1)
-                                           }
-                                           Column(
-                                               Modifier
-                                                   .fillMaxSize()
-                                                   .padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                               Column(Modifier.fillMaxWidth()) {
-                                                   Text(testViewModel.question.value!!.question.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp, textAlign = TextAlign.Center)
-                                                   Text(testViewModel.question.value!!.label.toString(), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top=5.dp))
-                                               }
-                                               Divider()
-                                               val shape = if(testViewModel.question.value!!.multiple == "no") RoundedCornerShape(50) else RoundedCornerShape(5.dp)
-                                               LazyColumn(content = {
-                                                   itemsIndexed(testViewModel.question.value!!.activeAnswers)
-                                                   {
-                                                           index, item ->
-                                                       Box(modifier = Modifier
-                                                           .fillMaxWidth()
-                                                           .padding(
-                                                               horizontal = 10.dp,
-                                                               vertical = 5.dp
-                                                           )
-                                                           .clickable {
-                                                               selected.value = item.id!!
-                                                           })
-                                                       Row(
-                                                           Modifier.clip(RoundedCornerShape(10.dp))
-                                                               .background(Primary_Green.copy(0.3f), RoundedCornerShape(10.dp))
-                                                               .padding(7.dp)
-                                                               .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                                           Text(text = item.answer.toString(), modifier = Modifier.fillMaxWidth(0.6f))
-                                                           Row(verticalAlignment = Alignment.CenterVertically) {
-                                                               Box(
-                                                                   modifier = Modifier
-                                                                       .size(size = 28.dp)
-                                                                       .clip(shape = shape) // to remove the ripple effect on the corners
-                                                                       .clickable {
-                                                                           selected.value =
-                                                                               item.id!!
+                                    if (!testViewModel.testStarted.value) {
+                                        Column(
+                                            Modifier.fillMaxWidth(),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Icon(painter = painterResource(id = R.drawable.baseline_quiz_24), contentDescription = "", tint = Primary_Green, modifier = Modifier.size(100.dp))
+                                            Text(text = "Тест по теме:")
+                                            Text(text = testViewModel.material.value!!.name.toString())
+                                            Spacer(modifier = Modifier.height(20.dp))
+                                            Text(text = "Количество вопросов: " + testViewModel.questionCount.value.toString())
+                                            Text(text = "Осталось попыток: " + testViewModel.attemptsLeft.value.toString())
+                                            Button(
+                                                onClick = {
+                                                    testViewModel.testStarted.value = true
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    backgroundColor = Primary_Green_BG,
+                                                    contentColor = Color.White
+                                                ),
+                                                enabled = (testViewModel.question.value !== null)
+                                            ) {
+                                                if (testViewModel.hasNotFinishedAttempt.value) {
+                                                    Text(
+                                                        text = "Продолжить тест",
+                                                        color = Color.White
+                                                    )
+                                                } else {
+                                                    Text(text = "Начать тест", color = Color.White)
+                                                }
+                                            }
+                                        }
+                                    } else {
 
-                                                                       }
-                                                                       .background(
-                                                                           color = if (selected.value == item.id!!) Primary_Green_BG else Color.White,
-                                                                           shape = shape
-                                                                       )
-                                                                       .border(
-                                                                           width = 2.dp,
-                                                                           color = if (selected.value == item.id!!) Color.DarkGray else Color.Gray,
-                                                                           shape = shape
-                                                                       ),
-                                                                   contentAlignment = Alignment.Center
-                                                               ) {
-                                                                   if (selected.value == item.id!!) {
-                                                                       Icon(
-                                                                           imageVector = Icons.Default.Check,
-                                                                           contentDescription = null,
-                                                                           tint = Color.White
-                                                                       )
-                                                                   }
-                                                               }
+//                                       if(testViewModel.question.value!!.multiple == "no")
+//                                       {
+                                        val selected = remember {
+                                            mutableStateOf(-1)
+                                        }
+                                        Column(
+                                            Modifier
+                                                .fillMaxSize()
+                                                .padding(10.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Column(Modifier.fillMaxWidth()) {
+                                                Text(
+                                                    testViewModel.question.value!!.question.toString(),
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 18.sp,
+                                                    textAlign = TextAlign.Center
+                                                )
+//                                                   Text(testViewModel.question.value!!.label.toString(), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top=5.dp))
+                                            }
+                                            Divider()
+                                            val _shape =
+                                                if (testViewModel.question.value!!.multiple == "no") RoundedCornerShape(
+                                                    50
+                                                ) else RoundedCornerShape(5.dp)
+                                            val shape =
+                                                RoundedCornerShape(
+                                                    50
+                                                )
+                                            Log.d(
+                                                "MyTestLog",
+                                                testViewModel.question.value!!.activeAnswers.size.toString()
+                                            )
+                                            Log.d(
+                                                "MyTestLog",
+                                                testViewModel.question.value!!.activeAnswers[0].toString()
+                                            )
+
+                                            LazyColumn(content = {
+                                                itemsIndexed(testViewModel.question.value!!.activeAnswers)
+                                                { index, item ->
+                                                    Log.d("MyTestLog", item.toString())
+                                                    Box(modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            horizontal = 10.dp,
+                                                            vertical = 5.dp
+                                                        )
+                                                        .clickable {
+                                                            selected.value = item.id!!
+                                                        })
+                                                    Row(
+                                                        Modifier
+                                                            .clip(RoundedCornerShape(10.dp))
+                                                            .background(
+                                                                Primary_Green.copy(0.3f),
+                                                                RoundedCornerShape(10.dp)
+                                                            )
+                                                            .padding(7.dp)
+                                                            .fillMaxWidth(),
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                    ) {
+                                                        Text(
+                                                            text = item.answer.toString(),
+                                                            modifier = Modifier.fillMaxWidth(0.6f)
+                                                        )
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .size(size = 28.dp)
+                                                                    .clip(shape = shape) // to remove the ripple effect on the corners
+                                                                    .clickable {
+                                                                        selected.value =
+                                                                            item.id!!
+
+                                                                    }
+                                                                    .background(
+                                                                        color = if (selected.value == item.id!!) Primary_Green_BG else Color.White,
+                                                                        shape = shape
+                                                                    )
+                                                                    .border(
+                                                                        width = 2.dp,
+                                                                        color = if (selected.value == item.id!!) Color.DarkGray else Color.Gray,
+                                                                        shape = shape
+                                                                    ),
+                                                                contentAlignment = Alignment.Center
+                                                            ) {
+                                                                if (selected.value == item.id!!) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Check,
+                                                                        contentDescription = null,
+                                                                        tint = Color.White
+                                                                    )
+                                                                }
+                                                            }
 
 
-                                                           }
-                                                       }
-                                                   }
-                                                   item { 
-                                                       Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.Center,) {
-                                                           Button(onClick = {
-                                                               testViewModel.sendSingle(context, contract, test, selected.value, testViewModel.question.value!!.id!!)
-                                                           }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red, contentColor = Color.White)) {
-                                                               Text(text = "Подтвердить", color = Color.White)
-                                                           }
-                                                       }
-                                                   }
-                                               })
+                                                        }
+                                                    }
+                                                }
+                                                item {
+                                                    Row(
+                                                        Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(top = 10.dp),
+                                                        horizontalArrangement = Arrangement.Center,
+                                                    ) {
+                                                        Button(
+                                                            onClick = {
+                                                                if (selected.value == -1) {
+                                                                    Toast.makeText(
+                                                                        context,
+                                                                        "Выберите вариант ответа!",
+                                                                        Toast.LENGTH_SHORT
+                                                                    ).show()
+                                                                    return@Button
+                                                                }
+                                                                testViewModel.sendSingle(
+                                                                    context,
+                                                                    contract,
+                                                                    test,
+                                                                    selected.value,
+                                                                    testViewModel.question.value!!.id!!
+                                                                )
+                                                                selected.value = -1
+                                                            },
+                                                            colors = ButtonDefaults.buttonColors(
+                                                                backgroundColor = Color.Red,
+                                                                contentColor = Color.White
+                                                            )
+                                                        ) {
+                                                            Text(
+                                                                text = "Подтвердить",
+                                                                color = Color.White
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            })
 
-                                           }
-                                       }
+                                        }
+                                    }
 
-                                   }
-                               }
-                           }
+                                } else {
+                                    Column(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        if (testViewModel.result.value!!.result >= 70.0f) {
+                                            Icon(imageVector = Icons.Default.Check, contentDescription = "", tint = Primary_Green, modifier = Modifier.size(100.dp).padding(10.dp))
+                                            Text(text = "Результат: " + testViewModel.result.value?.result.toString() + "%")
+                                            Text(
+                                                text = "Тест пройден!",
+                                                fontSize = 18.sp,
+                                                color = Primary_Green
+                                            )
+                                        } else {
+                                            Icon(imageVector = Icons.Default.Close, contentDescription = "", tint = Aggressive_red, modifier = Modifier.size(100.dp).padding(10.dp))
+                                            Text(text = "Результат: " + testViewModel.result.value?.result.toString() + "%")
+                                            Text(
+                                                text = "Тест не пройден!",
+                                                fontSize = 18.sp,
+                                                color = Aggressive_red
+                                            )
+
+                                        }
+                                        OutlinedButton(
+                                            onClick = { navHostController.navigateUp() },
+                                            border = BorderStroke(2.dp, Primary_Green),
+                                            modifier = Modifier.padding(vertical = 10.dp)
+                                        ) {
+                                            Text(
+                                                text = "Назад",
+                                                color = Primary_Green,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+//                }
             }
         }
     )
@@ -275,12 +395,15 @@ fun TestScreen(
 
 @Preview
 @Composable
-fun Answer()
-{
+fun Answer() {
     val checked = remember {
         mutableStateOf(false)
     }
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         Text(text = "Вариант ответа", modifier = Modifier.padding(horizontal = 20.dp))
     }
 }

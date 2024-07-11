@@ -47,8 +47,9 @@ class VideoViewModel  (
         spendTime: Float,
         contract: Int
     ) {
-        val queue = Volley.newRequestQueue(ctx)
 
+        val queue = Volley.newRequestQueue(ctx)
+        Log.d("MyLog", time.toString()+" "+duration.toString()+" "+spendTime.toString())
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
             "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id",
@@ -81,8 +82,9 @@ class VideoViewModel  (
                     HashMap()
                 params["time"] = time.toString()
                 params["duration"] = duration.toString()
-                params["spendTime"] = spendTime.toString()
+                params["spendTime"] = spendTime.times(1000).toString()
                 params["contract"] = contract.toString()
+                Log.d("MyLog", params.toString());
                 return params
             }
         }

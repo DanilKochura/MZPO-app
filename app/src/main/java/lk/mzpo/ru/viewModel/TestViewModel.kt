@@ -26,6 +26,7 @@ import lk.mzpo.ru.models.UserData
 import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.models.study.Question
 import lk.mzpo.ru.models.study.TestBase
+import lk.mzpo.ru.models.study.TestResult
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -55,11 +56,15 @@ class TestViewModel  (
     val hasNotFinishedAttempt = mutableStateOf(true)
 
     val question = mutableStateOf<Question?>(null)
+    val result = mutableStateOf<TestResult?>(null)
+    val finished = mutableStateOf(false)
     val material = mutableStateOf<ActiveMaterials?>(null)
 
     fun getData(context: Context, contractId: Int, testId: Int)
     {
         val url = "https://lk.mzpo-s.ru/mobile/user/test/$contractId/$testId"
+        Log.d("MyTestLog", url)
+
         val queue = Volley.newRequestQueue(context)
         val stringReq: StringRequest =
             object : StringRequest(
@@ -95,6 +100,7 @@ class TestViewModel  (
         this.final.value = test.final!!
         this.hasNotFinishedAttempt.value = test.hasNotFinishedAttempt!!
         this.question.value = test.question
+        Log.d("MyTestLog", question.value?.activeAnswers?.size.toString())
         this.questionCount.value = test.questionsCount!!
         this.material.value = test.material!!
 
@@ -152,15 +158,24 @@ class TestViewModel  (
     fun sendSingle(ctx: Context, contractId: Int, materialId: Int, answer: Int, question: Int)
     {
         val queue = Volley.newRequestQueue(ctx)
-
+        Log.d("MyTestLog", "https://lk.mzpo-s.ru/mobile/user/test/$contractId/$materialId/question/$question")
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
             "https://lk.mzpo-s.ru/mobile/user/test/$contractId/$materialId/question/$question",
             Response.Listener { response ->
                 val mainobj = JSONObject(response)
-                val quest = mainobj.getJSONObject("question")
                 val gson = Gson();
-                this.question.value = gson.fromJson(quest.toString(), Question::class.java)
+                try {
+                   val quest = mainobj.getJSONObject("question")
+                   this.question.value = gson.fromJson(quest.toString(), Question::class.java)
+               } catch (_: Exception)
+               {
+                   Log.d("MyTestLog", "TEST")
+                   val quest = mainobj.getJSONObject("result")
+                   this.result.value = gson.fromJson(quest.toString(), TestResult::class.java)
+                   Log.d("MyTestLog", result.value.toString())
+                   finished.value = true
+               }
                 Toast.makeText(ctx,"Данные успешно сохранены!", Toast.LENGTH_SHORT).show()
             },
 
