@@ -32,5 +32,13 @@ data class Exam (
     @SerializedName("answered"    ) var answered    : Int?              = null,
     @SerializedName("num"         ) var num         : Int?              = null,
     @SerializedName("ticket"      ) var ticket      : ArrayList<Ticket> = arrayListOf()
+)
 
+
+data class ExamNew (
+
+    @SerializedName("accessed" ) var accessed : String? = null,
+    @SerializedName("small"   ) var small    : Boolean,
+    @SerializedName("close"    ) var close    : String? = null,
+    @SerializedName("many"         ) var many  : ArrayList<String> = arrayListOf(),
 )

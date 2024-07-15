@@ -7,5 +7,5 @@ data class Feedback (
     @SerializedName("message") val message: String,
     @SerializedName("parent")  val parent: Int?,
     @SerializedName("type")  val type: Int,
-    @SerializedName("mobile")  val mobile: Int = 1
+    @SerializedName("mobile")  val mobile: String = "android"
         )

@@ -43,9 +43,15 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -59,6 +65,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -95,6 +102,8 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.ktx.logEvent
 import com.ireward.htmlcompose.HtmlText
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import lk.mzpo.ru.BuildConfig
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.network.retrofit.AuthService
@@ -106,6 +115,7 @@ import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
 import lk.mzpo.ru.ui.components.Privacy
 import lk.mzpo.ru.ui.components.SearchViewPreview
+import lk.mzpo.ru.ui.components.isValidEmail
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.theme.Aggressive_red
@@ -124,6 +134,7 @@ fun Main(
 
 )
 {
+    val uri = LocalUriHandler.current
     val bottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
     LaunchedEffect(key1 =  mainViewModel.bottomSheetState.value, block = {
@@ -148,9 +159,29 @@ fun Main(
     })
     mainViewModel.navHostController = navHostController
     val ctx = LocalContext.current
-    mainViewModel.getStories(context = ctx)
+    mainViewModel.getStories(context = ctx, uri = uri)
+    val renewModalState = remember {
+        mutableStateOf(false)
+    }
+    if (BuildConfig.VERSION_NAME < mainViewModel.app_version.value)
+    {
+        renewModalState.value = true
+    }
+    val isRefreshing = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
-
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing.value,
+        onRefresh = {
+            coroutineScope.launch {
+                isRefreshing.value = true
+                // Здесь вы можете добавить логику обновления данных
+                delay(2000) // Задержка для демонстрации
+                mainViewModel.getStories(context = ctx, uri)
+                isRefreshing.value = false
+            }
+        }
+    )
     Scaffold(
 //            bottomBar = { BottomNavigationMenu(navController = nav)  },
 //            topBar = {
@@ -198,151 +229,158 @@ fun Main(
                         }
                     }
 
-                    Column(
-                        Modifier
+                    Box(
+                        modifier = Modifier
                             .fillMaxSize()
-                            .background(
-                                color = Color.White,
-                                shape = RoundedCornerShape(
-                                    topStart = rounded.value,
-                                    topEnd = rounded.value
-                                )
-                            )
-                            .clip(
-                                RoundedCornerShape(
-                                    topStart = rounded.value,
-                                    topEnd = rounded.value
-                                )
-                            )
-                            .verticalScroll(mainscrollstate)
-                            .padding(horizontal = 7.dp)
+                            .pullRefresh(pullRefreshState)
                     ) {
-
-                        //region Strories
-                        LazyRow(
+                        Column(
                             Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-
-                            itemsIndexed(mainViewModel.stories.value)
-                            {
-                                    index, item ->
-                                Column( verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally)
-                                {
-                                    Image(painter = painterResource(id = mainViewModel.Story_lables[index][1] as Int), contentDescription = "",
-                                        contentScale = ContentScale.Inside, modifier = Modifier
-                                            .clip(RoundedCornerShape(50))
-                                            .clickable {
-                                                val test = mainViewModel.analytics.logEvent(
-                                                    FirebaseAnalytics.Event.VIEW_PROMOTION
-                                                ) {
-                                                    param(
-                                                        FirebaseAnalytics.Param.PROMOTION_ID,
-                                                        mainViewModel.Story_lables[index][0] as String
-                                                    )
-                                                    param(
-                                                        FirebaseAnalytics.Param.CONTENT_TYPE,
-                                                        "stories"
-                                                    )
-                                                }
-                                                Log.d("MyLog", "SENDED: $test")
-                                                if (mainViewModel.stories.value[index].isNotEmpty()) {
-                                                    mainViewModel._storyState.targetState = true
-                                                    mainViewModel.story_position.value = index
-                                                }
-                                            }
-                                        )
-                                    Text(
-                                        text = mainViewModel.Story_lables[index][0] as String,
-                                        style = TextStyle(
-                                            fontSize = 12.5.sp,
-                                            fontWeight = FontWeight(400),
-                                            color = Color(0xFF505050),
-                                            textAlign = TextAlign.Center,
-                                        )
+                                .fillMaxSize()
+                                .background(
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(
+                                        topStart = rounded.value,
+                                        topEnd = rounded.value
                                     )
+                                )
+                                .clip(
+                                    RoundedCornerShape(
+                                        topStart = rounded.value,
+                                        topEnd = rounded.value
+                                    )
+                                )
+                                .verticalScroll(mainscrollstate)
+                                .padding(horizontal = 7.dp)
+                        ) {
 
-                                }
+                            //region Strories
+                            LazyRow(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
 
-                            }
-
-
-                        }   
-                        //endregion
-                        Spacer(modifier = Modifier.height(10.dp))
-                        if (mainViewModel.courses.isNotEmpty()) {
-                            Text(
-                                text = "ПОПУЛЯРНЫЕ КУРСЫ",
-                                style = TextStyle(
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight(500),
-                                    color = Color(0xFF1D2B4B),
-                                    textAlign = TextAlign.Center,
-                                ),
-
-                            )
-
-
-                            LazyRow(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp)
-                            ) {
-
-                                itemsIndexed(mainViewModel.courses)
+                                itemsIndexed(mainViewModel.stories.value)
                                 {
-                                    _, index ->
-                                    val unit = {
-                                        mainViewModel.analytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM) {
-                                            param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
-                                            param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
-                                            param(
-                                                FirebaseAnalytics.Param.CONTENT_TYPE,
-                                                "course"
+                                        index, item ->
+                                    Column( verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally)
+                                    {
+                                        Image(painter = painterResource(id = mainViewModel.Story_lables[index][1] as Int), contentDescription = "",
+                                            contentScale = ContentScale.Inside, modifier = Modifier
+                                                .clip(RoundedCornerShape(50))
+                                                .clickable {
+                                                    val test = mainViewModel.analytics.logEvent(
+                                                        "open_stories"
+                                                    ) {
+                                                        param(
+                                                            "story_type",
+                                                            mainViewModel.Story_lables[index][0] as String
+                                                        )
+                                                    }
+                                                    Log.d("MyLog", "SENDED: $test")
+                                                    if (mainViewModel.stories.value[index].isNotEmpty()) {
+                                                        mainViewModel._storyState.targetState = true
+                                                        mainViewModel.story_position.value = index
+                                                    }
+                                                }
+                                        )
+                                        Text(
+                                            text = mainViewModel.Story_lables[index][0] as String,
+                                            style = TextStyle(
+                                                fontSize = 12.5.sp,
+                                                fontWeight = FontWeight(400),
+                                                color = Color(0xFF505050),
+                                                textAlign = TextAlign.Center,
                                             )
-                                        }
-                                        mainViewModel.analytics.logEvent("click_popular") {
-                                            param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
-                                            param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
-                                            param(
-                                                FirebaseAnalytics.Param.CONTENT_TYPE,
-                                                "course"
-                                            )
-                                        }
-                                        navHostController.navigate("course/" + index.id)
+                                        )
+
                                     }
-                                    CourseCard(index,
-                                        Modifier
-                                            .width(300.dp)
-                                            .clickable {
-                                                unit.invoke()
-                                            },
-                                        unit
+
+                                }
+
+
+                            }
+                            //endregion
+                            Spacer(modifier = Modifier.height(10.dp))
+                            if (mainViewModel.courses.isNotEmpty()) {
+                                Text(
+                                    text = "ПОПУЛЯРНЫЕ КУРСЫ",
+                                    style = TextStyle(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight(500),
+                                        color = Color(0xFF1D2B4B),
+                                        textAlign = TextAlign.Center,
+                                    ),
+
                                     )
+
+
+                                LazyRow(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp)
+                                ) {
+
+                                    itemsIndexed(mainViewModel.courses)
+                                    {
+                                            _, index ->
+                                        val unit = {
+                                            mainViewModel.analytics.logEvent(FirebaseAnalytics.Event.SELECT_ITEM) {
+                                                param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
+                                                param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
+                                                param(
+                                                    FirebaseAnalytics.Param.CONTENT_TYPE,
+                                                    "course"
+                                                )
+                                            }
+                                            mainViewModel.analytics.logEvent("click_popular") {
+                                                param(FirebaseAnalytics.Param.ITEM_ID, index.prefix)
+                                                param(FirebaseAnalytics.Param.ITEM_NAME, index.name)
+                                                param(
+                                                    FirebaseAnalytics.Param.CONTENT_TYPE,
+                                                    "course"
+                                                )
+                                            }
+                                            navHostController.navigate("course/" + index.id)
+                                        }
+                                        CourseCard(index,
+                                            Modifier
+                                                .width(300.dp)
+                                                .clickable {
+                                                    unit.invoke()
+                                                },
+                                            unit
+                                        )
+                                    }
                                 }
                             }
-                        }
 
 
-                        Spacer(modifier = Modifier.height(10.dp))
-                        if(mainViewModel.banner_sliser.value.isNotEmpty())
-                        {
-                            MainPromoBanner(mainViewModel)
                             Spacer(modifier = Modifier.height(10.dp))
-                        }
-                        if (mainViewModel.cats_main.value.isNotEmpty()) {
-                            Text(
-                                text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
-                                style = TextStyle(
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight(500),
-                                    color = Color(0xFF1D2B4B),
-                                    textAlign = TextAlign.Center,
-                                ),
-                            )
-                            AltFaculties(navHostController = navHostController, mainViewModel)
-                        }
+                            if(mainViewModel.banner_sliser.value.isNotEmpty())
+                            {
+                                MainPromoBanner(mainViewModel)
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+                            if (mainViewModel.cats_main.value.isNotEmpty()) {
+                                Text(
+                                    text = "НАПРАВЛЕНИЯ ОБУЧЕНИЯ",
+                                    style = TextStyle(
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight(500),
+                                        color = Color(0xFF1D2B4B),
+                                        textAlign = TextAlign.Center,
+                                    ),
+                                )
+                                AltFaculties(navHostController = navHostController, mainViewModel)
+                            }
 
 
+                        }
+                        PullRefreshIndicator(
+                        refreshing = isRefreshing.value,
+                        state = pullRefreshState,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    )
                     }
                 }
 
@@ -350,6 +388,35 @@ fun Main(
 
         }, modifier = Modifier.fillMaxSize()
     )
+    if (renewModalState.value) {
+        val uri = LocalUriHandler.current
+        AlertDialog(
+            onDismissRequest = {
+
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text("Ваша версия устарела", fontSize = 20.sp)
+                    Text("Обновите приложение", fontSize = 20.sp)
+                    Icon(painter = painterResource(id = R.drawable.devel), contentDescription = "", Modifier.size(50.dp))
+                }
+
+            },
+            buttons = {
+                Row(
+                    modifier = Modifier.padding(all = 8.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Button(onClick = {
+                        uri.openUri("https://www.rustore.ru/catalog/app/lk.mzpo.ru")
+                    }, modifier = Modifier, shape = RoundedCornerShape(10), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
+                        Text("Обновить", color = Color.White)
+                    }
+                }
+            },
+            shape = RoundedCornerShape(10.dp)
+        )
+    }
     AnimatedVisibility(visibleState = mainViewModel._storyState, modifier = Modifier.fillMaxSize(), exit = fadeOut()) {
 
         Box(modifier = Modifier
@@ -478,16 +545,16 @@ fun Main(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-
                             SendDataToAmo.sendDataToAmo(
                                 Data2Amo(
-                                    "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
+                                    comment =  "Записаться на "+mainViewModel.form_name_site.value+" с мобильного приложения",
                                     email = email.value.text,
-                                    "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
-                                    name.value.text.toString(),
+                                    form_name_site = "Записаться на "+mainViewModel.form_name_site.value+" с мобильного приложения",
+                                    name = name.value.text.toString(),
                                     phone = phone.value,
                                     event = mainViewModel.event.value,
-                                    event_name = mainViewModel.event_name.value
+                                    event_name = mainViewModel.event_name.value,
+                                    pipeline = mainViewModel.pipeline.value
                                 ), ctx = context)
                             mainViewModel.paused.value = false
                             mainViewModel.openDialog.targetState = false
@@ -555,13 +622,14 @@ fun Main(
                             }
                             SendDataToAmo.sendDataToAmo(
                                 Data2Amo(
-                                    "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
+                                    "Записаться на "+mainViewModel.form_name_site.value+" с мобильного приложения",
                                     email = email.value.text,
-                                    "Записаться на "+mainViewModel.form_title.value+" с мобильного приложения",
+                                    "Записаться на "+mainViewModel.form_name_site.value+" с мобильного приложения",
                                     name.value.text.toString(),
                                     phone = phone.value,
                                     event = mainViewModel.event.value,
-                                    event_name = mainViewModel.event_name.value
+                                    event_name = mainViewModel.event_name.value,
+                                    pipeline = mainViewModel.pipeline.value
                                 ), ctx = context)
                             mainViewModel.paused.value = false
                             mainViewModel.bottomSheetState.value = false },
@@ -1029,15 +1097,21 @@ fun SliderView(state: PagerState, viewModel: MainViewModel, navHostController: N
 
             AsyncImage(
                 model = viewModel.banner_sliser.value[page].image, contentDescription = "", Modifier
-                    .fillMaxSize().clickable {
-                        if (!viewModel.banner_sliser.value[page].link.isNullOrEmpty())
-                        {
-                            if (viewModel.banner_sliser.value[page].link?.contains("course") == true)
-                            {
+                    .fillMaxSize()
+                    .clickable {
+                        val test = viewModel.analytics.logEvent(
+                            "banner_click"
+                        ) {
+                            param(
+                                "promo_link",
+                                viewModel.banner_sliser.value[page].link.toString()
+                            )
+                        }
+                        if (!viewModel.banner_sliser.value[page].link.isNullOrEmpty()) {
+                            if (viewModel.banner_sliser.value[page].link?.contains("course") == true) {
                                 navHostController.navigate(viewModel.banner_sliser.value[page].link!!)
 
-                            } else
-                            {
+                            } else {
                                 navHostController.currentBackStackEntry?.savedStateHandle?.set(
                                     "link", viewModel.banner_sliser.value[page].link
                                 )

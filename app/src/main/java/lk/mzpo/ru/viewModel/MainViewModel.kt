@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -53,6 +54,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import lk.mzpo.ru.BuildConfig
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.Category
@@ -92,6 +94,7 @@ class MainViewModel
     val courses: List<CoursePreview> get() = _courses.value
 
     val form_title = mutableStateOf("")
+    val form_name_site = mutableStateOf("")
 
     val stories: MutableState<List<List<Story>>> = mutableStateOf(emptyList()) // список историй
     val step = mutableStateOf(0);
@@ -108,22 +111,23 @@ class MainViewModel
     val story_position = mutableStateOf(0)
     val paused = mutableStateOf(false)
     //endregion
-
+    val pipeline = mutableStateOf(3198184)
     val openDialog = MutableTransitionState(false).apply {
         targetState = false // start the animation immediately
     }
+
+    val app_version = mutableStateOf(BuildConfig.VERSION_NAME)
 
     @OptIn(ExperimentalMaterialApi::class)
     val bottomSheetState = mutableStateOf(false)
 
     lateinit var navHostController: NavHostController
 
-
     /**
      * Получение всей информации для главной страницы
      */
     @OptIn(ExperimentalMaterialApi::class)
-    fun getStories(context: Context) {
+    fun getStories(context: Context, uri: UriHandler) {
         val url = "https://lk.mzpo-s.ru/mobile/main"
         val queue = Volley.newRequestQueue(context)
         val sRequest = StringRequest(
@@ -134,6 +138,7 @@ class MainViewModel
                 val mainobj = JSONObject(response)
                 val events = mainobj.getJSONArray("events")
                 val promos = mainobj.getJSONArray("promos")
+                app_version.value = mainobj.getString("version")
                     val gson = Gson()
                 val cats = mainobj.getJSONArray("cats")
                 val popular = mainobj.getJSONArray("popular")
@@ -172,22 +177,50 @@ class MainViewModel
 
                                         var is_event = false
                                         var is_event_name = ""
+                                        var link = "";
+                                        var additional = "";
 
                                         if (i == 1)
                                         {
                                             is_event = true
                                             is_event_name = story.getString("name")
+//                                            additional = " мероприятие "
+                                        } else if (i ==0)
+                                        {
+//                                            additional = " акцию "
                                         }
+
+                                        try {
+                                            link = story.getString("link")
+                                        }catch (_: Exception){}
                                         Button(
                                             onClick = {
-                                                bottomText.value = story.getString("description")
-                                                paused.value = true
-                                                event.value = is_event
-                                                event_name.value = is_event_name
+                                                if (link.isNotEmpty())
+                                                {
+                                                    uri.openUri(link)
+                                                    return@Button
+                                                }
+                                                if (story.getInt("id") == 76 && auth_tested.value !== AuthStatus.AUTH)
+                                                {
+                                                    navHostController.navigate("register")
+                                                } else
+                                                {
+                                                    bottomText.value = story.getString("description")
+                                                    paused.value = true
+                                                    if (is_event)
+                                                    {
+                                                        pipeline.value = story.getInt("pipeline")
+                                                    }
+                                                    Log.d("MyLogPIP", pipeline.value.toString())
+                                                    event.value = is_event
+                                                    event_name.value = is_event_name
 //
-//                                                                                                          openDialog.targetState = true
-                                                bottomSheetState.value = true
-                                                form_title.value = story.getString("name")
+//                                                                                                                openDialog.targetState = true
+                                                    bottomSheetState.value = true
+                                                    form_title.value = story.getString("name")
+                                                    form_name_site.value = additional+story.getString("name")
+                                                }
+
                                             },
                                             colors = ButtonDefaults.buttonColors(backgroundColor = btn_color),
                                             shape = RoundedCornerShape(50),

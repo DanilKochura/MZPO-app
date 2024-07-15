@@ -82,6 +82,7 @@ import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.models.CourseFilterModel
 import lk.mzpo.ru.models.Prices
 import lk.mzpo.ru.ui.components.DashedDivider
+import lk.mzpo.ru.ui.components.LoadingDots
 import lk.mzpo.ru.ui.components.PriceTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
@@ -139,7 +140,7 @@ fun CatalogScreen(
         content = {padding ->
             val ctxx = LocalContext.current
             val listState = rememberScrollState()
-            LaunchedEffect(key1 = catalogViewModel.loaded.value, block = {
+            LaunchedEffect(key1 = "", block = {
                 if(!catalogViewModel.loaded.value)
                 {
                     coroutineScope.launch{
@@ -150,6 +151,7 @@ fun CatalogScreen(
 
                         } else
                         {
+                            Log.d("MyCataLog", "Requested")
                             catalogViewModel.getCourses(ctxx, string)
                         }
                     }
@@ -293,8 +295,11 @@ fun CatalogScreen(
 
 
                         LaunchedEffect(key1 = listState.canScrollForward, block = {
-                            if(listState.canScrollForward == false and catalogViewModel.loaded.value and catalogViewModel.courses.isNotEmpty() and listState.canScrollBackward)
+                            if((!listState.canScrollForward) and catalogViewModel.loaded.value and (catalogViewModel.courses_selected.value.size > 0) and listState.canScrollBackward and (catalogViewModel.courses_selected.value.size > 6))
                             {
+                                Log.d("MyCataLog", "Requested2")
+                                Log.d("MyCataLog", catalogViewModel.courses_selected.value.size.toString())
+
                                 catalogViewModel.getCourses(ctxx, string)
                             }
                         })
@@ -325,6 +330,13 @@ fun CatalogScreen(
                                     }
                                 }
                             }
+
+                        if (!catalogViewModel.maxPageExpired.value)
+                        {
+                            LoadingDots()
+
+                        }
+
                         }
 //                        LazyColumn(Modifier
 //                                .fillMaxSize())

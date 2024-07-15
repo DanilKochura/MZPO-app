@@ -77,10 +77,14 @@ fun StoryImageMultipleIndicator(url: String,
         HorizontalPager(
             userScrollEnabled = false,
             state = pagerState) {
-            StoryAsyncImage(url, screenWidth, onLeftClick, onRightClick)
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
-                story?.button?.invoke()
+            Box(modifier = Modifier.fillMaxSize())
+            {
+                StoryAsyncImage(url, screenWidth, onLeftClick, onRightClick)
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.CenterHorizontally) {
+                    story?.button?.invoke()
+                }
             }
+
         }
         Row(
             modifier = Modifier.padding(horizontal = 5.dp, vertical = 15.dp),

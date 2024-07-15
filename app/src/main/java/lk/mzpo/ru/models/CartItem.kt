@@ -6,6 +6,8 @@ import com.google.gson.annotations.SerializedName
 class CartItem(
   @SerializedName("id")  val id: Int,
   @SerializedName("type")  val type: String,
+  @SerializedName("org_id")  val org_id: Int,
+  @SerializedName("price")  val price: Int,
   @SerializedName("date")  val date: String?,
   @SerializedName("group_id")  val group_id: Int?,
   @SerializedName("group")  val group: GroupCart?,

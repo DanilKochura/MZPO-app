@@ -121,7 +121,7 @@ fun CategoriesScreen(
                             .fillMaxWidth()
                             .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 15.dp)
                     ) {
-                        SearchViewPreview();
+                        SearchViewPreview(navHostController);
                         IconButton(onClick = { /*TODO*/ }) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,

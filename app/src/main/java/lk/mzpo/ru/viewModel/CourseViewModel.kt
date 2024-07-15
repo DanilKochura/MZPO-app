@@ -13,7 +13,9 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import lk.mzpo.ru.models.Cart
+import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.models.Course
+import lk.mzpo.ru.models.CourseReview
 import lk.mzpo.ru.models.Document
 import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.models.GroupCart
@@ -33,7 +35,7 @@ class CourseViewModel   (
     val courses = mutableStateOf(listOf<Course>()) // курс
     val modalForm = mutableStateOf(false) // флаг для диалогового окна с формой
     val tabIndex = mutableStateOf("Инфо") // активная вкладка меню
-
+    val reviews = mutableListOf<CourseReview>()
     val monthes = listOf("Декабрь", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь")
     var isDist = mutableStateOf(false)
     val availible_months = mutableStateOf(listOf<Int>()) // список доступных месяцев для расписания
@@ -42,6 +44,7 @@ class CourseViewModel   (
     val selectedType = mutableStateOf("sale15") //выбранный тип цены для главной
     val selectedMonth = mutableStateOf(0) // выбранный месяц для расписания
     val db = Firebase.firestore
+
 
 
     /**
@@ -65,6 +68,20 @@ class CourseViewModel   (
                 var docs = JSONArray()
                 var adms = JSONArray()
             var month = JSONArray();
+
+
+            try {
+                reviews.clear()
+                val revs = item.getJSONArray("reviews")
+                for(i in 0 until  revs.length())
+                {
+                    val rew = revs[i] as JSONObject
+                    val gson = Gson()
+                    reviews.add(gson.fromJson(rew.toString(), CourseReview::class.java))
+                }
+            } catch (_: Exception){}
+
+
             try {
                 groups = item.getJSONArray("groups")
             } catch (_: Exception)
@@ -289,7 +306,7 @@ class CourseViewModel   (
 
             },
             {
-                Log.d("MyLog", "VolleyError: $it")
+                Log.d("MyCourseLog", "VolleyError: $it")
             }
         )
         queue.add(sRequest)

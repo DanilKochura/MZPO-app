@@ -1,6 +1,8 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -51,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -115,7 +118,7 @@ fun NotificationsScreen(
             val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
             val token = test.getString("token_lk", "")
             AuthService.testAuth(context,  navHostController, notificationsViewModel.auth_tested)
-
+            val uri = LocalUriHandler.current
             LaunchedEffect(key1 = notificationsViewModel.auth_tested.value, block = {
                 if(notificationsViewModel.auth_tested.value == AuthStatus.AUTH && notificationsViewModel.notifications.isEmpty() )
                 {
@@ -187,15 +190,43 @@ fun NotificationsScreen(
                                                AsyncImage(model = item.image, contentDescription = "poster_"+item.id, modifier = Modifier.fillMaxWidth())
                                            }
                                            Html(text = item.content!!)
-                                           if (item.link !== null)
+                                           if (item.link !== null || item.href !== null)
                                            {
+                                               Log.d("MyLogNot", "LINK: "+item.link.toString())
+                                               Log.d("MyLogNot", "HREF: "+item.href.toString())
+
                                                Button(onClick = {
-                                                   navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                       "link", item.link
-                                                   )
-                                                   navHostController.navigate("page") },
+                                                   if (item.link !== null)
+                                                   {
+                                                       navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                           "link", item.link
+                                                       )
+                                                       navHostController.navigate("page")
+                                                   } else if (item.href !== null)
+                                                   {
+
+                                                       uri.openUri(item.href!!)
+                                                   }
+                                                    },
                                                 colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red)
                                                    ) {
+                                                   Text(text = "Подробнее", color = Color.White)
+
+                                               }
+                                           }
+                                           if (item.tel !== null)
+                                           {
+                                               Log.d("MyLogNot", "LINK: "+item.link.toString())
+                                               Log.d("MyLogNot", "HREF: "+item.href.toString())
+
+                                               Button(onClick = {
+                                                   val intent = Intent(Intent.ACTION_DIAL).apply {
+                                                       data = Uri.parse(item.tel)
+                                                   }
+                                                   context.startActivity(intent)
+                                               },
+                                                   colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red)
+                                               ) {
                                                    Text(text = "Подробнее", color = Color.White)
 
                                                }

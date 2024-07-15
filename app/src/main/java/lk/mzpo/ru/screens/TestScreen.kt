@@ -188,7 +188,7 @@ fun TestScreen(
                                                     backgroundColor = Primary_Green_BG,
                                                     contentColor = Color.White
                                                 ),
-                                                enabled = (testViewModel.question.value !== null)
+                                                enabled = (testViewModel.question.value !== null && testViewModel.attemptsLeft.value > 0)
                                             ) {
                                                 if (testViewModel.hasNotFinishedAttempt.value) {
                                                     Text(

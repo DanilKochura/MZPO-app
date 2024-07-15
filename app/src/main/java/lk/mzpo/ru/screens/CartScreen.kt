@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.res.Resources.Theme
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,12 +30,17 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -51,8 +58,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat.startActivity
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
@@ -75,6 +86,9 @@ import lk.mzpo.ru.models.CartItem
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
+import lk.mzpo.ru.network.retrofit.PaymentRequest
+import lk.mzpo.ru.network.retrofit.PurchaseService
+import lk.mzpo.ru.network.retrofit.RetrofitClient
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
@@ -92,7 +106,46 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
 import kotlin.math.round
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import lk.mzpo.ru.network.retrofit.CheckPaymentRequest
+import lk.mzpo.ru.network.retrofit.PaymentResponse
+import lk.mzpo.ru.network.retrofit.YookassaConfigs
+import lk.mzpo.ru.ui.components.LoadableScreen
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+fun sendTokenToServer(token: String, app_token: String, uri: UriHandler, cartId: Int, cartViewModel: CartViewModel) {
+    val request = PaymentRequest(
+        token = token,
+        cartId = cartId
+    )
+    Log.d("MyLogTest", token)
+    Log.d("MyLogTest", app_token)
+    Log.d("MyLogTest", cartId.toString())
 
+    PurchaseService.apiService.completePayment("Bearer $app_token", request).enqueue(object : Callback<PaymentResponse> {
+        override fun onResponse(call: Call<PaymentResponse>, response: Response<PaymentResponse>) {
+            if (response.isSuccessful) {
+                val paymentResponse = response.body()
+                cartViewModel.payment_id.value = paymentResponse?.payment_id.toString()
+                Log.d("MyLogTEST", paymentResponse?.redirect_url.toString())
+                Log.d("Payment", "Server response: ${paymentResponse?.status}")
+                uri.openUri(paymentResponse?.redirect_url.toString())
+                // Обработайте успешный ответ сервера
+            } else {
+                Log.e("Payment", "Server error: ${response.errorBody()?.string()}")
+                // Обработайте ошибку сервера
+            }
+        }
+
+        override fun onFailure(call: Call<PaymentResponse>, t: Throwable) {
+            Log.e("Payment", "Network error: ${t.message}")
+            // Обработайте сетевую ошибку
+        }
+    })
+}
 @SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,13 +154,51 @@ fun CartScreen(
     cart_sum: MutableState<Int> = mutableStateOf(0)
 
 ) {
+    val uri = LocalUriHandler.current
+   
+
+
+
+    LaunchedEffect(cartViewModel.payment_status.value) {
+        if (cartViewModel.payment_status.value == 2) {
+            delay(2000)
+            cartViewModel.showLoader.value = false
+        }
+    }
+
+
+    val scope_for_payments = rememberCoroutineScope()
 
     val ctx = LocalContext.current
-    val scope = rememberCoroutineScope()
     val test = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
-    val token = test.getString("token", "")
+    val token = test.getString("token_lk", "")!!.trim('"')
+    val paymentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val token_yoo = Checkout.createTokenizationResult(result.data!!).paymentToken
+            Log.d("Payment", "Payment successful, token: $token_yoo")
+//            Toast.makeText(ctx, "Payment successful, token: $token_yoo", Toast.LENGTH_SHORT).show()
+            token_yoo.let {
+//                Toast.makeText(ctx, cartViewModel.selected_course.value.toString(), Toast.LENGTH_SHORT).show()
+                sendTokenToServer(it, token, uri, cartViewModel.selected_course.value, cartViewModel)
+            }
+            // Обработайте успешное получение токена
+        } else if (result.resultCode == Activity.RESULT_CANCELED) {
+            Log.d("Payment", "Payment canceled")
+            Toast.makeText(ctx, "Payment canceled", Toast.LENGTH_SHORT).show()
+            // Обработайте отмену оплаты
+        } else {
+            Log.e("Payment", "Payment error:")
+            Toast.makeText(ctx, "Payment error: ", Toast.LENGTH_SHORT).show()
+            // Обработайте ошибку
+        }
+    }
 
-    val cart = remember() {
+
+    val scope = rememberCoroutineScope()
+
+    val   cart = remember() {
         mutableStateOf(listOf( hashMapOf("" to "")))
     }
 
@@ -191,7 +282,7 @@ fun CartScreen(
                             .fillMaxWidth()
                             .padding(start = 5.dp, end = 5.dp, top = 5.dp, bottom = 15.dp)
                     ) {
-                        SearchViewPreview();
+                        SearchViewPreview(navHostController = navHostController);
                         IconButton(onClick = { if(cartViewModel.auth_tested.value == AuthStatus.AUTH)
                         {
                             navHostController.navigate("notifications")
@@ -225,9 +316,12 @@ fun CartScreen(
                                 Text(text = "Список покупок", fontSize = 24.sp, modifier = Modifier
                                     .padding(top = 15.dp)
                                     .fillMaxWidth(), textAlign = TextAlign.Center)
-                                if(cartViewModel.courses.isEmpty())
-                                {
 
+                            }
+                            if(cartViewModel.courses.isEmpty() || cartViewModel.auth_tested.value != AuthStatus.AUTH)
+                            {
+
+                                item {
                                     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly, horizontalAlignment = Alignment.CenterHorizontally) {
                                         Column(
                                             Modifier
@@ -241,68 +335,80 @@ fun CartScreen(
                                             }
                                         }
                                     }
+                                }
 
+                            } else if(cartViewModel.auth_tested.value == AuthStatus.AUTH)
+                            {
+                                itemsIndexed(cartViewModel.courses)
+                                {
+                                        _, value ->
+                                    val course = value.course
+                                    var price = value.price
+
+                                    CartCourse(value, price = price, {
+                                        if(value.id == 0)
+                                        {
+                                            cartViewModel.deleteCartItem(ctx, course.id)
+                                        } else
+                                        {
+                                            cartViewModel.deleteCartItem(ctx, value.id)
+                                        }
+                                        cartViewModel.courses.remove(value)
+                                        cartSum.value--
+                                    }, {
+                                        navHostController.navigate("course/${value.course_id}")
+                                    }, {
+                                        val config = YookassaConfigs.getConfig(value.org_id)
+                                        cartViewModel.selected_course.value = value.id
+                                        cartViewModel.selected_course_org.value = value.org_id
+                                        Toast.makeText(ctx, "Test", Toast.LENGTH_SHORT).show()
+                                        val paymentMethodTypes = setOf(
+                                            PaymentMethodType.BANK_CARD,
+//                                            PaymentMethodType.SBERBANK,
+//                                            PaymentMethodType.YOO_MONEY,
+//                                            PaymentMethodType.SBP,
+                                        )
+                                        val paymentParameters = PaymentParameters(
+                                            amount = Amount(value.price.toBigDecimal(), Currency.getInstance("RUB")),
+                                            title = course.name,
+                                            shopId = config.shopId,
+//                                            shopId = "957329",
+                                            savePaymentMethod = SavePaymentMethod.OFF,
+                                            customReturnUrl = "https://lk.mzpo-s.ru",
+                                            paymentMethodTypes = paymentMethodTypes,
+//                                            authCenterClientId =  "n2af44sofjfjsftsig09i5j5m32ui0pi6",
+                                            clientApplicationKey =  config.clientApplicationKey,
+//                                            clientApplicationKey = "test_OTU3MzI5XqsIBDAa7IHgGIlSoU8JqPgAJDLvSc8X-Bc",
+                                            subtitle = ""
+                                        )
+//
+                                        val intent = createTokenizeIntent(
+                                            ctx,
+                                            paymentParameters,
+                                            TestParameters(showLogs = true)
+                                        )
+                                        paymentLauncher.launch(intent)
+                                    })
                                 }
                             }
-                            itemsIndexed(cartViewModel.courses)
+
+
+                        }
+                    }
+                }
+                if (cartViewModel.showLoader.value)
+                {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.Black.copy(alpha = 0.3f)))
+                    {
+                        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            if (cartViewModel.payment_status.value == 0)
                             {
-                                _, value ->
-                                val course = value.course
-                                val price_type =  value.type
-                                var price = if (course.prices.dist !== null) course.prices.dist else course.prices.sale15!!
-
-                                if (price_type == "sale15")
-                                {
-                                    price = course.prices.sale15!!
-                                } else if(price_type == "dist")
-                                {
-                                    price = course.prices.dist!!
-                                }else if(price_type == "ind")
-                                {
-                                    price = course.prices.ind!!
-                                }else if(price_type == "weekend")
-                                {
-                                    price = course.prices.weekend!!
-                                }
-
-                               CartCourse(value, price = price, {
-                                    if(value.id == 0)
-                                    {
-                                        cartViewModel.deleteCartItem(ctx, course.id)
-                                    } else
-                                    {
-                                        cartViewModel.deleteCartItem(ctx, value.id)
-                                    }
-                                   cartViewModel.courses.remove(value)
-                                   cartSum.value--
-                               }, {
-                                   navHostController.navigate("course/${value.id.toString()}")
-                               }, {
-                                   Toast.makeText(ctx, "Test", Toast.LENGTH_SHORT).show()
-                                   val paymentMethodTypes = setOf(
-                                       PaymentMethodType.BANK_CARD,
-                                       PaymentMethodType.SBERBANK,
-                                       PaymentMethodType.YOO_MONEY,
-                                       PaymentMethodType.SBP,
-                                   )
-                                   val paymentParameters = PaymentParameters(
-                                       amount = Amount(BigDecimal.valueOf(10.0), Currency.getInstance("RUB")),
-                                       title = course.name,
-                                       shopId = "25052",
-                                       savePaymentMethod = SavePaymentMethod.OFF,
-                                       paymentMethodTypes = paymentMethodTypes,
-                                       authCenterClientId =  "n2af44sofjfjsftig09i5j5m32ui0pi6",
-                                       clientApplicationKey = "01FlvYILde_7fxcew-qL-VvwxY8Epu4Xz3qyoWQJrd_SiNo4SKprzXEosGdIOIB5",
-                                       subtitle = ""
-                                   )
-//
-                                   val intent = createTokenizeIntent(
-                                       ctx,
-                                       paymentParameters,
-                                       TestParameters(showLogs = true)
-                                   )
-                                   startActivity(ctx, intent, null)
-                               })
+                                CircularProgressIndicator(Modifier.fillMaxWidth(0.5f), strokeCap = StrokeCap.Round, strokeWidth = 5.dp, trackColor = Color.White, color = Color.Transparent)
+                            } else if (cartViewModel.payment_status.value == 1)
+                            {
+                                Icon(imageVector = Icons.Default.Check, contentDescription = "", Modifier.fillMaxWidth(0.5f), tint = Primary_Green)
                             }
                         }
                     }
@@ -310,6 +416,7 @@ fun CartScreen(
             }
         }
     )
+
 }
 
 
@@ -382,8 +489,11 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
                                 Text(text = item.date!!, color = Aggressive_red, fontSize = 12.sp)
                             }else
                             {
-                                Text(text = "Дата начала: ", color = Color.Gray, fontSize = 12.sp)
-                                Text(text = item.group?.start!!, color = Aggressive_red, fontSize = 12.sp)
+                                if (item.group !== null)
+                                {
+                                    Text(text = "Дата начала: ", color = Color.Gray, fontSize = 12.sp)
+                                    Text(text = item.group.start, color = Aggressive_red, fontSize = 12.sp)
+                                }
                             }
                         }
                         Row{
@@ -400,7 +510,9 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
             .padding(7.dp)
             .fillMaxWidth()) {
             Divider(Modifier.padding(vertical = 5.dp))
-
+            val agreement = remember {
+                mutableStateOf(false)
+            }
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.course.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Bold)
                 if (item.course.isDist())
@@ -416,15 +528,44 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
                     }
                 }
             }
+            val ctx = LocalContext.current
+
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically){
                     Text(text = price.toString(), fontWeight = FontWeight.Bold, color = Aggressive_red, fontSize = 25.sp)
                     Text(text = price.times(1.15).toBigDecimal().setScale(-2, RoundingMode.UP).toInt().toString(), textDecoration = TextDecoration.LineThrough, modifier = Modifier.padding(start = 10.dp), fontSize = 18.sp)
                 }
-                Button(onClick = { onBuy.invoke() }, modifier = Modifier, shape = RoundedCornerShape(10), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
+
+                Button(onClick = {
+                                 if (agreement.value)
+                                 {
+                                     onBuy.invoke()
+                                 } else
+                                 {
+                                     Toast.makeText(ctx, "Вы не подтвердили согласие с договором оферты", Toast.LENGTH_SHORT).show()
+                                 }
+                }, modifier = Modifier, shape = RoundedCornerShape(10), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
                     Text("Купить", color = Color.White)
                 }
             }
+            val uriHandler = LocalUriHandler.current
+            Row (verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = agreement.value,
+                    onCheckedChange = { agreement.value = it },
+                    modifier = Modifier.padding(start = 5.dp, end = 10.dp).size(12.dp),
+                    colors = androidx.compose.material3.CheckboxDefaults.colors(checkedColor = Primary_Green)
+                    )
+                Text(text = "Согласен с условиями ", fontSize = 12.sp)
+                Text(
+                    text = "договора оферты",
+                    modifier = Modifier.clickable {
+                        uriHandler.openUri("https://lk.mzpo-s.ru/build/documents/oferta_"+item.org_id+".pdf")
+                    },
+                    color = Color.Blue, fontSize = 12.sp)
+
+            }
         }
     }
+
 }

@@ -409,20 +409,19 @@ fun ContractsScreen(
 @Composable
 fun Login(token: String?, navHostController: NavHostController) {
     val password = remember {
-//        mutableStateOf(TextFieldValue(""))
-        mutableStateOf(TextFieldValue("YKg9mt7S5RiHUXy6"))
+        mutableStateOf(TextFieldValue(""))
+//        mutableStateOf(TextFieldValue("YKg9mt7S5RiHUXy6"))
 //        mutableStateOf(TextFieldValue("mkCF4CVa4iLyTd8"))
     }
     val login = remember {
-//        mutableStateOf(TextFieldValue(""))
-        mutableStateOf(TextFieldValue("d.kochura@mzpo.info"))
+        mutableStateOf(TextFieldValue(""))
+//        mutableStateOf(TextFieldValue("d.kochura@mzpo.info"))
 //        mutableStateOf(TextFieldValue("cooliyev@gmail.com"))
     }
     val bl = remember {
         mutableStateOf(false)
     }
     val context = LocalContext.current
-    Log.d("MyLog", "test1")
     Column(
         Modifier
             .fillMaxWidth()

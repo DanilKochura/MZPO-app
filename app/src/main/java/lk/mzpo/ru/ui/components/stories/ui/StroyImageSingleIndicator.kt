@@ -1,5 +1,6 @@
 package lk.mzpo.ru.ui.components.stories.ui
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
@@ -69,7 +70,13 @@ fun StoryImageSingleIndicator(
         onRightClick()
     }
 
-    StoryImage(animatable.value, url, indicator, swipeTiming, onLeftClick, onRightClick)
+    Box(modifier = Modifier.fillMaxSize())
+    {
+        StoryImage(animatable.value, url, indicator, swipeTiming, onLeftClick, onRightClick)
+        story?.button?.invoke()
+        Log.d("MyLogStory", "testtst")
+    }
+
 }
 
 @Composable

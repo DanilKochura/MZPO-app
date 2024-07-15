@@ -1,6 +1,7 @@
 package lk.mzpo.ru.ui.components
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
@@ -113,6 +114,7 @@ fun Search()
 
 @Composable
 fun SearchView(state: MutableState<String>, navHostController: NavHostController) {
+    val ctx = LocalContext.current
     MyTextField(
         value = state.value,
         onValueChange = { value ->
@@ -129,7 +131,9 @@ fun SearchView(state: MutableState<String>, navHostController: NavHostController
                 IconButton(onClick = {
                     if (state.value.length > 3)
                     {
-                        navHostController.navigate("catalog?search=_"+state.value)
+                        try {
+                            navHostController.navigate("catalog?search=_"+state.value)
+                        }catch (_: Exception){}
                     }
                 }) {
                     Icon(
@@ -182,15 +186,19 @@ fun SearchView(state: MutableState<String>, navHostController: NavHostController
          keyboardActions = KeyboardActions(onSearch = {
              if (state.value.length > 3)
          {
-             navHostController.navigate("catalog?search=_"+state.value)
+             try {
+                 navHostController.navigate("catalog?search=_"+state.value)
+             } catch (e:Exception){
+                 Toast.makeText(ctx, "Произошла ошибка. Попробуйте еще раз", Toast.LENGTH_SHORT).show()
+                 Log.e("MySearchLog", e.toString())
+             }
          }}),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
         )
 }
 
-@Preview(showBackground = true)
 @Composable
-fun SearchViewPreview(navHostController: NavHostController = rememberNavController(), textState: MutableState<String>? = null) {
+fun SearchViewPreview(navHostController: NavHostController, textState: MutableState<String>? = null) {
     var ts = remember {
         mutableStateOf("")
     }

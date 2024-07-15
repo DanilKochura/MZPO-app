@@ -156,6 +156,9 @@ data class NotificationPromo (
     @SerializedName("name"        ) var name        : String? = null,
     @SerializedName("btn_text"    ) var btnText     : String? = null,
     @SerializedName("description" ) var description : String? = null,
-    @SerializedName("btn_color"   ) var btnColor    : String? = null
+    @SerializedName("btn_color"   ) var btnColor    : String? = null,
+    @SerializedName("pipeline"   ) var pipeline    : Int = 3198184,
+    @SerializedName("event"   ) var event    : Boolean = false,
+    @SerializedName("event_name"   ) var event_name  : String = "",
 
 )

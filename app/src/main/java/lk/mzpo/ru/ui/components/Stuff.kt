@@ -19,13 +19,23 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.DatePicker
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -41,6 +51,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
@@ -61,15 +73,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -96,6 +114,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
@@ -104,6 +123,10 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import com.google.accompanist.web.WebView
+import com.google.accompanist.web.rememberWebViewState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import lk.mzpo.ru.BuildConfig
 import lk.mzpo.ru.MainActivity
 import lk.mzpo.ru.R
@@ -1125,4 +1148,97 @@ fun Privacy() {
                 url.openUri(it.item)
             }
         })
+}
+
+@Composable
+fun WebViewPage(url: String) {
+    val context = LocalContext.current
+//    val uri = Uri.parse(url)
+//    PdfViewer(pdfUrl = url, context = context)
+//    PdfViewer(uri = uri)
+//    val webView = remember { WebView(context).apply {
+//        webViewClient = WebViewClient()
+//        settings.javaScriptEnabled = true
+//        settings.allowContentAccess = true
+//        settings.domStorageEnabled = true
+//        settings.cacheMode = WebSettings.LOAD_NO_CACHE
+//
+//
+//    }
+//
+//    }
+//
+//    AndroidView(
+//        modifier = Modifier
+//            .fillMaxSize(),
+//        factory = { webView },
+//        update = {
+//            it.loadUrl(url)
+//        })
+}
+
+@Composable
+fun WebViewScreen(htmlContent: String) {
+    val context = LocalContext.current
+    val webView = remember { WebView(context) }
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        factory = { ctx ->
+            webView.apply {
+                webViewClient = WebViewClient()
+                loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+            }
+        }
+    )
+
+    // Обработка кнопки "Назад"
+    BackHandler(enabled = webView.canGoBack()) {
+        webView.goBack()
+    }
+}
+
+@Composable
+fun LoadingDots() {
+    val dotSize = 10.dp
+    val maxSize = 15.dp
+    val dotColor = Primary_Green
+    val animDuration = 600
+
+    val dotScales = remember { List(3) { Animatable(1f) } }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            dotScales.forEachIndexed { index, animatable ->
+                launch {
+                    animatable.animateTo(
+                        1.5f,
+                        animationSpec = tween(animDuration)
+                    )
+                    animatable.animateTo(
+                        1f,
+                        animationSpec = tween(animDuration)
+                    )
+                }
+                delay(animDuration.toLong())
+            }
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth().padding(30.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        dotScales.forEach { scale ->
+            Box(
+                modifier = Modifier
+                    .size(dotSize * scale.value)
+                    .clip(CircleShape)
+                    .background(dotColor)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+        }
+    }
 }

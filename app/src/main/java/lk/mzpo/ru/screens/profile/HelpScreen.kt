@@ -188,32 +188,32 @@ fun HelpScreen(
                                 )
                                 val selectedIndex = remember{mutableStateOf(-1)}
                                 Column {
-                                    Text(text = "Выберите тип обращения", modifier = Modifier.padding(top = 10.dp, bottom = 5.dp))
-                                    Divider()
-                                    for(i in types.indices)
-                                    {
-
-                                        Row(modifier = Modifier
-                                            .fillMaxWidth()
-                                            .selectable(
-                                                selected = i == selectedIndex.value,
-                                                onClick = {
-                                                    if (selectedIndex.value != i)
-                                                        selectedIndex.value =
-                                                            i else selectedIndex.value = -1
-                                                })
-                                            .padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                            Column(Modifier.fillMaxWidth(0.8f)) {
-                                                Text(text = types[i])
-                                                Text(text = descrs[i], fontSize = 12.sp, color = Color.Gray, lineHeight = 12.sp)
-                                            }
-                                            if(selectedIndex.value == i)
-                                            {
-                                                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Primary_Green)
-                                            }
-                                        }
-                                        Divider()
-                                    }
+//                                    Text(text = "Выберите тип обращения", modifier = Modifier.padding(top = 10.dp, bottom = 5.dp))
+//                                    Divider()
+//                                    for(i in types.indices)
+//                                    {
+//
+//                                        Row(modifier = Modifier
+//                                            .fillMaxWidth()
+//                                            .selectable(
+//                                                selected = i == selectedIndex.value,
+//                                                onClick = {
+//                                                    if (selectedIndex.value != i)
+//                                                        selectedIndex.value =
+//                                                            i else selectedIndex.value = -1
+//                                                })
+//                                            .padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+//                                            Column(Modifier.fillMaxWidth(0.8f)) {
+//                                                Text(text = types[i])
+//                                                Text(text = descrs[i], fontSize = 12.sp, color = Color.Gray, lineHeight = 12.sp)
+//                                            }
+//                                            if(selectedIndex.value == i)
+//                                            {
+//                                                Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "", tint = Primary_Green)
+//                                            }
+//                                        }
+//                                        Divider()
+//                                    }
                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                                        Button(onClick = {
                                                         val feedback = Feedback(

@@ -15,3 +15,13 @@ data class Question (
     @SerializedName("status"   ) var status   : String? = null,
     @SerializedName("active_answers" ) var activeAnswers : ArrayList<Answer> = arrayListOf()
 )
+
+
+data class TestResult (
+
+    @SerializedName("questionsCount"        ) var questionsCount      : Int?                           = null,
+    @SerializedName("attempt"               ) var attempt             : Int?                           = null,
+    @SerializedName("final"                 ) var final               : Boolean?                       = null,
+    @SerializedName("result"                ) var result              : Float
+
+)

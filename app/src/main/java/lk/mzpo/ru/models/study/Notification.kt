@@ -42,6 +42,8 @@ data class NotificationNew(
     @SerializedName("updated_at"        ) var updatedAt        : String?           = null,
     @SerializedName("image"        ) var image        : String?           = null,
     @SerializedName("link"        ) var link        : String?           = null,
+    @SerializedName("href"        ) var href        : String?           = null,
+    @SerializedName("tel"        ) var tel        : String?           = null,
 //    @SerializedName("user_notification" ) var userNotification : UserNotification? = UserNotification()
 
 )

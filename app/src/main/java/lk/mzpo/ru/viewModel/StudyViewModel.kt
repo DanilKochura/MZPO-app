@@ -16,6 +16,7 @@ import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.study.Admission
 import lk.mzpo.ru.models.study.CourseSchedule
 import lk.mzpo.ru.models.study.Exam
+import lk.mzpo.ru.models.study.ExamNew
 import lk.mzpo.ru.models.study.PassedModules
 import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.models.study.UserDocument
@@ -46,6 +47,7 @@ class StudyViewModel: ViewModel() {
     val selected = mutableStateOf("Расписание")
 
     val exam = mutableListOf<Exam>()
+    val examNew = mutableListOf<ExamNew>()
 
     val verify_docs = mutableStateOf(false)
     fun getData(context: Context)
@@ -70,9 +72,14 @@ class StudyViewModel: ViewModel() {
                        val docsJson = main.getJSONArray("documents")
                        val schedJson = main.getJSONArray("sched")
                        val examJson = main.getJSONArray("exam")
+                       val examsJson = main.getJSONArray("exams")
                        if(examJson.length() > 0)
                        {
                            exam.add(gson.fromJson(examJson[0].toString(), Exam::class.java))
+                       }
+                       if(examsJson.length() > 0)
+                       {
+                           examNew.add(gson.fromJson(examsJson[0].toString(), ExamNew::class.java))
                        }
 //                    Log.d("MyLog", main.getJSONObject("practiceData").toString())
                        verify_docs.value = main.getBoolean("verify_docs")

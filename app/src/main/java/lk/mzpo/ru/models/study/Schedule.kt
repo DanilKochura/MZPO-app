@@ -62,11 +62,14 @@ data class Group (
 )
 
 data class UserSchedule(
-    @SerializedName("course"     ) var course    : String,
-    @SerializedName("date"       ) var date      : String,
-    @SerializedName("teacher"    ) var teacher   : String,
-    @SerializedName("time_start" ) var timeStart : String,
-    @SerializedName("auditory"   ) var auditory  : String
+    @SerializedName("course"          ) var course         : String,
+    @SerializedName("course_pref"     ) var course_pref    : String,
+    @SerializedName("date"            ) var date           : String,
+    @SerializedName("time"            ) var time           : String,
+    @SerializedName("teacher"         ) var teacher        : String,
+    @SerializedName("time_start"      ) var timeStart      : String,
+    @SerializedName("auditory"        ) var auditory       : String,
+    @SerializedName("teacher_image"   ) var teacher_image  : String? = null
 )
 
 

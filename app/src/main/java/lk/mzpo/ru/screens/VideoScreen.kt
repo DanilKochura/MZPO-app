@@ -44,6 +44,7 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.navigation.NavHostController
 import androidx.navigation.ui.navigateUp
+import com.google.gson.Gson
 import com.rizzi.bouquet.ResourceType
 import com.rizzi.bouquet.VerticalPDFReader
 import com.rizzi.bouquet.rememberVerticalPdfReaderState
@@ -117,11 +118,23 @@ fun VideoScreen(
 
         )
         IconButton(onClick = {
+            val gson = Gson()
+            val video_ = gson.toJson(
+                video,
+                ActiveMaterials::class.java
+            )
 
+            navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                "video",
+                video_
+            )
+            navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                "contract",
+                contract.toString()
+            )
 
-
-
-            navHostController.navigateUp()
+//            navHostController.navigateUp()
+            navHostController.navigate("study")
                              }, modifier = Modifier
             .padding(20.dp)
             .align(Alignment.TopEnd)) {

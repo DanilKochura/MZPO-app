@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -51,7 +52,9 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material.rememberModalBottomSheetState
@@ -118,9 +121,12 @@ import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
 import lk.mzpo.ru.ui.components.Privacy
+import lk.mzpo.ru.ui.components.WebViewScreen
 import lk.mzpo.ru.ui.components.isValidEmail
 import lk.mzpo.ru.ui.theme.Aggressive_red
+import lk.mzpo.ru.ui.theme.Gold
 import lk.mzpo.ru.ui.theme.MainRounded
+import lk.mzpo.ru.ui.theme.Passive_Green
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CartViewModel
 import lk.mzpo.ru.viewModel.CourseViewModel
@@ -143,6 +149,7 @@ fun CourseScreen(
 ) {
     val ctxx = LocalContext.current
     if (courseViewModel.courses.value.isEmpty()) {
+        Log.d("MyCourseLog", id.toString())
         courseViewModel.getData(id, ctxx)
     }
     var ok = 0
@@ -264,7 +271,7 @@ fun CourseScreen(
 //                    Text(text = courses.toString())
 
 
-                            CourseTab(co, courseViewModel);
+                            CourseTab(co, courseViewModel, navHostController);
                         }
                     }
 
@@ -306,18 +313,20 @@ fun CourseScreen(
                         if (courseViewModel.auth_tested.value == AuthStatus.AUTH) {
                             CartViewModel.addToCart(ctxx, courseViewModel.courses.value[0].id)
                         } else if (courseViewModel.auth_tested.value == AuthStatus.GUEST) {
-                            FirebaseHelpers.addToCart(
-                                token, hashMapOf(
-                                    "id" to courseViewModel.courses.value.get(0).id.toString(),
-                                    "type" to courseViewModel.selectedType.value
-                                )
-                            )
+//                            FirebaseHelpers.addToCart(
+//                                token, hashMapOf(
+//                                    "id" to courseViewModel.courses.value.get(0).id.toString(),
+//                                    "type" to courseViewModel.selectedType.value
+//                                )
+//                            )
+                            navHostController.navigate("register")
                         }
 
                         if (ok === 0) {
                             cart_sum.value++
                             ok = 1
-                            val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                            val vibrator =
+                                ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                             if (vibrator.hasVibrator()) { // Vibrator availability checking
                                 vibrator.vibrate(
                                     VibrationEffect.createOneShot(
@@ -360,12 +369,19 @@ fun CourseScreen(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalPagerApi::class)
 @Composable
-fun CourseTab(course: Course, courseViewModel: CourseViewModel) {
+fun CourseTab(
+    course: Course,
+    courseViewModel: CourseViewModel,
+    navHostController: NavHostController
+) {
 
 
-    var list = listOf("Инфо", "Документы", "Расписание", "Отзывы")
+    var list = mutableListOf("Инфо", "Документы", "Расписание", "Отзывы")
     if (course.modules.isNotEmpty()) {
-        list = listOf("Инфо", "Модули", "Документы", "Расписание", "Отзывы")
+        list = mutableListOf("Инфо", "Модули", "Документы", "Расписание", "Отзывы")
+    }
+    if (courseViewModel.isDist.value) {
+        list.remove("Расписание")
     }
     val scrollstate = rememberScrollState()
     Column(modifier = Modifier.verticalScroll(scrollstate)) {
@@ -408,6 +424,7 @@ fun CourseTab(course: Course, courseViewModel: CourseViewModel) {
             edgePadding = 0.dp,
             contentColor = Color.White,
             containerColor = Primary_Green
+
         ) {
             list.forEachIndexed { index, text ->
                 Tab(selected = courseViewModel.tabIndex.value == text, onClick = {
@@ -420,7 +437,12 @@ fun CourseTab(course: Course, courseViewModel: CourseViewModel) {
             "Инфо" -> CourseInfo(courseViewModel, scrollstate)
             "Модули" -> CourseModules(course = course)
             "Документы" -> CourseDocs(course)
-            "Расписание" -> CourseGroups(course = course, courseViewModel)
+            "Расписание" -> CourseGroups(
+                course = course,
+                courseViewModel,
+                navHostController = navHostController
+            )
+
             "Отзывы" -> CourseReviews(courseViewModel)
 
         }
@@ -430,25 +452,100 @@ fun CourseTab(course: Course, courseViewModel: CourseViewModel) {
 
 @Composable
 fun CourseReviews(courseViewModel: CourseViewModel) {
-    Column(
-        Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+
+    if (courseViewModel.reviews.isEmpty()) {
         Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 50.dp), horizontalAlignment = Alignment.CenterHorizontally
+            Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.baseline_reviews_24),
-                contentDescription = "No Schedule Icon",
-                Modifier.size(80.dp),
-                tint = Color.Gray
-            )
-            Text(text = "Отзывов пока нет", fontSize = 22.sp)
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 50.dp), horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_reviews_24),
+                    contentDescription = "No Schedule Icon",
+                    Modifier.size(80.dp),
+                    tint = Color.Gray
+                )
+                Text(text = "Отзывов пока нет", fontSize = 22.sp)
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp)
+        ) {
+            for (review in courseViewModel.reviews) {
+                Column(
+                    modifier = Modifier
+                        .padding(vertical = 5.dp)
+                        .background(Primary_Green.copy(0.6f), RoundedCornerShape(10.dp))
+                        .padding(10.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                ) {
+                    Row {
+                        Text(text = review.user, modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp), textAlign = TextAlign.Center, color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                    Row (Modifier.fillMaxWidth()){
+                       Column(modifier = Modifier
+                           .weight(1f)
+                           .padding(end = 5.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                           if (review.user_avatar !== null) {
+                               Box(
+                                   modifier = Modifier
+                                       .size(50.dp)
+                                       .clip(CircleShape)
+                               ) {
+                                   AsyncImage(
+                                       model = "https://lk.mzpo-s.ru/build/images/" + review.user_avatar,
+                                       contentDescription = "",
+                                       contentScale = ContentScale.Crop,
+                                   )
+                               }
+
+                           } else {
+                               Box(modifier = Modifier
+                                   .clip(CircleShape)
+                                   .border(1.dp, Color.White, CircleShape)
+                                   .padding(5.dp))
+                               {
+                                   Icon(
+                                       imageVector = Icons.Default.Person,
+                                       contentDescription = "",
+                                       tint = Color.White,
+                                       modifier = Modifier
+                                           .size(40.dp)
+                                           .padding(10.dp)
+
+                                   )
+                               }
+                           }
+                           Row (Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+                               Text(text = review.rate.toString(), color = Gold)
+                               Icon(imageVector = Icons.Default.Star, contentDescription = "", tint = Gold
+                               )
+                           }
+                       }
+                       Column(modifier = Modifier.weight(4f)) {
+                           if (!review.text.isNullOrEmpty()) {
+                               Text(text = review.text!!, fontSize = 12.sp, lineHeight = 14.sp)
+                           }
+                       }
+                   }
+                    Row() {
+                        Text(text = review.date, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth(), color = Color.White)
+                    }
+                }
+            }
+
         }
     }
+    Spacer(modifier = Modifier.height(70.dp))
+
 }
 
 
@@ -458,7 +555,11 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
 
     Column(modifier = Modifier.padding(10.dp)) {
         Text(text = course.name, fontSize = 22.sp)
-        Row(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 5.dp)
+        ) {
             Text(
                 text = "Артикул: " + course.prefix,
                 fontSize = 15.sp,
@@ -511,7 +612,7 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
         Text(
             text = "Доступные формы обучения:",
             fontSize = 20.sp,
-            modifier = Modifier.padding(top = 5.dp)
+            modifier = Modifier
         )
         val scope = rememberCoroutineScope()
 
@@ -523,27 +624,28 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
         ) {
             if (courseViewModel.isDist.value) {
                 if (course.prices.dist != 0) {
-                    Column(modifier = Modifier
-                        .height(45.dp)
-                        .padding(end = 7.dp)
-                        .clip(
-                            RoundedCornerShape(20)
-                        )
-                        .background(if (courseViewModel.selectedPrice.value == course.prices.dist!!) Primary_Green else Color.Transparent)
-                        .border(
-                            width = 1.dp,
-                            color = if (courseViewModel.selectedPrice.value == course.prices.dist!!) Primary_Green else Color.LightGray,
-                            RoundedCornerShape(20)
-                        )
-                        .clickable {
-                            courseViewModel.selectedPrice.value = course.prices.dist!!
-                            courseViewModel.selectedType.value = "dist"
-                            if (scrollstate.value > 800) {
-                                scope.launch {
-                                    scrollstate.animateScrollTo(800)
+                    Column(
+                        modifier = Modifier
+                            .height(45.dp)
+                            .padding(end = 7.dp)
+                            .clip(
+                                RoundedCornerShape(20)
+                            )
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.dist!!) Primary_Green else Color.Transparent)
+                            .border(
+                                width = 1.dp,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.dist!!) Primary_Green else Color.LightGray,
+                                RoundedCornerShape(20)
+                            )
+                            .clickable {
+                                courseViewModel.selectedPrice.value = course.prices.dist!!
+                                courseViewModel.selectedType.value = "dist"
+                                if (scrollstate.value > 800) {
+                                    scope.launch {
+                                        scrollstate.animateScrollTo(800)
+                                    }
                                 }
-                            }
-                        }, verticalArrangement = Arrangement.Center
+                            }, verticalArrangement = Arrangement.Center
                     )
                     {
                         Text(
@@ -555,28 +657,29 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                 }
             } else {
                 if (course.prices.sale15 != 0) {
-                    Column(modifier = Modifier
-                        .height(45.dp)
-                        .padding(end = 7.dp)
-                        .clip(
-                            RoundedCornerShape(20)
-                        )
-                        .background(if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.Transparent)
-                        .border(
-                            width = 1.dp,
-                            color = if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.LightGray,
-                            RoundedCornerShape(20)
-                        )
-                        .clickable {
-                            courseViewModel.selectedPrice.value = course.prices.sale15!!
-                            courseViewModel.selectedType.value = "sale15"
+                    Column(
+                        modifier = Modifier
+                            .height(45.dp)
+                            .padding(end = 7.dp)
+                            .clip(
+                                RoundedCornerShape(20)
+                            )
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.Transparent)
+                            .border(
+                                width = 1.dp,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.LightGray,
+                                RoundedCornerShape(20)
+                            )
+                            .clickable {
+                                courseViewModel.selectedPrice.value = course.prices.sale15!!
+                                courseViewModel.selectedType.value = "sale15"
 
-                            if (scrollstate.value > 800) {
-                                scope.launch {
-                                    scrollstate.animateScrollTo(800)
+                                if (scrollstate.value > 800) {
+                                    scope.launch {
+                                        scrollstate.animateScrollTo(800)
+                                    }
                                 }
-                            }
-                        }, verticalArrangement = Arrangement.Center
+                            }, verticalArrangement = Arrangement.Center
                     )
                     {
                         Text(
@@ -587,28 +690,29 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                     }
                 }
                 if (course.prices.ind != 0) {
-                    Column(modifier = Modifier
-                        .height(45.dp)
-                        .padding(end = 7.dp)
-                        .clip(
-                            RoundedCornerShape(20)
-                        )
-                        .background(if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.Transparent)
-                        .border(
-                            width = 1.dp,
-                            color = if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.LightGray,
-                            RoundedCornerShape(20)
-                        )
-                        .clickable {
-                            courseViewModel.selectedPrice.value = course.prices.ind!!
-                            courseViewModel.selectedType.value = "ind"
+                    Column(
+                        modifier = Modifier
+                            .height(45.dp)
+                            .padding(end = 7.dp)
+                            .clip(
+                                RoundedCornerShape(20)
+                            )
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.Transparent)
+                            .border(
+                                width = 1.dp,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.LightGray,
+                                RoundedCornerShape(20)
+                            )
+                            .clickable {
+                                courseViewModel.selectedPrice.value = course.prices.ind!!
+                                courseViewModel.selectedType.value = "ind"
 
-                            if (scrollstate.value > 800) {
-                                scope.launch {
-                                    scrollstate.animateScrollTo(800)
+                                if (scrollstate.value > 800) {
+                                    scope.launch {
+                                        scrollstate.animateScrollTo(800)
+                                    }
                                 }
-                            }
-                        }, verticalArrangement = Arrangement.Center
+                            }, verticalArrangement = Arrangement.Center
                     )
                     {
                         Text(
@@ -619,28 +723,29 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                     }
                 }
                 if (course.prices.weekend != 0) {
-                    Column(modifier = Modifier
-                        .height(45.dp)
-                        .padding(end = 7.dp)
-                        .clip(
-                            RoundedCornerShape(20)
-                        )
-                        .background(if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.Transparent)
-                        .border(
-                            width = 1.dp,
-                            color = if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.LightGray,
-                            RoundedCornerShape(20)
-                        )
-                        .clickable {
-                            courseViewModel.selectedPrice.value = course.prices.weekend!!
-                            courseViewModel.selectedType.value = "weekend"
+                    Column(
+                        modifier = Modifier
+                            .height(45.dp)
+                            .padding(end = 7.dp)
+                            .clip(
+                                RoundedCornerShape(20)
+                            )
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.Transparent)
+                            .border(
+                                width = 1.dp,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.LightGray,
+                                RoundedCornerShape(20)
+                            )
+                            .clickable {
+                                courseViewModel.selectedPrice.value = course.prices.weekend!!
+                                courseViewModel.selectedType.value = "weekend"
 
-                            if (scrollstate.value > 800) {
-                                scope.launch {
-                                    scrollstate.animateScrollTo(800)
+                                if (scrollstate.value > 800) {
+                                    scope.launch {
+                                        scrollstate.animateScrollTo(800)
+                                    }
                                 }
-                            }
-                        }, verticalArrangement = Arrangement.Center
+                            }, verticalArrangement = Arrangement.Center
                     )
                     {
                         Text(
@@ -654,8 +759,11 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
         }
 
 
-        Text(text = "Описание", fontSize = 20.sp, modifier = Modifier.padding(end = 5.dp))
-        Html(text = course.description)
+        if (course.description.isNotBlank()) {
+            Text(text = "Описание", fontSize = 20.sp, modifier = Modifier.padding(end = 5.dp))
+//            WebViewScreen(course.description)
+            Html(text = course.description)
+        }
         Text(
             text = "Документы для поступления:",
             fontSize = 20.sp,
@@ -709,7 +817,11 @@ fun CourseDocs(course: Course) {
 
 
 @Composable
-fun CourseGroups(course: Course, courseViewModel: CourseViewModel) {
+fun CourseGroups(
+    course: Course,
+    courseViewModel: CourseViewModel,
+    navHostController: NavHostController
+) {
     val group = course.groups
     val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val formaTime = DateTimeFormatter.ofPattern("HH:mm")
@@ -722,27 +834,29 @@ fun CourseGroups(course: Course, courseViewModel: CourseViewModel) {
         LazyRow(
             Modifier
                 .fillMaxWidth()
+                .padding(start = 5.dp)
                 .padding(vertical = 5.dp)
         ) {
 
             itemsIndexed(courseViewModel.availible_months.value)
             { index, item ->
-                Column(modifier = Modifier
-                    .height(30.dp)
-                    .padding(horizontal = 5.dp)
-                    .clip(
-                        RoundedCornerShape(20)
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = if (courseViewModel.selectedMonth.value == item) Primary_Green else Color.LightGray,
-                        RoundedCornerShape(20)
-                    )
-                    .clickable {
-                        courseViewModel.selectedMonth.value = item
-                        courses.value =
-                            course.groups?.filter { group -> group.month == item } ?: listOf()
-                    }, verticalArrangement = Arrangement.Center
+                Column(
+                    modifier = Modifier
+                        .height(30.dp)
+                        .padding(horizontal = 5.dp)
+                        .clip(
+                            RoundedCornerShape(20)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (courseViewModel.selectedMonth.value == item) Primary_Green else Color.LightGray,
+                            RoundedCornerShape(20)
+                        )
+                        .clickable {
+                            courseViewModel.selectedMonth.value = item
+                            courses.value =
+                                course.groups?.filter { group -> group.month == item } ?: listOf()
+                        }, verticalArrangement = Arrangement.Center
                 )
                 {
                     Text(
@@ -782,7 +896,7 @@ fun CourseGroups(course: Course, courseViewModel: CourseViewModel) {
         }
         Column {
             courses.value.forEachIndexed { index, group ->
-                CourseGroup(course.id, group)
+                CourseGroup(course.id, group, navHostController)
             }
         }
         Spacer(modifier = Modifier.height(70.dp))
@@ -792,10 +906,23 @@ fun CourseGroups(course: Course, courseViewModel: CourseViewModel) {
 }
 
 
-@Preview
 @Composable
-fun CourseGroup(course_id: Int = 0, group: GroupCart = GroupCart(1, 1, "МАС-1-ВХ", "LocalDate.now()", "LocalDate.now()", "LocalTime.now()", "uid", "https://lk.mzpo-s.ru/build/images/teachers/2.jpg","Михайлов Р.С", 1))
-{
+fun CourseGroup(
+    course_id: Int = 0,
+    group: GroupCart = GroupCart(
+        1,
+        1,
+        "МАС-1-ВХ",
+        "LocalDate.now()",
+        "LocalDate.now()",
+        "LocalTime.now()",
+        "uid",
+        "https://lk.mzpo-s.ru/build/images/teachers/2.jpg",
+        "Михайлов Р.С",
+        1
+    ),
+    navHostController: NavHostController
+) {
     val ctx = LocalContext.current
     val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val formaTime = DateTimeFormatter.ofPattern("HH:mm")
@@ -814,27 +941,44 @@ fun CourseGroup(course_id: Int = 0, group: GroupCart = GroupCart(1, 1, "МАС-1
             .clip(RoundedCornerShape(10.dp)),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column (modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly){
-            IconButton(onClick = {
-                CartViewModel.addToCart(ctx, course_id, group.id)
-                if (ok == 0) {
-                    ok = 1
-                    val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    if (vibrator.hasVibrator()) { // Vibrator availability checking
-                        vibrator.vibrate(
-                            VibrationEffect.createOneShot(
-                                200,
-                                VibrationEffect.DEFAULT_AMPLITUDE
-                            )
-                        ) // New vibrate method for API Level 26 or higher
-                    }
+        Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly) {
+            IconButton(
+                onClick = {
+                    Log.d("MyCartModelLog", course_id.toString() + " " + group.id.toString())
+                    CartViewModel.addToCart(ctx, course_id, group.id)
+                    if (ok == 0) {
+                        ok = 1
+                        val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                        if (vibrator.hasVibrator()) { // Vibrator availability checking
+                            vibrator.vibrate(
+                                VibrationEffect.createOneShot(
+                                    200,
+                                    VibrationEffect.DEFAULT_AMPLITUDE
+                                )
+                            ) // New vibrate method for API Level 26 or higher
+                        }
 
-                }
-            }, ) {
-                Icon(painter = painterResource(id = R.drawable.baseline_shopping_cart_24), contentDescription = "", tint = Aggressive_red, modifier = Modifier.background(Color.White, RoundedCornerShape(50)).padding(5.dp))
+                    }
+                    navHostController.navigate("cart")
+
+                },
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.baseline_shopping_cart_24),
+                    contentDescription = "",
+                    tint = Aggressive_red,
+                    modifier = Modifier
+                        .background(Color.White, RoundedCornerShape(50))
+                        .padding(5.dp)
+                )
             }
         }
-        Column(Modifier.padding(5.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly) {
+        Column(
+            Modifier
+                .padding(5.dp)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
             Text(
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold))
@@ -859,7 +1003,7 @@ fun CourseGroup(course_id: Int = 0, group: GroupCart = GroupCart(1, 1, "МАС-1
                     {
                         append("Преподаватель: ")
                     }
-                    append(group.teacher_name)
+                    append(group.teacher_name ?: "Не указан")
                 }, color = Color.White
             )
 
@@ -872,15 +1016,47 @@ fun CourseGroup(course_id: Int = 0, group: GroupCart = GroupCart(1, 1, "МАС-1
 @Composable
 fun CourseModules(course: Course) {
     Log.d("MyLog", course.modules.size.toString())
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 10.dp)
+    ) {
         course.modules.forEach { it ->
-            Row {
-                Text(text = it.name + " " + it.hours)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .padding(vertical = 5.dp)
+                    .background(
+                        Brush.linearGradient(listOf(Primary_Green, Primary_Green)),
+                        RoundedCornerShape(10),
+                        0.5f
+                    )
+                    .clip(RoundedCornerShape(10.dp))
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.fillMaxWidth(0.7f)) {
+                    Text(text = it.name, color = Color.White)
+                }
+                Column(verticalArrangement = Arrangement.Center) {
+                    if (it.hours != 0) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.time_svgrepo_com),
+                                contentDescription = "",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(text = it.hours.toString(), color = Color.White)
+                        }
+                    }
+                }
             }
+
         }
     }
-
-
 }
 
 @Preview(name = "CatalogScreen")

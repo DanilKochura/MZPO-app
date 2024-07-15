@@ -131,7 +131,7 @@ fun ProfileScreen(
                 ) {
 
                     //region Header
-                    ProfileHeader(navHostController = navHostController)
+                    ProfileHeader(navHostController = navHostController, true)
                     //endregion
 
                     Column(
@@ -271,7 +271,7 @@ fun ProfileScreen(
 
                             val NavError = listOf(
                                 ProfileItem.Help,
-                                ProfileItem.Reviews,
+//                                ProfileItem.Reviews,
                             )
                             Column {
                                 for (i in NavError) {
@@ -325,11 +325,12 @@ fun ProfileScreen(
                                                 FirebaseHelpers.getCartSum(token, cart_sum)
 
                                                 navHostController.navigate("profile")
+                                            },
+                                            onPress = {
+                                                Toast.makeText(context, "Для выхода удерживайте кнопку", Toast.LENGTH_SHORT).show()
                                             }
                                         )
-                                    }
-                                    .clickable {
-                                       Toast.makeText(context, "Для выхода удерживайте кнопку", Toast.LENGTH_SHORT).show()
+
                                     }
                                     .padding(horizontal = 5.dp, vertical = 15.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween) {

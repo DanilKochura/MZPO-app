@@ -10,6 +10,7 @@ import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
+import lk.mzpo.ru.BuildConfig
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.UserData
@@ -78,8 +79,9 @@ class HelpViewModel  (
                 params["subject"] = feedback.subject
                 params["message"] = feedback.message
 //                params["parent"] = feedback.parent.toString()
-                params["type"] = feedback.type.toString()
+//                params["type"] = feedback.type.toString()
                 params["mobile"] = feedback.mobile.toString()
+                params["version"] = BuildConfig.VERSION_NAME
                 return params
             }
         }

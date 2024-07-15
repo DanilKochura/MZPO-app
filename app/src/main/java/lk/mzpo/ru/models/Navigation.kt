@@ -154,6 +154,7 @@ sealed class ProfileItem(val title: String, val icon: Int, val route: String)
     object  Jobs: ProfileItem("Трудоустройство", R.drawable.baseline_work_24, "profile/jobs")
     object  Help: ProfileItem("Сообщить о проблеме", R.drawable.devel, "profile/help")
     object  Docs: ProfileItem("Документы", R.drawable.baseline_document_scanner_24, "profile/docs")
+    object  Certs: ProfileItem("Документы об обучении", R.drawable.diploma_svgrepo_com, "profile/certs")
     object  Contacts: ProfileItem("Контакты", R.drawable.baseline_map_24, "profile/contacts")
     object  Schedule: ProfileItem("Моё расписание", R.drawable.baseline_calendar_month_24, "profile/schedule")
 }

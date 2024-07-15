@@ -1,7 +1,10 @@
 package lk.mzpo.ru
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,28 +33,36 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.gson.Gson
 import lk.mzpo.ru.models.BottomItem
 import lk.mzpo.ru.models.Contract
+import lk.mzpo.ru.models.Gift
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.UserData
+import lk.mzpo.ru.models.study.ActiveFile
 import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.screens.CartScreen
 import lk.mzpo.ru.screens.CatalogScreen
 import lk.mzpo.ru.screens.CategoriesScreen
+import lk.mzpo.ru.screens.ContactsScreen
 import lk.mzpo.ru.screens.ContractsScreen
 import lk.mzpo.ru.screens.CourseScreen
+import lk.mzpo.ru.screens.GiftScreen
 import lk.mzpo.ru.screens.LoginScreen
 import lk.mzpo.ru.screens.Main
 import lk.mzpo.ru.screens.NotificationPromoScreen
 import lk.mzpo.ru.screens.NotificationsScreen
+import lk.mzpo.ru.screens.PdfGiftScreen
 import lk.mzpo.ru.screens.PdfScreen
 import lk.mzpo.ru.screens.ProfileScreen
+import lk.mzpo.ru.screens.RegisterScreen
 import lk.mzpo.ru.screens.StudyModuleScreen
 import lk.mzpo.ru.screens.StudyScreen
 import lk.mzpo.ru.screens.TestScreen
+import lk.mzpo.ru.screens.VideoGiftScreen
 import lk.mzpo.ru.screens.VideoScreen
 import lk.mzpo.ru.screens.profile.BillsScreen
 import lk.mzpo.ru.screens.profile.CertificatesScreen
@@ -63,6 +74,7 @@ import lk.mzpo.ru.screens.profile.UserDataScreen
 import lk.mzpo.ru.ui.components.WebViewPage
 import kotlin.math.log
 
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun NavGraph(
     navHostController: NavHostController,
@@ -133,18 +145,10 @@ fun NavGraph(
                 "profile/certs"
             ) {
 //                val userJson =  it.arguments?.getString("user")
-//
-                val userJson =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("USER")
-                val gson = Gson()
-                val userObject = gson.fromJson(userJson, User::class.java)
-                if (userObject !== null) {
                     CertificatesScreen(
-                        user = userObject,
                         navHostController = navHostController,
                         cart_sum = cart_sum
                     )
-                }
             }
             composable(
                 "profile/reviews"
@@ -234,9 +238,10 @@ fun NavGraph(
                 "profile/contacts"
             ) {
 //                val userJson =  it.arguments?.getString("user")
+                ContactsScreen(navHostController = navHostController, cart_sum = cart_sum)
 //
-                val uriHandler = LocalUriHandler.current
-                uriHandler.openUri("https://www.mzpo-s.ru/contacts")
+//                val uriHandler = LocalUriHandler.current
+//                uriHandler.openUri("https://www.mzpo-s.ru/contacts")
             }
             composable(
                 "profile/user_data"
@@ -290,6 +295,19 @@ fun NavGraph(
                     ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
             }
+            composable("gift")
+            {
+
+                val contractJson =
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Gift")
+                val gson = Gson()
+                val gift = gson.fromJson(contractJson, Gift::class.java)
+                if (gift !== null) {
+                    GiftScreen(gift = gift, navHostController = navHostController)
+                } else {
+                    ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
+                }
+            }
             composable("study/module")
             {
 
@@ -316,13 +334,30 @@ fun NavGraph(
             composable("notifications") {
                 InDev()
             }
-            composable("home")
+            composable("home",
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "https://lk.mzpo-s.ru"
+                        action = Intent.ACTION_VIEW
+                    }
+                )
+            )
             {
                 Main(navHostController, cart_sum = cart_sum)
             }
-            composable("login")
+            composable("login",
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "https://lk.mzpo-s.ru/login"
+                        action = Intent.ACTION_VIEW
+                    }
+                ))
             {
                 LoginScreen(navHostController, cart_sum = cart_sum)
+            }
+            composable("register")
+            {
+                RegisterScreen(navHostController, cart_sum = cart_sum)
             }
             composable("cart")
             {
@@ -331,6 +366,10 @@ fun NavGraph(
             composable("notifications")
             {
                 NotificationsScreen(navHostController = navHostController, cart_sum = cart_sum)
+            }
+            composable("contacts")
+            {
+                ContactsScreen(navHostController = navHostController, cart_sum = cart_sum)
             }
 
             composable(
@@ -383,12 +422,25 @@ fun NavGraph(
                 val userJson =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("video")
                 val contract =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("contract")!!
-                        .toInt()
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("contract")!!.toInt()
                 val gson = Gson()
                 val material = gson.fromJson(userJson, ActiveMaterials::class.java)
                 if (material !== null) {
                     VideoScreen(navHostController = navHostController, video = material, contract)
+
+                }
+            }
+            composable(
+                "gift/video",
+            ) {
+                val userJson =
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("video")
+                val gift =
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("gift")!!.toInt()
+                val gson = Gson()
+                val material = gson.fromJson(userJson, ActiveFile::class.java)
+                if (material !== null) {
+                    VideoGiftScreen(navHostController = navHostController, video = material, gift)
 
                 }
             }
@@ -405,7 +457,23 @@ fun NavGraph(
                     PdfScreen(navHostController = navHostController, material = userObject, contract = contract)
                 } else
                 {
-                    InDev();
+                    navHostController.navigate("study")
+                }
+            }
+            composable(
+                "gift/pdf",
+            ) {
+                val userJson =
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("MATERIAL")
+                val gson = Gson()
+                val userObject = gson.fromJson(userJson, ActiveFile::class.java)
+                val contract =
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<Int>("gift")
+                if (userObject !== null && contract !== null) {
+                    PdfGiftScreen(navHostController = navHostController, material = userObject, gift = contract)
+                } else
+                {
+                    navHostController.navigate("study")
                 }
             }
             composable(
@@ -514,10 +582,10 @@ fun InDev(text: String? = null) {
                 modifier = Modifier.padding(5.dp)
             )
 //            Text(text = "Страница находится в разработке: \nОтрисуйте и сделаю)))", textAlign = TextAlign.Center)
-            Text(
-                text = "Куда полезли? Я еще до $text не добрался \nОтрисуйте и сделаю)))",
-                textAlign = TextAlign.Center
-            )
+//            Text(
+//                text = "Куда полезли? Я еще до $text не добрался \nОтрисуйте и сделаю)))",
+//                textAlign = TextAlign.Center
+//            )
 //            if(text !== null)
 //            {
 //                Text(text = text)

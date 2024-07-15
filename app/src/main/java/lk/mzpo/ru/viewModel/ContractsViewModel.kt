@@ -11,6 +11,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import lk.mzpo.ru.models.Contract
+import lk.mzpo.ru.models.Gift
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
@@ -23,6 +24,7 @@ class ContractsViewModel  (
 ): ViewModel()
 {
     val contracts = mutableStateOf(listOf<Contract>()) // список заказов
+    val gifts = mutableStateOf(listOf<Gift>()) // список заказов
     val user = mutableStateOf(User(0,"","", "", ""))
     val selected = mutableStateOf("Активные") // активная вкладка меню
 
@@ -35,6 +37,13 @@ class ContractsViewModel  (
     val accessOrder = mutableIntStateOf(0)
     val selectedDate = mutableStateOf("")
     val accessModule = mutableIntStateOf(0)
+
+    val accessModuleUid = mutableStateOf("")
+    val accessContractUid = mutableStateOf("")
+    val accessCourseHours = mutableStateOf(0)
+    val accessPrice = mutableStateOf(0)
+
+    val accessFree = mutableStateOf("1")
     /**
      * Получение списка заказов
      * @param token - ЛК AUTH токен
@@ -50,7 +59,8 @@ class ContractsViewModel  (
                 Response.Listener { response ->
                     Log.d("getData", response)
                     val gson = Gson();
-                    val json = JSONArray(response)
+                    val common = JSONObject(response)
+                    val json = common.getJSONArray("contracts")
                     val array = arrayListOf<Contract>()
                     for (i in 0 until  json.length())
                     {
@@ -58,6 +68,18 @@ class ContractsViewModel  (
                         array.add(gson.fromJson(string, Contract::class.java))
                     }
                     this.contracts.value = array
+
+
+                    val jsong = common.getJSONArray("gifts")
+                    val arrayg = arrayListOf<Gift>()
+                    for (i in 0 until  jsong.length())
+                    {
+                        val string = jsong[i].toString()
+                        arrayg.add(gson.fromJson(string, Gift::class.java))
+                    }
+                    this.gifts.value = arrayg
+
+
                     loaded.value = true
 
                 },

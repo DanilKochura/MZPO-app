@@ -184,7 +184,7 @@ fun StudyScreen(
                             .height(45.dp),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        if (contract.docs_errors > 0)
+                        if (contract.docs_errors > 0 && false)
                         {
                             BadgedBox(badge = { Badge { Text(contract.docs_errors.toString()) } }) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -284,13 +284,70 @@ fun StudyScreen(
                                 .fillMaxWidth()
                                 .padding(10.dp)
                         ) {
-                            Text(
-                                text = contract.course!!.name,
-                                modifier = Modifier.weight(2f),
-                                fontSize = 20.sp,
-                                maxLines = 3,
-                                fontWeight = FontWeight.Bold
-                            )
+                            Column(Modifier.weight(2f)) {
+                                Text(
+                                    text = contract.course!!.name,
+                                    modifier = Modifier,
+                                    fontSize = 18.sp,
+                                    maxLines = 2,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                if (studyViewModel.examNew.size > 0)
+                                {
+                                    if (!studyViewModel.examNew[0].accessed.isNullOrEmpty())
+                                    {
+                                        Text(
+                                            buildAnnotatedString {
+                                                append("Экзамен: ")
+                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                    append(studyViewModel.examNew[0].accessed)
+                                                }
+                                            }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp
+                                        )
+                                    } else if (studyViewModel.examNew[0].many.isNotEmpty())
+                                    {
+                                        if (studyViewModel.examNew[0].many.size > 1)
+                                        {
+                                            Text(
+                                                buildAnnotatedString {
+                                                    append("Экзамены: ")
+                                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                        for (i in 0..studyViewModel.examNew[0].many.size - 1)
+                                                        {
+                                                            append(studyViewModel.examNew[0].many[i])
+                                                            if (i < studyViewModel.examNew[0].many.size-1)
+                                                            {
+                                                                append(", ")
+                                                            }
+                                                        }
+                                                    }
+                                                }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp)
+                                        } else
+                                        {
+                                            Text(
+                                                buildAnnotatedString {
+                                                    append("Окончание обучения: ")
+                                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                            append(studyViewModel.examNew[0].many[0])
+                                                        }
+                                                }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp)
+                                        }
+                                    } else if (!studyViewModel.examNew[0].close.isNullOrEmpty())
+                                    {
+                                        Text(
+                                            buildAnnotatedString {
+                                                append("С итоговым экзаменом: ")
+                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                    append(studyViewModel.examNew[0].close)
+                                                }
+                                            }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp
+                                        )
+                                    }
+
+                                }
+
+
+                            }
                             AsyncImage(
                                 model = contract.course!!.image,
                                 contentDescription = "",
@@ -379,7 +436,9 @@ fun StudyScreen(
                                         text = "Ваше заявление на возврат принято",
                                         color = Aggressive_red,
                                         textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 5.dp).fillMaxWidth()
+                                        modifier = Modifier
+                                            .padding(vertical = 5.dp)
+                                            .fillMaxWidth()
                                     )
                                 }
                             }

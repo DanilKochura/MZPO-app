@@ -46,6 +46,7 @@ class SendDataToAmo {
                         HashMap()
                     params["name"] = data.name
                     params["form_name_site"] = data.form_name_site
+                    params["site"] = "mobile.android"
                     params["email"] = data.email
                     params["phone"] = data.phone
                     if(data.comment != "")
@@ -55,6 +56,12 @@ class SendDataToAmo {
                     {
                         params["comment"] = data.form_name_site
                     }
+                    if (data.event)
+                    {
+                        params["events"] = data.event.toString()
+                        params["event_name"] = data.event_name
+                    }
+                    params["pipeline"] = data.pipeline.toString()
                     Log.d("MyLog", params.toString())
                     return params
                 }

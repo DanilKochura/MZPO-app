@@ -29,7 +29,10 @@ class AuthService {
                     val test =  ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
                     test.edit().putString("token_lk", response).apply()
                     Log.d("MyLog", "AUTHORISED")
-                    navHostController.navigate("contracts")
+                    if (redirect)
+                    {
+                        navHostController.navigate("contracts")
+                    }
                 },
 
                 Response.ErrorListener { error ->

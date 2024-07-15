@@ -25,6 +25,7 @@ fun StoryAsyncImage(url: String,
             .data(url)
             .crossfade(true)
             .build(),
+
         placeholder = painterResource(id = R.drawable.placehold),
         contentDescription = "Image",
         contentScale = ContentScale.Crop,

@@ -10,29 +10,37 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.CartItem
 import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthStatus
+import lk.mzpo.ru.network.retrofit.CheckPaymentRequest
+import lk.mzpo.ru.network.retrofit.PurchaseService
 import org.json.JSONArray
 import org.json.JSONObject
 
 class CartViewModel  (
 ): ViewModel()
 {
+    val payment_id = mutableStateOf("")
+    val payment_status = mutableStateOf(0)
     val courses = mutableStateListOf<CartItem>()  // список курсов в корзине
-
+    val showLoader = mutableStateOf(false)
     val auth_tested = mutableStateOf(AuthStatus.TEST) //статус аунтификации
 
-
+    val selected_course = mutableStateOf(0)
+    val selected_course_org = mutableStateOf(0)
     /**
      * Получение списка курсов по ID в ЛК
      * @param context - Контекст для очереди
@@ -60,7 +68,7 @@ class CartViewModel  (
                     try {
                         val item = mainobj[i].toString()
                         val gson = Gson();
-                        courses.add(CartItem(0, cartList.value[i]["type"].toString(), "", 0, null, 0, gson.fromJson(item, CoursePreview::class.java)))
+                        courses.add(CartItem(0, cartList.value[i]["type"].toString(), 0, 0, "", 0, null, 0, gson.fromJson(item, CoursePreview::class.java)))
                     } catch (_: Exception) {}
                 }
 
@@ -286,5 +294,7 @@ class CartViewModel  (
             FirebaseHelpers.deleteFromCart(token, id)
         }
     }
+
+
 
 }

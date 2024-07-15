@@ -89,6 +89,8 @@ class CatalogViewModel
      */
     fun getCourses(context: Context, url: String) {
         //region Получение курсов
+        Log.d("MyCataLog", "started "+page.value.toString())
+
         val url1 = "https://lk.mzpo-s.ru/mobile/catalog/$url/${page.value}"
         val queue = Volley.newRequestQueue(context)
         val sRequest = StringRequest(
@@ -111,10 +113,16 @@ class CatalogViewModel
                 page.value++
                 loaded.value = true
 
+                Log.d("MyCataLog", courses_selected.value.size.toString())
+                if (courses.size < 20)
+                {
+                    maxPageExpired.value = true
+
+                }
             },
             {
-
-                Log.d("MyLog", "VolleyError: $it")
+                maxPageExpired.value = true
+                Log.d("MyCataLog", "VolleyError: $it")
             }
         )
         queue.add(sRequest)
@@ -193,6 +201,7 @@ class CatalogViewModel
 
                 courses_selected.value = courses
                 loaded.value = true
+                this.maxPageExpired.value = true
                 h1.value = "Вот что мы нашли по запросу \"$query\""
 
             },
