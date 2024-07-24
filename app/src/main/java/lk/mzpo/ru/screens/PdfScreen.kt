@@ -131,18 +131,22 @@ fun PdfScreen(
     val loading = remember {
         mutableStateOf(false)
     }
-    pdfState
-
 
     LaunchedEffect(key1 = pdfState.currentPage) {
-        if (pdfState.currentPage > progress.value && pdfState.currentPage - progress.value < 3)
+
+        if ( pdfState.pdfPageCount - pdfState.currentPage < 5)
         {
+            progress.value = pdfState.pdfPageCount
+        }
+        if ((pdfState.currentPage > progress.value && pdfState.currentPage - progress.value < 3) || progress.value == pdfState.pdfPageCount)
+        {
+
             SaveLastPageService().send(
                 "Bearer " + token_?.trim('"'),
                 SaveLastPageService.PostBody(
                     material = material.id!!,
                     contract = contract,
-                    page = pdfState.currentPage
+                    page =  progress.value
                 )
 
             ).enqueue(object : retrofit2.Callback<ResponseBody> {
@@ -164,7 +168,7 @@ fun PdfScreen(
                     }
                 }
             })
-            if (progress.value == pdfState.pdfPageCount)
+            if (progress.value == pdfState.pdfPageCount && pdfState.pdfPageCount - pdfState.currentPage < 5 && pdfState.isLoaded)
             {
                 Toast.makeText(ctx, "Вы просмотрели документ полностью!", Toast.LENGTH_SHORT).show()
             }
@@ -178,7 +182,13 @@ fun PdfScreen(
                 .fillMaxSize()
                 .padding(top = 80.dp, end = 5.dp), contentAlignment = Alignment.TopEnd) {
                 if (pdfState.isLoaded) {
-                    val progress_reading = pdfState.currentPage.toFloat().div(pdfState.pdfPageCount).times(100).roundToInt()
+                    var progress_reading = pdfState.currentPage.toFloat().div(pdfState.pdfPageCount).times(100).roundToInt()
+                    var filling = pdfState.currentPage.toFloat().div(pdfState.pdfPageCount)
+                    if (pdfState.pdfPageCount - pdfState.currentPage < 5)
+                    {
+                        progress_reading = 100
+                        filling= 1f
+                    }
                     Row(
                         modifier = Modifier
                             .width(150.dp)
@@ -187,7 +197,7 @@ fun PdfScreen(
                     ) {
 
                         LinearProgressIndicator(
-                            progress = pdfState.currentPage.toFloat().div(pdfState.pdfPageCount),
+                            progress = filling,
                             Modifier
                                 .fillMaxSize()
                                 .clip(

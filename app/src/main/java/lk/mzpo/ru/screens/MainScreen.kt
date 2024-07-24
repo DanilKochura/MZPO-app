@@ -492,7 +492,7 @@ fun Main(
                 onAllStoriesShown =  {
                     if(mainViewModel.story_position.value <= mainViewModel.stories.value.size - 2)
                     {
-                        Toast.makeText(ctx, "All Showed", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(ctx, "All Showed", Toast.LENGTH_SHORT).show()
                         mainViewModel._storyState.targetState = false
 
 

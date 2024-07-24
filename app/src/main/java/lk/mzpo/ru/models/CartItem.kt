@@ -11,6 +11,7 @@ class CartItem(
   @SerializedName("date")  val date: String?,
   @SerializedName("group_id")  val group_id: Int?,
   @SerializedName("group")  val group: GroupCart?,
+  @SerializedName("purchase_type")  val purchase_type: String?,
   @SerializedName("course_id")  val course_id: Int,
   @SerializedName("course")  val course: CoursePreview,
 )

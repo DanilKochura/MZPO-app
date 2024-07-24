@@ -190,7 +190,7 @@ fun CartScreen(
             // Обработайте отмену оплаты
         } else {
             Log.e("Payment", "Payment error:")
-            Toast.makeText(ctx, "Payment error: ", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "Payment error", Toast.LENGTH_SHORT).show()
             // Обработайте ошибку
         }
     }
@@ -361,7 +361,7 @@ fun CartScreen(
                                         val config = YookassaConfigs.getConfig(value.org_id)
                                         cartViewModel.selected_course.value = value.id
                                         cartViewModel.selected_course_org.value = value.org_id
-                                        Toast.makeText(ctx, "Test", Toast.LENGTH_SHORT).show()
+//                                        Toast.makeText(ctx, "Test", Toast.LENGTH_SHORT).show()
                                         val paymentMethodTypes = setOf(
                                             PaymentMethodType.BANK_CARD,
 //                                            PaymentMethodType.SBERBANK,
@@ -426,10 +426,10 @@ fun CartScreen(
 fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: () -> Unit = {}, onBuy: () -> Unit = {}, modifier: Modifier = Modifier)
 {
     var text = "";
-    if(item.course.prices.dist == price)
+    if(item.type == "dist")
     {
         text = "Дистанционно"
-    } else if (item.course.prices.sale15 == price)
+    } else if (item.type== "sale15")
     {
         text = "Очно в группе"
     } else if (item.course.prices.ind == price)
@@ -456,7 +456,7 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
                 .fillMaxWidth()
                 .padding(7.dp)) {
                 AsyncImage(model = item.course.image, contentDescription = item.course.id.toString(), modifier = Modifier
-                    .height(100.dp)
+                    .height(120.dp)
                     .weight(1f)
                     .fillMaxWidth()
                     .clickable {
@@ -466,9 +466,9 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
                 Column(modifier = Modifier
                     .weight(2f)
                     .padding(start = 10.dp)
-                    .height(100.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    .height(120.dp), verticalArrangement = Arrangement.SpaceBetween) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                        Text(item.course.name, modifier = Modifier.weight(1f), maxLines = 3, overflow = TextOverflow.Ellipsis, fontSize = 18.sp)
+                        Text(item.course.name, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 16.sp)
                         IconButton(modifier = Modifier.width(25.dp), onClick = {
                             onDelete.invoke()
                         }) {
@@ -533,7 +533,10 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically){
                     Text(text = price.toString(), fontWeight = FontWeight.Bold, color = Aggressive_red, fontSize = 25.sp)
-                    Text(text = price.times(1.15).toBigDecimal().setScale(-2, RoundingMode.UP).toInt().toString(), textDecoration = TextDecoration.LineThrough, modifier = Modifier.padding(start = 10.dp), fontSize = 18.sp)
+                    if (item.purchase_type == "course")
+                    {
+                        Text(text = price.times(1.15).toBigDecimal().setScale(-2, RoundingMode.UP).toInt().toString(), textDecoration = TextDecoration.LineThrough, modifier = Modifier.padding(start = 10.dp), fontSize = 18.sp)
+                    } 
                 }
 
                 Button(onClick = {
@@ -549,11 +552,17 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
                 }
             }
             val uriHandler = LocalUriHandler.current
+            if (item.purchase_type == "recovery")
+            {
+                Text(text = "Продление доступа за 50% стоимости")
+            }
             Row (verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = agreement.value,
                     onCheckedChange = { agreement.value = it },
-                    modifier = Modifier.padding(start = 5.dp, end = 10.dp).size(12.dp),
+                    modifier = Modifier
+                        .padding(start = 5.dp, end = 10.dp)
+                        .size(12.dp),
                     colors = androidx.compose.material3.CheckboxDefaults.colors(checkedColor = Primary_Green)
                     )
                 Text(text = "Согласен с условиями ", fontSize = 12.sp)

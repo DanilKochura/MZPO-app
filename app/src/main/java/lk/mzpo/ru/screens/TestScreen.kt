@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
@@ -179,7 +180,7 @@ fun TestScreen(
                                             Text(text = testViewModel.material.value!!.name.toString())
                                             Spacer(modifier = Modifier.height(20.dp))
                                             Text(text = "Количество вопросов: " + testViewModel.questionCount.value.toString())
-                                            Text(text = "Осталось попыток: " + testViewModel.attemptsLeft.value.toString())
+//                                            Text(text = "Осталось попыток: " + testViewModel.attemptsLeft.value.toString())
                                             Button(
                                                 onClick = {
                                                     testViewModel.testStarted.value = true
@@ -188,7 +189,7 @@ fun TestScreen(
                                                     backgroundColor = Primary_Green_BG,
                                                     contentColor = Color.White
                                                 ),
-                                                enabled = (testViewModel.question.value !== null && testViewModel.attemptsLeft.value > 0)
+                                                enabled = (testViewModel.question.value !== null)
                                             ) {
                                                 if (testViewModel.hasNotFinishedAttempt.value) {
                                                     Text(
@@ -197,6 +198,26 @@ fun TestScreen(
                                                     )
                                                 } else {
                                                     Text(text = "Начать тест", color = Color.White)
+                                                }
+                                            }
+                                            LazyRow {
+                                                itemsIndexed(testViewModel.attempts.value)
+                                                {
+                                                    it, value ->
+                                                    if (value.result != null)
+                                                    {
+                                                        var color = Aggressive_red
+                                                        if(value.result!! >= 70.0f)
+                                                        {
+                                                            color = Primary_Green
+                                                        }
+                                                        Column (modifier = Modifier.padding(10.dp).background(
+                                                           color.copy(0.1f), RoundedCornerShape(10.dp)).padding(5.dp)){
+                                                            Text(text = "Попытка: "+value.attempt, color = color)
+                                                            Text(text = "Результат: "+value.result+"%", color = color)
+                                                        }
+                                                    }
+
                                                 }
                                             }
                                         }
@@ -352,7 +373,9 @@ fun TestScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
                                         if (testViewModel.result.value!!.result >= 70.0f) {
-                                            Icon(imageVector = Icons.Default.Check, contentDescription = "", tint = Primary_Green, modifier = Modifier.size(100.dp).padding(10.dp))
+                                            Icon(imageVector = Icons.Default.Check, contentDescription = "", tint = Primary_Green, modifier = Modifier
+                                                .size(100.dp)
+                                                .padding(10.dp))
                                             Text(text = "Результат: " + testViewModel.result.value?.result.toString() + "%")
                                             Text(
                                                 text = "Тест пройден!",
@@ -360,7 +383,9 @@ fun TestScreen(
                                                 color = Primary_Green
                                             )
                                         } else {
-                                            Icon(imageVector = Icons.Default.Close, contentDescription = "", tint = Aggressive_red, modifier = Modifier.size(100.dp).padding(10.dp))
+                                            Icon(imageVector = Icons.Default.Close, contentDescription = "", tint = Aggressive_red, modifier = Modifier
+                                                .size(100.dp)
+                                                .padding(10.dp))
                                             Text(text = "Результат: " + testViewModel.result.value?.result.toString() + "%")
                                             Text(
                                                 text = "Тест не пройден!",

@@ -25,3 +25,17 @@ data class TestResult (
     @SerializedName("result"                ) var result              : Float
 
 )
+
+
+data class TestAttempt (
+
+    @SerializedName("id"                ) var id              : Int?    = null,
+    @SerializedName("user_id"           ) var userId          : Int?    = null,
+    @SerializedName("order_id"          ) var orderId         : Int?    = null,
+    @SerializedName("study_material_id" ) var studyMaterialId : Int?    = null,
+    @SerializedName("attempt"           ) var attempt         : Int?    = null,
+    @SerializedName("result"            ) var result          : Float? = null,
+    @SerializedName("created_at"        ) var createdAt       : String? = null,
+    @SerializedName("updated_at"        ) var updatedAt       : String? = null
+
+)

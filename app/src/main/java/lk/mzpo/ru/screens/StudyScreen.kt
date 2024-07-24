@@ -332,6 +332,16 @@ fun StudyScreen(
                                                         }
                                                 }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp)
                                         }
+                                    } else if (!studyViewModel.examNew[0].corp.isNullOrEmpty())
+                                    {
+                                        Text(
+                                            buildAnnotatedString {
+                                                append("Окончание обучения: ")
+                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                    append(studyViewModel.examNew[0].corp)
+                                                }
+                                            }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp
+                                        )
                                     } else if (!studyViewModel.examNew[0].close.isNullOrEmpty())
                                     {
                                         Text(

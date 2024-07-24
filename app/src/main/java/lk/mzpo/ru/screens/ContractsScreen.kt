@@ -410,7 +410,7 @@ fun ContractsScreen(
 fun Login(token: String?, navHostController: NavHostController) {
     val password = remember {
         mutableStateOf(TextFieldValue(""))
-//        mutableStateOf(TextFieldValue("YKg9mt7S5RiHUXy6"))
+//        mutableStateOf(TextFieldValue("12345"))
 //        mutableStateOf(TextFieldValue("mkCF4CVa4iLyTd8"))
     }
     val login = remember {

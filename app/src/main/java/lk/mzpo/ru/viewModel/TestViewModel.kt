@@ -25,6 +25,7 @@ import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.UserData
 import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.models.study.Question
+import lk.mzpo.ru.models.study.TestAttempt
 import lk.mzpo.ru.models.study.TestBase
 import lk.mzpo.ru.models.study.TestResult
 import lk.mzpo.ru.network.retrofit.AuthData
@@ -59,6 +60,8 @@ class TestViewModel  (
     val result = mutableStateOf<TestResult?>(null)
     val finished = mutableStateOf(false)
     val material = mutableStateOf<ActiveMaterials?>(null)
+    val attempts = mutableStateOf(
+        arrayListOf<TestAttempt>())
 
     fun getData(context: Context, contractId: Int, testId: Int)
     {
@@ -103,7 +106,7 @@ class TestViewModel  (
         Log.d("MyTestLog", question.value?.activeAnswers?.size.toString())
         this.questionCount.value = test.questionsCount!!
         this.material.value = test.material!!
-
+        this.attempts.value = test.material!!.attempts
     }
 
 

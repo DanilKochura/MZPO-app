@@ -68,7 +68,7 @@ class CartViewModel  (
                     try {
                         val item = mainobj[i].toString()
                         val gson = Gson();
-                        courses.add(CartItem(0, cartList.value[i]["type"].toString(), 0, 0, "", 0, null, 0, gson.fromJson(item, CoursePreview::class.java)))
+                        courses.add(gson.fromJson(item, CartItem::class.java))
                     } catch (_: Exception) {}
                 }
 

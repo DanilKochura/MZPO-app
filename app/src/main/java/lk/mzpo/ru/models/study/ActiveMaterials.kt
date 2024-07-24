@@ -12,6 +12,7 @@ data class ActiveMaterials (
     @SerializedName("position"        ) var position      : Int?        = null,
     @SerializedName("status"          ) var status        : String?     = null,
     @SerializedName("created_at"      ) var createdAt     : String?     = null,
+    @SerializedName("attempts"        ) var attempts     : ArrayList<TestAttempt>     = arrayListOf(),
     @SerializedName("updated_at"      ) var updatedAt     : String?     = null,
     @SerializedName("active_file"     ) var activeFile    : ActiveFile? = ActiveFile(),
     @SerializedName("user_progress"   ) var userProgress   : UserProgressCourse? = UserProgressCourse()

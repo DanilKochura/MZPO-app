@@ -57,27 +57,31 @@ class ContractsViewModel  (
             object : StringRequest(
                 Method.GET, url,
                 Response.Listener { response ->
-                    Log.d("getData", response)
-                    val gson = Gson();
-                    val common = JSONObject(response)
-                    val json = common.getJSONArray("contracts")
-                    val array = arrayListOf<Contract>()
-                    for (i in 0 until  json.length())
-                    {
-                        val string = json[i].toString()
-                        array.add(gson.fromJson(string, Contract::class.java))
-                    }
-                    this.contracts.value = array
+                    try {
+                        val gson = Gson();
+                        val common = JSONObject(response)
+                        val json = common.getJSONArray("contracts")
+                        val array = arrayListOf<Contract>()
+                        for (i in 0 until  json.length())
+                        {
+                            val string = json[i].toString()
+                            array.add(gson.fromJson(string, Contract::class.java))
+                        }
+                        this.contracts.value = array
 
 
-                    val jsong = common.getJSONArray("gifts")
-                    val arrayg = arrayListOf<Gift>()
-                    for (i in 0 until  jsong.length())
+                        val jsong = common.getJSONArray("gifts")
+                        val arrayg = arrayListOf<Gift>()
+                        for (i in 0 until  jsong.length())
+                        {
+                            val string = jsong[i].toString()
+                            arrayg.add(gson.fromJson(string, Gift::class.java))
+                        }
+                        this.gifts.value = arrayg
+                    } catch (_:Exception)
                     {
-                        val string = jsong[i].toString()
-                        arrayg.add(gson.fromJson(string, Gift::class.java))
+                        error.value = true
                     }
-                    this.gifts.value = arrayg
 
 
                     loaded.value = true

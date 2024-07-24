@@ -25,6 +25,7 @@ data class Group(
 data class GroupCart(
    @SerializedName("id") val id: Int,
    @SerializedName("course_id") val course_id: Int,
+   @SerializedName("group_type") val group_type: Int,
    @SerializedName("title") val title: String,
    @SerializedName("start_date") val start: String,
    @SerializedName("end_date") val end: String,

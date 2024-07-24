@@ -311,7 +311,19 @@ fun CourseScreen(
                     onClick = {
 
                         if (courseViewModel.auth_tested.value == AuthStatus.AUTH) {
-                            CartViewModel.addToCart(ctxx, courseViewModel.courses.value[0].id)
+                            var group_type = 1;
+                            if (courseViewModel.selectedType.value == "weekend")
+                            {
+                                group_type = 2
+                            }
+                            val group = courseViewModel.courses.value[0].groups?.filter { it.group_type == group_type }
+                            if (group.isNullOrEmpty())
+                            {
+                                CartViewModel.addToCart(ctxx, courseViewModel.courses.value[0].id)
+                            } else
+                            {
+                                CartViewModel.addToCart(ctxx, courseViewModel.courses.value[0].id, group.first().id)
+                            }
                         } else if (courseViewModel.auth_tested.value == AuthStatus.GUEST) {
 //                            FirebaseHelpers.addToCart(
 //                                token, hashMapOf(
@@ -842,7 +854,7 @@ fun CourseGroups(
             { index, item ->
                 Column(
                     modifier = Modifier
-                        .height(30.dp)
+                        .height(36.dp)
                         .padding(horizontal = 5.dp)
                         .clip(
                             RoundedCornerShape(20)
@@ -861,7 +873,9 @@ fun CourseGroups(
                 {
                     Text(
                         text = courseViewModel.monthes[item],
-                        Modifier.padding(5.dp),
+                        modifier = Modifier.padding(horizontal = 5.dp),
+                        fontSize = 18.sp,
+                        lineHeight = 36.sp,
                         color = Color.Black
                     )
                 }
@@ -910,6 +924,7 @@ fun CourseGroups(
 fun CourseGroup(
     course_id: Int = 0,
     group: GroupCart = GroupCart(
+        1,
         1,
         1,
         "МАС-1-ВХ",

@@ -209,7 +209,7 @@ fun StudyModuleScreen(
                                                         contract.id
                                                     )
                                                     navHostController.navigate("pdf")
-                                                } else if (i.activeFile!!.type == "test") {
+                                                } else if (i.activeFile!!.type == "test" || i.activeFile!!.type == "final_test") {
                                                     navHostController.navigate("test/${contract.id}/${i.id}")
                                                 }
                                             }),
@@ -295,7 +295,7 @@ fun StudyModuleScreen(
                                                             tint = Primary_Green
                                                         )
                                                     }
-                                                } else if (i.activeFile!!.type == "test") {
+                                                } else if (i.activeFile!!.type == "test"  || i.activeFile!!.type == "final_test") {
                                                     IconButton(
                                                         onClick = {
                                                             navHostController.navigate("test/${contract.id}/${i.id}")
