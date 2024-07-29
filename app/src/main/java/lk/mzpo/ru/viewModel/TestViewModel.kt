@@ -215,6 +215,64 @@ class TestViewModel  (
 
     }
 
+    fun sendMultiple(ctx: Context, contractId: Int, materialId: Int, answer: MutableList<Int>, question: Int)
+    {
+        val queue = Volley.newRequestQueue(ctx)
+        Log.d("MyTestLog", "https://lk.mzpo-s.ru/mobile/user/test/$contractId/$materialId/question/$question")
+        val stringRequest: StringRequest = object : StringRequest(
+            Method.POST,
+            "https://lk.mzpo-s.ru/mobile/user/test/$contractId/$materialId/question/$question",
+            Response.Listener { response ->
+                val mainobj = JSONObject(response)
+                val gson = Gson();
+                try {
+                    val quest = mainobj.getJSONObject("question")
+                    this.question.value = gson.fromJson(quest.toString(), Question::class.java)
+                } catch (_: Exception)
+                {
+                    Log.d("MyTestLog", "TEST")
+                    val quest = mainobj.getJSONObject("result")
+                    this.result.value = gson.fromJson(quest.toString(), TestResult::class.java)
+                    Log.d("MyTestLog", result.value.toString())
+                    finished.value = true
+                }
+                Toast.makeText(ctx,"Данные успешно сохранены!", Toast.LENGTH_SHORT).show()
+            },
+
+            Response.ErrorListener { error ->
+                Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже", Toast.LENGTH_SHORT).show()
+                error.printStackTrace()
+            }) {
+            override fun getBodyContentType(): String {
+                return "application/x-www-form-urlencoded"
+            }
+
+            override fun getHeaders(): Map<String, String> {
+                val headers: MutableMap<String, String> =
+                    HashMap()
+                headers["Content-Type"] = "application/x-www-form-urlencoded"
+                headers["Accept"] = "application/json"
+                val test = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
+                val token = test.getString("token_lk", "")
+                headers["Authorization"] = "Bearer "+token?.trim('"')
+                return headers
+            }
+
+            @Throws(AuthFailureError::class)
+            override fun getParams(): Map<String, String> {
+                val params: MutableMap<String, String> =
+                    HashMap()
+                params["answers"] = answer.joinToString(" ")
+                Log.d("MyLog", params.toString())
+                return params
+            }
+        }
+
+        queue.add(stringRequest)
+
+
+    }
+
 
 
 }

@@ -791,28 +791,31 @@ fun module(
     var sum = 0;
     var checked = 0;
     for (i in studyModule.activeMaterials) {
-        if (i.activeFile!!.type == "video") {
-            sum += i.activeFile!!.size ?: 0
-        } else if (i.activeFile!!.type == "file") {
-            sum += (i.activeFile!!.size ?: 0) * 120
+        if (i.activeFile !== null)
+        {
+            if (i.activeFile!!.type == "video") {
+                sum += i.activeFile!!.size ?: 0
+            } else if (i.activeFile!!.type == "file") {
+                sum += (i.activeFile!!.size ?: 0) * 120
 
-        } else if (i.activeFile!!.type == "test") {
-            sum += 1200
+            } else if (i.activeFile!!.type == "test" || i.activeFile!!.type == "final_test") {
+                sum += 1200
 
-        }
-
-        if (i.activeFile!!.userProgress !== null) {
-            if (checked != 1) {
-                if (i.activeFile!!.userProgress?.viewed == "1") {
-                    checked = 1;
-                }
-                if (i.activeFile!!.userProgress?.viewed == "2") {
-                    checked = 2;
-                }
             }
-        } else {
-            if (checked != 0) {
-                checked = 1
+
+            if (i.activeFile!!.userProgress !== null) {
+                if (checked != 1) {
+                    if (i.activeFile!!.userProgress?.viewed == "1") {
+                        checked = 1;
+                    }
+                    if (i.activeFile!!.userProgress?.viewed == "2") {
+                        checked = 2;
+                    }
+                }
+            } else {
+                if (checked != 0) {
+                    checked = 1
+                }
             }
         }
     }
