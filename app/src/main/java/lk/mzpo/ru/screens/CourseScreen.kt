@@ -953,13 +953,28 @@ fun CourseGroup(
                 RoundedCornerShape(10),
                 0.5f
             )
-            .clip(RoundedCornerShape(10.dp)),
+            .clip(RoundedCornerShape(10.dp)).clickable {
+                CartViewModel.addToCart(ctx, course_id, group.id)
+                if (ok == 0) {
+                    ok = 1
+                    val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    if (vibrator.hasVibrator()) { // Vibrator availability checking
+                        vibrator.vibrate(
+                            VibrationEffect.createOneShot(
+                                200,
+                                VibrationEffect.DEFAULT_AMPLITUDE
+                            )
+                        ) // New vibrate method for API Level 26 or higher
+                    }
+
+                }
+                navHostController.navigate("cart")
+            },
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly) {
             IconButton(
                 onClick = {
-                    Log.d("MyCartModelLog", course_id.toString() + " " + group.id.toString())
                     CartViewModel.addToCart(ctx, course_id, group.id)
                     if (ok == 0) {
                         ok = 1
