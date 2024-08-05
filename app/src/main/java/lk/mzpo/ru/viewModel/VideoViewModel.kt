@@ -49,13 +49,13 @@ class VideoViewModel  (
     ) {
 
         val queue = Volley.newRequestQueue(ctx)
-        Log.d("MyLog", time.toString()+" "+duration.toString()+" "+spendTime.toString())
+//        Log.d("MyLog", time.toString()+" "+duration.toString()+" "+spendTime.toString())
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
             "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id",
             Response.Listener { response ->
-                Log.d("MyLog", response)
-                Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id")
+//                Log.d("MyLog", response)
+//                Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id")
             },
 
             Response.ErrorListener { error ->
@@ -84,11 +84,11 @@ class VideoViewModel  (
                 params["duration"] = duration.toString()
                 params["spendTime"] = spendTime.times(1000).toString()
                 params["contract"] = contract.toString()
-                Log.d("MyLog", params.toString());
+//                Log.d("MyLog", params.toString());
                 return params
             }
         }
-
+        stringRequest.setShouldCache(false);
         queue.add(stringRequest)
 
 

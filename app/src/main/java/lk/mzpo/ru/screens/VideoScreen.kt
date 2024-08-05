@@ -49,6 +49,8 @@ import com.rizzi.bouquet.ResourceType
 import com.rizzi.bouquet.VerticalPDFReader
 import com.rizzi.bouquet.rememberVerticalPdfReaderState
 import io.sanghun.compose.video.VideoPlayer
+import io.sanghun.compose.video.cache.VideoPlayerCacheManager
+import io.sanghun.compose.video.controller.VideoPlayerControllerConfig
 import io.sanghun.compose.video.uri.VideoPlayerMediaItem
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.study.ActiveMaterials
@@ -82,6 +84,8 @@ fun VideoScreen(
 //                .background(color = Color.Gray)
 //
 //        )
+        VideoPlayerCacheManager.initialize(ctx, 1024 * 1024 * 10)    // 10Mb
+
         VideoPlayer(
             mediaItems = listOf(
                 VideoPlayerMediaItem.NetworkMediaItem(
@@ -95,23 +99,31 @@ fun VideoScreen(
             usePlayerController = true,
             enablePip = false,
             handleAudioFocus = true,
-
+            controllerConfig = VideoPlayerControllerConfig(
+                showSpeedAndPitchOverlay = true,
+                showSubtitleButton = false,
+                showCurrentTimeAndTotalTime = true,
+                showBufferingProgress = false,
+                showForwardIncrementButton = true,
+                showBackwardIncrementButton = true,
+                showBackTrackButton = false,
+                showNextTrackButton = false,
+                showRepeatModeButton = false,
+                controllerShowTimeMilliSeconds = 5_000,
+                controllerAutoShow = true,
+                showFullScreenButton = true
+            ),
             volume = 0.5f,  // volume 0.0f to 1.0f
             onCurrentTimeChanged = { // long type, current player time (millisec)
-                Log.e("CurrentTime", it.div(1000).toFloat().toString())
-                state.value = it/1000F
-
-                videoViewModel.update(ctx, video.id!!, it/1000.toFloat(), video.activeFile!!.size!!.toFloat(), video.activeFile!!.size!!.toFloat(), contract)
-                //TODO: should save time it in there
+                if (it/1000 - state.value  > 20 ||  video.activeFile!!.size!!.toFloat() - it/1000f < 10)
+                {
+//                    Log.e("CurrentTime", it.div(1000).toFloat().toString())
+                    state.value = it/1000F
+                    videoViewModel.update(ctx, video.id!!, it/1000.toFloat(), video.activeFile!!.size!!.toFloat(), video.activeFile!!.size!!.toFloat(), contract)
+                }
             },
             playerInstance = {
-                Log.d("MyLog", "aaaa")// ExoPlayer instance (Experimental)
-
-                addAnalyticsListener(
-                    object : AnalyticsListener {
-
-                    }
-                )
+//                Log.d("MyLog", "aaaa")// ExoPlayer instance (Experimental)
             },
             modifier = Modifier
                 .fillMaxSize(),
@@ -133,8 +145,8 @@ fun VideoScreen(
                 contract.toString()
             )
 
-//            navHostController.navigateUp()
-            navHostController.navigate("study")
+            navHostController.navigateUp()
+//            navHostController.navigate("study")
                              }, modifier = Modifier
             .padding(20.dp)
             .align(Alignment.TopEnd)) {

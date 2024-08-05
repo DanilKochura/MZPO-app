@@ -311,14 +311,18 @@ fun NavGraph(
             composable("study/module")
             {
 
-                val contractJson =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Contract")
                 val gson = Gson()
-                val contract = gson.fromJson(contractJson, Contract::class.java)
+                var contract: Contract? = null
+                var module: StudyModule? = null
+                try {
+                    val contractJson =
+                        navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Contract")
+                    contract = gson.fromJson(contractJson, Contract::class.java)
 
-                val moduleJson =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("StudyModule")
-                val module = gson.fromJson(moduleJson, StudyModule::class.java)
+                    val moduleJson =
+                        navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("StudyModule")
+                    module = gson.fromJson(moduleJson, StudyModule::class.java)
+                } catch (_: Exception){}
 
                 if (contract !== null && module !== null) {
                     StudyModuleScreen(
@@ -422,12 +426,14 @@ fun NavGraph(
                 val userJson =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("video")
                 val contract =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("contract")!!.toInt()
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("contract")
                 val gson = Gson()
                 val material = gson.fromJson(userJson, ActiveMaterials::class.java)
-                if (material !== null) {
-                    VideoScreen(navHostController = navHostController, video = material, contract)
-
+                if (material !== null && contract !== null) {
+                    VideoScreen(navHostController = navHostController, video = material, contract.toInt())
+                } else
+                {
+                    ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
             }
             composable(
@@ -436,12 +442,14 @@ fun NavGraph(
                 val userJson =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("video")
                 val gift =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("gift")!!.toInt()
+                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("gift")
                 val gson = Gson()
                 val material = gson.fromJson(userJson, ActiveFile::class.java)
-                if (material !== null) {
-                    VideoGiftScreen(navHostController = navHostController, video = material, gift)
-
+                if (material !== null && gift !== null) {
+                    VideoGiftScreen(navHostController = navHostController, video = material, gift.toInt())
+                } else
+                {
+                    ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
             }
             composable(
