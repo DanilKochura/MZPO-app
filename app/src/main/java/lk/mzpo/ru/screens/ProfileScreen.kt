@@ -50,11 +50,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.google.gson.Gson
+import lk.mzpo.ru.BuildConfig
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.ProfileItem
@@ -320,14 +322,26 @@ fun ProfileScreen(
                                                     "session",
                                                     Context.MODE_PRIVATE
                                                 )
-                                                test.edit().remove("token_lk").apply()
-                                                test.edit().remove("auth_data").apply()
+                                                test
+                                                    .edit()
+                                                    .remove("token_lk")
+                                                    .apply()
+                                                test
+                                                    .edit()
+                                                    .remove("auth_data")
+                                                    .apply()
                                                 FirebaseHelpers.getCartSum(token, cart_sum)
 
                                                 navHostController.navigate("profile")
                                             },
                                             onPress = {
-                                                Toast.makeText(context, "Для выхода удерживайте кнопку", Toast.LENGTH_SHORT).show()
+                                                Toast
+                                                    .makeText(
+                                                        context,
+                                                        "Для выхода удерживайте кнопку",
+                                                        Toast.LENGTH_SHORT
+                                                    )
+                                                    .show()
                                             }
                                         )
 
@@ -350,6 +364,7 @@ fun ProfileScreen(
                                 )
                             }
                             Divider()
+                            Text(text = "Версия приложения: "+BuildConfig.VERSION_NAME, textAlign = TextAlign.Center, color = Color.Gray, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
 //                            Row(
 //                                horizontalArrangement = Arrangement.Center,
 //                                modifier = Modifier.fillMaxWidth()
