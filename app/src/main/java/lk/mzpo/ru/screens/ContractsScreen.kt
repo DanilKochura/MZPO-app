@@ -307,9 +307,7 @@ fun ContractsScreen(
                         onClick = {
 
 
-
-                            if(contractsViewModel.accessFree.value == "0")
-                            {
+                            if (contractsViewModel.accessFree.value == "0") {
                                 BuyExtendRequest().send(
                                     "Bearer " + token_?.trim('"'),
                                     BuyExtendRequest.PostBody(
@@ -321,9 +319,16 @@ fun ContractsScreen(
 
                                 ).enqueue(object : retrofit2.Callback<ResponseBody> {
                                     override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                        Log.e("API Request", "I got an error and i don't know why :(")
+                                        Log.e(
+                                            "API Request",
+                                            "I got an error and i don't know why :("
+                                        )
                                         Log.e("API Request", t.message.toString())
-                                        Toast.makeText(context, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Произошла ошибка. Попробуйте позже!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
 
                                     override fun onResponse(
@@ -339,8 +344,7 @@ fun ContractsScreen(
                                         }
                                     }
                                 })
-                            } else
-                            {
+                            } else {
                                 ExtendRequest().send(
                                     "Bearer " + token_?.trim('"'),
                                     ExtendRequest.PostBody(
@@ -351,9 +355,16 @@ fun ContractsScreen(
 
                                 ).enqueue(object : retrofit2.Callback<ResponseBody> {
                                     override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                        Log.e("API Request", "I got an error and i don't know why :(")
+                                        Log.e(
+                                            "API Request",
+                                            "I got an error and i don't know why :("
+                                        )
                                         Log.e("API Request", t.message.toString())
-                                        Toast.makeText(context, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Произошла ошибка. Попробуйте позже!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
 
                                     override fun onResponse(
@@ -379,8 +390,6 @@ fun ContractsScreen(
                             }
 
 
-
-
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -392,7 +401,7 @@ fun ContractsScreen(
                             contentColor = Color.White
                         )
                     ) {
-                            Text("Продлить доступ", color = Color.White)
+                        Text("Продлить доступ", color = Color.White)
                     }
 
                 },
@@ -541,9 +550,11 @@ fun ActiveTab(
                                 contractsViewModel.accessOrder.intValue = contract.id
                                 contractsViewModel.accessModule.intValue =
                                     contract.notPassed?.moduleId!!
-                                contractsViewModel.selectedDate.value = contract.notPassed!!.exams[0]
+                                contractsViewModel.selectedDate.value =
+                                    contract.notPassed!!.exams[0]
                                 contractsViewModel.accessContractUid.value = contract.uid!!
-                                contractsViewModel.accessModuleUid.value = contract.notPassed!!.moduleUid!!
+                                contractsViewModel.accessModuleUid.value =
+                                    contract.notPassed!!.moduleUid!!
                                 contractsViewModel.accessCourseHours.value = contract.course!!.hours
                                 contractsViewModel.accessFree.value = contract.notPassed!!.free!!
                                 contractsViewModel.accessPrice.value = contract.extendPrice!!
@@ -578,13 +589,24 @@ fun ActiveTab(
             state = listState,
             flingBehavior = rememberSnapFlingBehavior(listState)
         )
-    } else
-    {
-        Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+    } else {
+        Column(
+            Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Text(text = "Тут пока ничего нет")
             Text(text = "Самое время что-нибудь подобрать")
-            OutlinedButton(onClick = { navHostController.navigate("categories") }, border = BorderStroke(2.dp, Primary_Green), modifier = Modifier.padding(vertical = 10.dp)) {
-                Text(text = "Перейти в каталог", color = Primary_Green, fontWeight = FontWeight.Bold)
+            OutlinedButton(
+                onClick = { navHostController.navigate("categories") },
+                border = BorderStroke(2.dp, Primary_Green),
+                modifier = Modifier.padding(vertical = 10.dp)
+            ) {
+                Text(
+                    text = "Перейти в каталог",
+                    color = Primary_Green,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -593,7 +615,8 @@ fun ActiveTab(
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
-    val courses = contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17}
+    val courses =
+        contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17 }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -698,7 +721,20 @@ fun ContractCard(
             contentDescription = contract.course?.id.toString(),
             modifier = Modifier
                 .height(200.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .clickable {
+                    if (contract.notPassed === null && contract.status!! in intArrayOf(
+                            1,
+                            6,
+                            7,
+                            9,
+                            10,
+                            11
+                        )
+                    ) {
+                        onClick.invoke()
+                    }
+                },
             contentScale = ContentScale.Crop
         )
         Column(
@@ -894,15 +930,17 @@ fun ContractCard(
                 val scope = rememberCoroutineScope()
                 Button(
                     onClick = {
-                        if (contract.status != 10)
-                        {
+                        if (contract.status != 10) {
                             scope.launch {
                                 bottom?.show()
                                 onAccess.invoke()
                             }
-                        } else
-                        {
-                            Toast.makeText(context, "Вы сможете продлить доступ после полной оплаты курса.", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Вы сможете продлить доступ после полной оплаты курса.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     },
                     modifier = Modifier
@@ -914,11 +952,12 @@ fun ContractCard(
                         contentColor = Color.White
                     ),
                 ) {
-                    if (contract.notPassed!!.free == "0")
-                    {
-                        Text("Продлить доступ за "+contract.extendPrice+" руб.", color = Color.White)
-                    } else
-                    {
+                    if (contract.notPassed!!.free == "0") {
+                        Text(
+                            "Продлить доступ за " + contract.extendPrice + " руб.",
+                            color = Color.White
+                        )
+                    } else {
                         Text("Продлить доступ", color = Color.White)
                     }
                 }
@@ -947,7 +986,7 @@ fun ContractCard(
 
                 if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
                     Text(
-                        text = "Восстановить доступ к курсу за 50% стоимости - "+contract.extendPrice,
+                        text = "Восстановить доступ к курсу за 50% стоимости - " + contract.extendPrice,
                         textAlign = TextAlign.Center,
                         fontSize = 12.sp,
                         color = Color.Gray,
@@ -970,7 +1009,11 @@ fun ContractCard(
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 Log.e("API Request", "I got an error and i don't know why :(")
                                 Log.e("API Request", t.message.toString())
-                                Toast.makeText(context, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Произошла ошибка. Попробуйте позже!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
 
                             override fun onResponse(
@@ -997,7 +1040,7 @@ fun ContractCard(
                     ),
                 ) {
 
-                        Text("Восстановиться", color = Color.White)
+                    Text("Восстановиться", color = Color.White)
                 }
 
             }
@@ -1034,7 +1077,10 @@ fun GiftCard(
             contentDescription = gift.id.toString(),
             modifier = Modifier
                 .height(200.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .clickable {
+                        onClick.invoke()
+                    },
             contentScale = ContentScale.Crop
         )
         Column(
@@ -1053,28 +1099,37 @@ fun GiftCard(
                 modifier = Modifier.padding(10.dp),
                 textAlign = TextAlign.Center
             )
-            Icon(painter = painterResource(id = R.drawable.gift_lfzdpfhdv6ka), contentDescription = "", Modifier.size(120.dp).padding(end = 10.dp), tint= Color.Unspecified)
-            Text(text = "Доступно до "+gift.dateTo, modifier = Modifier
-                .fillMaxWidth()
+            Icon(
+                painter = painterResource(id = R.drawable.gift_lfzdpfhdv6ka),
+                contentDescription = "",
+                Modifier
+                    .size(120.dp)
+                    .padding(end = 10.dp),
+                tint = Color.Unspecified
+            )
+            Text(
+                text = "Доступно до " + gift.dateTo, modifier = Modifier
+                    .fillMaxWidth()
 
-                .padding(10.dp), textAlign = TextAlign.Center, color = Aggressive_red)
+                    .padding(10.dp), textAlign = TextAlign.Center, color = Aggressive_red
+            )
 
-                Button(
-                    onClick = {
-                        onClick.invoke()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 5.dp),
-                    shape = RoundedCornerShape(30),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Aggressive_red,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Перейти", color = Color.White)
+            Button(
+                onClick = {
+                    onClick.invoke()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 5.dp),
+                shape = RoundedCornerShape(30),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Aggressive_red,
+                    contentColor = Color.White
+                )
+            ) {
+                Text("Перейти", color = Color.White)
 
-                }
+            }
 
         }
     }

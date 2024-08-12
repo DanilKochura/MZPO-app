@@ -186,7 +186,7 @@ fun CartScreen(
             // Обработайте успешное получение токена
         } else if (result.resultCode == Activity.RESULT_CANCELED) {
             Log.d("Payment", "Payment canceled")
-            Toast.makeText(ctx, "Payment canceled", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(ctx, "Payment canceled", Toast.LENGTH_SHORT).show()
             // Обработайте отмену оплаты
         } else {
             Log.e("Payment", "Payment error:")
