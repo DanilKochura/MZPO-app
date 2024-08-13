@@ -697,29 +697,32 @@ fun StudyScreen(
                                     Spacer(modifier = Modifier.height(5.dp))
                                 }
                                 Divider()
-                                if (studyViewModel.practiceData[0].blanks.isNotEmpty()) {
-                                    Text(
-                                        text = "Рекомендуем курсы для платной практики",
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 5.dp)
-                                    )
-                                    LazyRow(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 10.dp)
-                                    ) {
-                                        itemsIndexed(studyViewModel.practiceData[0].courses)
-                                        { _, index ->
-                                            CourseCard(index,
-                                                Modifier
-                                                    .width(300.dp)
-                                                    .clickable {
-                                                        navHostController.navigate("course/" + index.id)
-                                                    })
+                                if (studyViewModel.practiceData.isNotEmpty())
+                                {
+                                    if (studyViewModel.practiceData[0].blanks.isNotEmpty()) {
+                                        Text(
+                                            text = "Рекомендуем курсы для платной практики",
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(vertical = 5.dp)
+                                        )
+                                        LazyRow(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 10.dp)
+                                        ) {
+                                            itemsIndexed(studyViewModel.practiceData[0].courses)
+                                            { _, index ->
+                                                CourseCard(index,
+                                                    Modifier
+                                                        .width(300.dp)
+                                                        .clickable {
+                                                            navHostController.navigate("course/" + index.id)
+                                                        })
+                                            }
                                         }
-                                    }
 
+                                    }
                                 }
                                 Spacer(modifier = Modifier.height(5.dp))
                                 Divider()

@@ -935,17 +935,19 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
                 }
             }
         }
-        imageUri.let {
-            imageUri.value = it.value
-            if (it.value !== null) {
-                if (Build.VERSION.SDK_INT < 28) {
-                    bitmap.value = MediaStore.Images
-                        .Media.getBitmap(context.contentResolver, it.value)
+        LaunchedEffect(key1 = imageUri.value) {
+            imageUri.let {
+                imageUri.value = it.value
+                if (it.value !== null) {
+                    if (Build.VERSION.SDK_INT < 28) {
+                        bitmap.value = MediaStore.Images
+                            .Media.getBitmap(context.contentResolver, it.value)
 
-                } else {
-                    val source = ImageDecoder
-                        .createSource(context.contentResolver, it.value!!)
-                    bitmap.value = ImageDecoder.decodeBitmap(source)
+                    } else {
+                        val source = ImageDecoder
+                            .createSource(context.contentResolver, it.value!!)
+                        bitmap.value = ImageDecoder.decodeBitmap(source)
+                    }
                 }
             }
         }
@@ -1227,7 +1229,8 @@ fun LoadingDots() {
 
     Row(
         modifier = Modifier
-            .fillMaxWidth().padding(30.dp),
+            .fillMaxWidth()
+            .padding(30.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
