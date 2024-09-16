@@ -161,8 +161,8 @@ fun PrivateScreen(
                                )
 
                                NameTextField(name = name, isError = isError, modifier = Modifier.fillMaxWidth(), readonly = true)
-                               EmailTextField(email = email, isError = isError, modifier = Modifier.fillMaxWidth())
-                               PhoneTextField(phone = phone, isError = isError, modifier = Modifier.fillMaxWidth())
+                               EmailTextField(email = email, isError = isError, modifier = Modifier.fillMaxWidth(), readonly = true)
+                               PhoneTextField(phone = phone, isError = isError, modifier = Modifier.fillMaxWidth(), readonly = true)
                            }
 
 

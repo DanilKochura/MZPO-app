@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
@@ -699,7 +701,7 @@ fun StudyScreen(
                                 Divider()
                                 if (studyViewModel.practiceData.isNotEmpty())
                                 {
-                                    if (studyViewModel.practiceData[0].blanks.isNotEmpty()) {
+                                    if (studyViewModel.practiceData[0].courses.isNotEmpty()) {
                                         Text(
                                             text = "Рекомендуем курсы для платной практики",
                                             fontWeight = FontWeight.Bold,
@@ -793,16 +795,22 @@ fun module(
 
     var sum = 0;
     var checked = 0;
+    var files = 0;
+    var tests = 0;
+    var videos = 0;
     for (i in studyModule.activeMaterials) {
         if (i.activeFile !== null)
         {
             if (i.activeFile!!.type == "video") {
                 sum += i.activeFile!!.size ?: 0
+                videos+=1;
             } else if (i.activeFile!!.type == "file") {
                 sum += (i.activeFile!!.size ?: 0) * 120
+                files+=1;
 
             } else if (i.activeFile!!.type == "test" || i.activeFile!!.type == "final_test") {
                 sum += 1200
+                tests+=1;
 
             }
 
@@ -842,8 +850,33 @@ fun module(
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
-            Text(text = "~ ${sum.div(60).toInt()} мин.")
+            Row (horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                Text(text = "~ ${sum.div(60).toInt()} мин.")
 
+                Row {
+                    if (files > 0) {
+                        Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)) {
+                            Icon(painter = painterResource(id = R.drawable.baseline_library_books_24), contentDescription = "", Modifier.size(20.dp), tint = Primary_Green)
+                            Text(text = files.toString())
+                        }
+                    }
+                    if (videos > 0)
+                    {
+                        Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)){
+                            Icon(painter = painterResource(id = R.drawable.baseline_video_library_24), contentDescription = "", Modifier.size(20.dp), tint = Primary_Green)
+                            Text(text = videos.toString())
+                        }
+                    }
+                    if (tests > 0)
+                    {
+                        Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)) {
+                            Icon(painter = painterResource(id = R.drawable.baseline_quiz_24), contentDescription = "", Modifier.size(20.dp), tint = Primary_Green)
+                            Text(text = tests.toString())
+                        }
+                    }
+                }
+
+            }
         }
         Box(modifier = Modifier.fillMaxSize()) {
             if (checked == 2) {
@@ -853,7 +886,7 @@ fun module(
                     tint = Primary_Green,
                     modifier = Modifier.align(
                         Alignment.Center
-                    )
+                    ).fillMaxSize()
                 )
             } else if (checked == 1) {
                 Icon(
@@ -862,7 +895,7 @@ fun module(
                     tint = Orange,
                     modifier = Modifier.align(
                         Alignment.Center
-                    )
+                    ).fillMaxSize()
                 )
 
             }
@@ -951,13 +984,13 @@ fun Schedule(studyViewModel: StudyViewModel) {
                             textAlign = TextAlign.Center
                         )
                     }
-                    for (i in 0 until studyViewModel.exam[0].ticket.size) {
-                        Text(
-                            text = "Вопрос №" + (i + 1) + " " + studyViewModel.exam[0].ticket[i].question.toString(),
-                            fontWeight = FontWeight.Bold
-                        )
+                        for (i in 0 until studyViewModel.exam[0].ticket.size) {
+                            Text(
+                                text = "Вопрос №" + (i + 1) + " " + studyViewModel.exam[0].ticket[i].question.toString(),
+                                fontWeight = FontWeight.Bold
+                            )
 
-                    }
+                        }
                     HorizontalDivider()
                 }
             } else {
@@ -981,19 +1014,23 @@ fun Schedule(studyViewModel: StudyViewModel) {
         if (studyViewModel.schedules.isNotEmpty()) {
             for (item in studyViewModel.schedules) {
 
-                    val exam = LocalDate.parse(item.group.exam)
                     Text(
                         text = "Группа " + item.group.title,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold
                     )
+                if (!item.group.exam.isNullOrEmpty())
+                {
+                    val exam = LocalDate.parse(item.group.exam)
                     Text(
                         text = "Дата экзамена: " + exam.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold
                     )
+                }
+
 
                 Divider()
                 for (i in item.group.allSchedules) {
@@ -1046,6 +1083,7 @@ fun Schedule(studyViewModel: StudyViewModel) {
 fun Materials(
     studyViewModel: StudyViewModel, navHostController: NavHostController, contract: Contract
 ) {
+    val ctx = LocalContext.current
     LazyColumn(
         content = {
 
@@ -1073,21 +1111,26 @@ fun Materials(
                 itemsIndexed(studyViewModel.studyModules.value) { i, item ->
 
                     module(studyModule = item, int = i, navHostController, onClick = {
-                        val gson = Gson()
-                        val contractJson = gson.toJson(
-                            contract, Contract::class.java
-                        )
-                        navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                            "Contract", contractJson
-                        )
-                        val smJson = gson.toJson(
-                            item, StudyModule::class.java
-                        )
-                        navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                            "StudyModule", smJson
-                        )
+                        try {
+                            val gson = Gson()
+                            val contractJson = gson.toJson(
+                                contract, Contract::class.java
+                            )
+                            navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                "Contract", contractJson
+                            )
+                            val smJson = gson.toJson(
+                                item, StudyModule::class.java
+                            )
+                            navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                "StudyModule", smJson
+                            )
 
-                        navHostController.navigate("study/module")
+                            navHostController.navigate("study/module")
+                        } catch (e: Exception)
+                        {
+                            Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                        }
                     })
                 }
             }

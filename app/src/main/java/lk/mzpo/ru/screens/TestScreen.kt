@@ -140,9 +140,9 @@ fun TestScreen(
                                             Modifier.fillMaxWidth(),
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Icon(painter = painterResource(id = R.drawable.baseline_quiz_24), contentDescription = "", tint = Primary_Green, modifier = Modifier.size(100.dp))
+                                            Icon(painter = painterResource(id = R.drawable.baseline_quiz_24), contentDescription = "", tint = Primary_Green, modifier = Modifier.size(200.dp))
                                             Text(text = "Тест по теме:")
-                                            Text(text = testViewModel.material.value!!.name.toString())
+                                            Text(text = testViewModel.material.value!!.name.toString(), Modifier.fillMaxWidth(0.7f), textAlign = TextAlign.Center, fontWeight = FontWeight.Bold)
                                             Spacer(modifier = Modifier.height(20.dp))
                                             Text(text = "Количество вопросов: " + testViewModel.questionCount.value.toString())
 //                                            Text(text = "Осталось попыток: " + testViewModel.attemptsLeft.value.toString())
@@ -221,6 +221,13 @@ fun TestScreen(
 //                                                   Text(testViewModel.question.value!!.label.toString(), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top=5.dp))
                                             }
                                             Divider()
+                                            if (testViewModel.question.value!!.multiple == "no")
+                                            {
+                                                Text(text = "Выбор одного ответа", color = Color.Gray, fontSize = 12.sp)
+                                            } else
+                                            {
+                                                Text(text = "Выбор нескольких вариантов ответа", color = Color.Gray, fontSize = 12.sp)
+                                            }
                                             val shape =
                                                 if (testViewModel.question.value!!.multiple == "no") RoundedCornerShape(
                                                     50
@@ -390,25 +397,51 @@ fun TestScreen(
                                                                     modifier = Modifier
                                                                         .size(size = 28.dp)
                                                                         .clip(shape = shape) // to remove the ripple effect on the corners
-                                                                         .clickable {
-                                                                            if (selectedMultiple.contains(index+1))
-                                                                            {
-                                                                                selectedMultiple.remove(index+1)
-                                                                            } else
-                                                                            {
-                                                                                selectedMultiple.add(index+1)
+                                                                        .clickable {
+                                                                            if (selectedMultiple.contains(
+                                                                                    index + 1
+                                                                                )
+                                                                            ) {
+                                                                                selectedMultiple.remove(
+                                                                                    index + 1
+                                                                                )
+                                                                            } else {
+                                                                                selectedMultiple.add(
+                                                                                    index + 1
+                                                                                )
                                                                             }
-                                                                            Log.d("MyLog", selectedMultiple.joinToString(" "))
-                                                                            Log.d("MyLog", selectedMultiple.contains(index+1).toString())
-                                                                            Log.d("MyLog", selectedMultiple.indexOf(index+1).toString())
+                                                                            Log.d(
+                                                                                "MyLog",
+                                                                                selectedMultiple.joinToString(
+                                                                                    " "
+                                                                                )
+                                                                            )
+                                                                            Log.d(
+                                                                                "MyLog",
+                                                                                selectedMultiple
+                                                                                    .contains(index + 1)
+                                                                                    .toString()
+                                                                            )
+                                                                            Log.d(
+                                                                                "MyLog",
+                                                                                selectedMultiple
+                                                                                    .indexOf(index + 1)
+                                                                                    .toString()
+                                                                            )
                                                                         }
                                                                         .background(
-                                                                            color = if (selectedMultiple.indexOf(index+1) != -1) Primary_Green_BG else Color.White,
+                                                                            color = if (selectedMultiple.indexOf(
+                                                                                    index + 1
+                                                                                ) != -1
+                                                                            ) Primary_Green_BG else Color.White,
                                                                             shape = shape
                                                                         )
                                                                         .border(
                                                                             width = 2.dp,
-                                                                            color = if (selectedMultiple.indexOf(index+1)  != -1 ) Color.DarkGray else Color.Gray,
+                                                                            color = if (selectedMultiple.indexOf(
+                                                                                    index + 1
+                                                                                ) != -1
+                                                                            ) Color.DarkGray else Color.Gray,
                                                                             shape = shape
                                                                         ),
                                                                     contentAlignment = Alignment.Center
