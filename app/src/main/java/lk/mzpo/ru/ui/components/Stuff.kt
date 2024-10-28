@@ -1,16 +1,13 @@
 package lk.mzpo.ru.ui.components
 
-import android.Manifest
 import android.Manifest.permission.CAMERA
-import android.Manifest.permission.MANAGE_EXTERNAL_STORAGE
-import android.Manifest.permission.READ_EXTERNAL_STORAGE
-import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.app.DatePickerDialog
 import android.content.ContentUris
 import android.content.Context
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.icu.util.Calendar
 import android.net.Uri
@@ -19,7 +16,6 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.DatePicker
@@ -29,13 +25,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -51,7 +42,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -73,22 +63,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -115,21 +102,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import com.google.accompanist.web.WebView
-import com.google.accompanist.web.rememberWebViewState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import lk.mzpo.ru.BuildConfig
-import lk.mzpo.ru.MainActivity
 import lk.mzpo.ru.R
+import lk.mzpo.ru.network.retrofit.ImageService
 import lk.mzpo.ru.network.retrofit.UploadImage
 import lk.mzpo.ru.network.retrofit.UploadRequestBody
 import lk.mzpo.ru.ui.theme.Aggressive_red
@@ -142,8 +122,9 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import java.io.File
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Date
 
@@ -810,7 +791,13 @@ fun CircularProgressbar2(
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status: String?, count: Int = 0) {
+fun PickImageFromGallery(
+    contract: Int,
+    admission: Int,
+    loaded: String?,
+    status: String?,
+    count: Int = 0
+) {
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
@@ -821,6 +808,10 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
     val disabled = remember {
         mutableStateOf(false)
     }
+
+    val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+    val token = pref.getString("token_lk", "")
+    val imageBitmap = remember { mutableStateOf<ImageBitmap?>(null) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -847,8 +838,7 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
                 android.Manifest.permission.READ_MEDIA_AUDIO
             )
 
-            if(!status.isNullOrEmpty() && status != "1" && count < 4)
-            {
+            if (!status.isNullOrEmpty() && status != "1" && count < 4) {
                 Button(
                     onClick = {
                         // Camera permission state
@@ -876,7 +866,6 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
                     Text(text = "Выбрать", color = Color.White)
                 }
             }
-
             if (imageUri.value !== null) {
                 Button(
                     onClick = {
@@ -889,8 +878,7 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
                         val test =
                             RequestBody.create("multipart/form-data".toMediaTypeOrNull(), file)
                         val body = UploadRequestBody(file, "image")
-                        val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                        val token = pref.getString("token_lk", "")
+
                         UploadImage().uploadImage(
                             "Bearer " + token?.trim('"'),
                             MultipartBody.Part.createFormData(
@@ -901,7 +889,11 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 Log.e("API Request", "I got an error and i don't know why :(")
                                 Log.e("API Request", t.message.toString())
-                                Toast.makeText(context, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Произошла ошибка. Попробуйте позже!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 disabled.value = false
 
 
@@ -951,6 +943,8 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
                 }
             }
         }
+
+
         if (bitmap.value !== null) {
             Image(
                 bitmap = bitmap.value!!.asImageBitmap(),
@@ -961,13 +955,15 @@ fun PickImageFromGallery(contract: Int, admission: Int, loaded: String?, status:
             )
         } else {
             if (loaded !== null) {
-                AsyncImage(
-                    model = "https://lk.mzpo-s.ru/build/images/$loaded",
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(150.dp)
-                        .padding(20.dp)
-                )
+                ImageView(imageId = loaded, token = token!!.trim('"'), imageBitmap)
+
+//                AsyncImage(
+//                    model = "https://lk.mzpo-s.ru/build/images/$loaded",
+//                    contentDescription = null,
+//                    modifier = Modifier
+//                        .size(150.dp)
+//                        .padding(20.dp)
+//                )
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -1147,8 +1143,8 @@ fun Privacy() {
         onClick = { offset ->
             annotatedString.getStringAnnotations(tag = "terms", start = offset, end = offset)
                 .firstOrNull()?.let {
-                url.openUri(it.item)
-            }
+                    url.openUri(it.item)
+                }
         })
 }
 
@@ -1245,3 +1241,63 @@ fun LoadingDots() {
         }
     }
 }
+
+fun decodeUrl(encodedUrl: String): String {
+    return URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
+}
+@Composable
+fun ImageView(imageId: String, token: String, bitmap: MutableState<ImageBitmap?>) {
+    Log.d("MyLog", "https://lk.mzpo-s.ru/"+"mobile/user/images/"+imageId)
+
+    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    if (bitmap.value == null)
+    {
+        LaunchedEffect(key1 = "") {
+            ImageService().getImage(
+                "Bearer $token",
+                imageId
+            ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+
+                }
+
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
+                    Log.d("API Request", response.body().toString())
+                    Log.d("API Request", response.message())
+                    Log.d("API Request", response.errorBody().toString())
+                    Log.d("API Request", response.raw().body.toString())
+                    Log.d("API Request", response.code().toString())
+                    val inputStream = response.body()?.byteStream()
+                    imageBitmap = BitmapFactory.decodeStream(inputStream).asImageBitmap()
+                    bitmap.value = imageBitmap
+                }
+            })
+        }
+
+        Box (modifier = Modifier.fillMaxWidth()){
+            imageBitmap?.let {
+                Image(bitmap = it, contentDescription = null, modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .align(Alignment.TopCenter))
+            } ?: run {
+                // Отображение загрузки или ошибки
+                Image(painter = painterResource(id = R.drawable.image_preview), contentDescription = null, modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .align(Alignment.TopCenter))
+            }
+        }
+    } else
+    {
+        Box (modifier = Modifier.fillMaxWidth()){
+            Image(bitmap = bitmap.value!!, contentDescription = null, modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .align(Alignment.TopCenter))
+        }
+
+    }
+}
+

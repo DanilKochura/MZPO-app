@@ -2,7 +2,6 @@ package lk.mzpo.ru.screens
 
 import CoursePreview
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,17 +10,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -31,13 +26,10 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ListItem
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.rememberModalBottomSheetState
@@ -52,7 +44,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,15 +69,12 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.models.CourseFilterModel
-import lk.mzpo.ru.models.Prices
 import lk.mzpo.ru.ui.components.DashedDivider
 import lk.mzpo.ru.ui.components.LoadingDots
 import lk.mzpo.ru.ui.components.PriceTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
-import lk.mzpo.ru.ui.theme.Blue_BG
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CatalogViewModel
@@ -208,7 +196,7 @@ fun CatalogScreen(
                         {
                                 index, item ->
                             Column(modifier = Modifier
-                                .height(30.dp)
+                                .height(40.dp)
                                 .padding(horizontal = 5.dp)
                                 .clip(
                                     RoundedCornerShape(20)

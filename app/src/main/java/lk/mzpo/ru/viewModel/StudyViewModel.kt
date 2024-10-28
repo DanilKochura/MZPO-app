@@ -1,6 +1,7 @@
 package lk.mzpo.ru.viewModel
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -12,7 +13,6 @@ import com.google.gson.Gson
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.PracticeData
 import lk.mzpo.ru.models.PracticeOchno
-import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.study.Admission
 import lk.mzpo.ru.models.study.CourseSchedule
 import lk.mzpo.ru.models.study.Exam
@@ -21,9 +21,7 @@ import lk.mzpo.ru.models.study.PassedModules
 import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.models.study.UserDocument
 import lk.mzpo.ru.network.retrofit.AuthStatus
-import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.math.log
 
 class StudyViewModel: ViewModel() {
 
@@ -39,6 +37,8 @@ class StudyViewModel: ViewModel() {
     val schedules = mutableListOf<CourseSchedule>()
     val practiceData = mutableListOf<PracticeData>()
     val passedModules = mutableListOf<PassedModules>()
+
+    val docsBitMaps = mutableMapOf<Int, Bitmap>()
 
     val practiceOcno = mutableListOf<PracticeOchno>()
 

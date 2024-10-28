@@ -12,10 +12,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,18 +25,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -55,27 +48,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.accompanist.permissions.rememberPermissionState
 import lk.mzpo.ru.BuildConfig
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.User
-import lk.mzpo.ru.network.retrofit.Feedback
 import lk.mzpo.ru.network.retrofit.FeedbackService
-import lk.mzpo.ru.network.retrofit.UploadImage
 import lk.mzpo.ru.network.retrofit.UploadRequestBody
 import lk.mzpo.ru.screens.ProfileHeader
 import lk.mzpo.ru.ui.components.CustomTextField
@@ -87,7 +73,6 @@ import lk.mzpo.ru.ui.components.checkPhone
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
-import lk.mzpo.ru.viewModel.BillsViewModel
 import lk.mzpo.ru.viewModel.HelpViewModel
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -151,6 +136,7 @@ fun HelpScreen(
             val disabled = remember {
                 mutableStateOf(false)
             }
+
             Box(
                 Modifier
                     .background(color = Primary_Green)
@@ -258,6 +244,11 @@ fun HelpScreen(
 //                                    }
                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                                        Button(onClick = {
+                                           if (text.value.text.isEmpty() or theme.value.text.isEmpty())
+                                           {
+                                               Toast.makeText(ctx, "Заполните тему и текст обращения!", Toast.LENGTH_SHORT).show()
+                                               return@Button
+                                           }
                                                         var bodyPart: MultipartBody.Part? = null
                                                        val uriPathHelper = URIPathHelper()
                                                        if (imageUri.value !== null)

@@ -37,7 +37,6 @@ import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.OutlinedButton
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -98,7 +97,6 @@ import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.ContractsViewModel
-import lk.mzpo.ru.viewModel.ProfileViewModel
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
@@ -519,7 +517,8 @@ fun ActiveTab(
                 8,
                 9,
                 10,
-                11
+                11,
+                14
             )
         }
     if (courses.isNotEmpty() || contractsViewModel.gifts.value.isNotEmpty()) {
@@ -616,7 +615,7 @@ fun ActiveTab(
 @Composable
 fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
     val courses =
-        contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17 }
+        contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17 || it.status == 15}
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -729,7 +728,8 @@ fun ContractCard(
                             7,
                             9,
                             10,
-                            11
+                            11,
+                        14
                         )
                     ) {
                         onClick.invoke()
@@ -760,7 +760,8 @@ fun ContractCard(
                     8,
                     9,
                     10,
-                    11
+                    11,
+                    14
                 )
             ) {
                 Text(
@@ -794,7 +795,8 @@ fun ContractCard(
                 }
             } else if (contract.status!! in intArrayOf(
                     0,
-                    3
+                    3,
+                    15
                 )
             ) {
                 Column(
@@ -895,7 +897,8 @@ fun ContractCard(
 //                    8,
                     9,
                     10,
-                    11
+                    11,
+                    14
                 )
             ) {
                 Button(
