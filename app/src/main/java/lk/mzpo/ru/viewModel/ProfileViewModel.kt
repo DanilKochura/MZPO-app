@@ -62,20 +62,26 @@ class ProfileViewModel  (
     }
 
     fun getUser(response: String): User {
-        Log.d("ProfileLog", response)
-        if (response.isEmpty()) return User(0,"","", "", "")
-        val mainObject = JSONObject(response)
+        val empty = User(0,"","", "", "");
+        if (response.isEmpty()) return  empty
+        return try {
+            val mainObject = JSONObject(response)
+            User(
+                mainObject.getInt("id"),
+                mainObject.getString("name"),
+                mainObject.getString("email"),
+                mainObject.getString("phone"),
+                mainObject.getString("id_1c"),
+                mainObject.getString("avatar")
+            )
+        } catch (_: Exception) {
+            error.value = true
+            empty
+        }
 //        val data = mainObject.getJSONObject("auth_user_data")
 //        val gson = Gson()
 //        var mUser = gson.fromJson(data.toString(), UserData::class.java)
-        return User(
-            mainObject.getInt("id"),
-            mainObject.getString("name"),
-            mainObject.getString("email"),
-            mainObject.getString("phone"),
-            mainObject.getString("id_1c"),
-            mainObject.getString("avatar")
-        )
+
 
     }
 

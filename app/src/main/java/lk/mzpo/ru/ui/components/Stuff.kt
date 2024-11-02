@@ -796,7 +796,8 @@ fun PickImageFromGallery(
     admission: Int,
     loaded: String?,
     status: String?,
-    count: Int = 0
+    count: Int = 0,
+    verify: Int = 0
 ) {
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
@@ -884,7 +885,7 @@ fun PickImageFromGallery(
                             MultipartBody.Part.createFormData(
                                 "files[0]",
                                 file.name, body
-                            ), contract, admission
+                            ), contract, admission, verify
                         ).enqueue(object : retrofit2.Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 Log.e("API Request", "I got an error and i don't know why :(")
@@ -1247,7 +1248,6 @@ fun decodeUrl(encodedUrl: String): String {
 }
 @Composable
 fun ImageView(imageId: String, token: String, bitmap: MutableState<ImageBitmap?>) {
-    Log.d("MyLog", "https://lk.mzpo-s.ru/"+"mobile/user/images/"+imageId)
 
     var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
@@ -1272,8 +1272,16 @@ fun ImageView(imageId: String, token: String, bitmap: MutableState<ImageBitmap?>
                     Log.d("API Request", response.raw().body.toString())
                     Log.d("API Request", response.code().toString())
                     val inputStream = response.body()?.byteStream()
-                    imageBitmap = BitmapFactory.decodeStream(inputStream).asImageBitmap()
-                    bitmap.value = imageBitmap
+                    if(inputStream !== null)
+                    {
+                        imageBitmap = BitmapFactory.decodeStream(inputStream).asImageBitmap()
+                        bitmap.value = imageBitmap
+                    } else
+                    {
+                        imageBitmap = null
+                        bitmap.value = null
+                    }
+
                 }
             })
         }

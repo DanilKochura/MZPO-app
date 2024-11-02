@@ -507,7 +507,9 @@ fun StudyScreen(
                             textAlign = TextAlign.Center
                         )
                         Divider()
+                        var verify = 0
                         if (studyViewModel.verify_docs.value) {
+                            verify = 1
                             val list =
                                 studyViewModel.admissions.filter { it.pivot!!.for_access == "1" }
                             studyViewModel.admissions.clear()
@@ -584,6 +586,7 @@ fun StudyScreen(
                                     loaded,
                                     status,
                                     count,
+                                    verify
                                 )
 
 
