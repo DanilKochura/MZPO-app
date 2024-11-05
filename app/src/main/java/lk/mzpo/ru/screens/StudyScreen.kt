@@ -518,20 +518,27 @@ fun StudyScreen(
                         LazyColumn(content = {
                             itemsIndexed(studyViewModel.admissions)
                             { index, admission ->
-                                var loaded: String? = null
+                                val loaded: ArrayList<String> = arrayListOf()
                                 var comment: String? = null
                                 var status: String? = null
                                 var count = 0
                                 for (j in studyViewModel.documents) {
                                     if (admission.id == j.admissionId) {
-                                        loaded = j.file
+                                        if (j.file !== null)
+                                        {
+                                            if (!loaded.contains(j.file!!))
+                                            {
+                                                loaded.add(j.file!!)
+                                            }
+                                        }
                                         status = j.docCondition
-                                        comment = j.comment
-                                        if (!loaded.isNullOrEmpty()) {
-                                            count += 1
+                                        if (j.comment !== null)
+                                        {
+                                            comment = j.comment
                                         }
                                     }
                                 }
+                                count = studyViewModel.documents.filter { it.docCondition === "0"  }.size
                                 Text(
                                     text = admission.name.toString(),
                                     fontWeight = FontWeight.Bold,
@@ -539,7 +546,7 @@ fun StudyScreen(
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                if (loaded !== null) {
+                                if (loaded.isNotEmpty()) {
                                     Row(
                                         Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.Center

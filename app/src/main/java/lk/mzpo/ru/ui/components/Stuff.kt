@@ -1,6 +1,6 @@
 package lk.mzpo.ru.ui.components
 
-import android.Manifest.permission.CAMERA
+import android.Manifest
 import android.app.DatePickerDialog
 import android.content.ContentUris
 import android.content.Context
@@ -42,6 +42,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -115,9 +117,7 @@ import lk.mzpo.ru.network.retrofit.UploadRequestBody
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.ui.theme.Transparent_Green
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
@@ -794,183 +794,174 @@ fun CircularProgressbar2(
 fun PickImageFromGallery(
     contract: Int,
     admission: Int,
-    loaded: String?,
+    loaded: ArrayList<String>,
     status: String?,
     count: Int = 0,
     verify: Int = 0
 ) {
-    val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val imageUris = remember { mutableStateOf<List<Uri>>(emptyList()) }
     val context = LocalContext.current
-    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val bitmaps = remember { mutableStateOf<List<Bitmap?>>(emptyList()) }
     val launcher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
-            imageUri.value = uri
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetMultipleContents()) { uris: List<Uri> ->
+            imageUris.value = uris
         }
     val disabled = remember {
         mutableStateOf(false)
     }
-
     val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
     val token = pref.getString("token_lk", "")
-    val imageBitmap = remember { mutableStateOf<ImageBitmap?>(null) }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column {
-            val launcher_ = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { isGranted: Boolean ->
-                if (isGranted) {
-                    // Permission Accepted: Do something
-                    Log.d("ExampleScreen", "PERMISSION GRANTED")
+    Column (Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally){
+        val launcher_ = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                // Permission Accepted: Do something
+                Log.d("ExampleScreen", "PERMISSION GRANTED")
 
-                } else {
-                    // Permission Denied: Do something
-                    Log.d("ExampleScreen", "PERMISSION DENIED")
-                }
-            }
-            val rem = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { Log.d("MyLogHETE", "TEST") }
-            val cameraPermissionState = rememberPermissionState(
-                android.Manifest.permission.READ_MEDIA_AUDIO
-            )
-
-            if (!status.isNullOrEmpty() && status != "1" && count < 4) {
-                Button(
-                    onClick = {
-                        // Camera permission state
-
-                        val permissionCheck = ContextCompat.checkSelfPermission(
-                            context,
-                            CAMERA
-                        )
-                        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                            launcher.launch("image/*")
-                        } else {
-                            rem.launch(CAMERA)
-//                    cameraPermissionState.launchPermissionRequest()
-                            Toast.makeText(
-                                context,
-                                "Разрешите приложению доступ к галерее",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary_Green),
-                    modifier = Modifier.padding(bottom = 10.dp)
-                ) {
-                    Text(text = "Выбрать", color = Color.White)
-                }
-            }
-            if (imageUri.value !== null) {
-                Button(
-                    onClick = {
-                        disabled.value = true
-                        Log.d("MyLog", imageUri.value!!.path.toString())
-                        Log.d("MyLog", imageUri.value!!.query.toString())
-                        val uriPathHelper = URIPathHelper()
-                        val filePath = uriPathHelper.getPath(context, imageUri.value!!)
-                        val file: File = File(filePath.toString())
-                        val test =
-                            RequestBody.create("multipart/form-data".toMediaTypeOrNull(), file)
-                        val body = UploadRequestBody(file, "image")
-
-                        UploadImage().uploadImage(
-                            "Bearer " + token?.trim('"'),
-                            MultipartBody.Part.createFormData(
-                                "files[0]",
-                                file.name, body
-                            ), contract, admission, verify
-                        ).enqueue(object : retrofit2.Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                Log.e("API Request", "I got an error and i don't know why :(")
-                                Log.e("API Request", t.message.toString())
-                                Toast.makeText(
-                                    context,
-                                    "Произошла ошибка. Попробуйте позже!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                disabled.value = false
-
-
-                            }
-
-                            override fun onResponse(
-                                call: Call<ResponseBody>,
-                                response: Response<ResponseBody>
-                            ) {
-                                Log.d("API Request", response.body().toString())
-                                Log.d("API Request", response.message())
-                                Log.d("API Request", response.errorBody().toString())
-                                Log.d("API Request", response.raw().body.toString())
-                                if (response.isSuccessful) {
-                                    Toast.makeText(
-                                        context,
-                                        "Документ отправлен на проверку",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-
-                                }
-                            }
-                        })
-
-
-                    },
-                    enabled = !disabled.value,
-                    colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
-                ) {
-                    Text("Загрузить", color = Color.White)
-                }
+            } else {
+                // Permission Denied: Do something
+                Log.d("ExampleScreen", "PERMISSION DENIED")
             }
         }
-        LaunchedEffect(key1 = imageUri.value) {
-            imageUri.let {
-                imageUri.value = it.value
-                if (it.value !== null) {
-                    if (Build.VERSION.SDK_INT < 28) {
-                        bitmap.value = MediaStore.Images
-                            .Media.getBitmap(context.contentResolver, it.value)
-
-                    } else {
-                        val source = ImageDecoder
-                            .createSource(context.contentResolver, it.value!!)
-                        bitmap.value = ImageDecoder.decodeBitmap(source)
+        val rem = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { Log.d("MyLogHETE", "TEST") }
+        val cameraPermissionState = rememberPermissionState(
+            android.Manifest.permission.READ_MEDIA_AUDIO
+        )
+        if (loaded.size > 0) {
+            LazyRow {
+                itemsIndexed(loaded) { _, value ->
+                    val imageBitmap = remember { mutableStateOf<ImageBitmap?>(null) }
+                    Column(modifier = Modifier.width(50.dp)) {
+                        ImageView(imageId = value, token = token!!.trim('"'), imageBitmap)
                     }
                 }
             }
         }
+        LaunchedEffect(key1 = imageUris.value) {
+            val bitmapList = imageUris.value.mapNotNull { uri ->
+                try {
+                    if (Build.VERSION.SDK_INT < 28) {
+                        MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    } else {
+                        val source = ImageDecoder.createSource(context.contentResolver, uri)
+                        ImageDecoder.decodeBitmap(source)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            bitmaps.value = bitmapList
+        }
+        Row (Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween){
+            Column {
+                if (!status.isNullOrEmpty() && status != "1" && count < 4) {
+                    Button(
+                        onClick = {
+                            // Camera permission state
 
+                            val permissionCheck = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.CAMERA
+                            )
+                            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                                launcher.launch("image/*")
+                            } else {
+                                rem.launch(Manifest.permission.CAMERA)
+//                    cameraPermissionState.launchPermissionRequest()
+                                Toast.makeText(
+                                    context,
+                                    "Разрешите приложению доступ к галерее",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
 
-        if (bitmap.value !== null) {
-            Image(
-                bitmap = bitmap.value!!.asImageBitmap(),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(20.dp)
-            )
-        } else {
-            if (loaded !== null) {
-                ImageView(imageId = loaded, token = token!!.trim('"'), imageBitmap)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Primary_Green),
+                        modifier = Modifier.padding(bottom = 10.dp)
+                    ) {
+                        Text(text = "Выбрать", color = Color.White)
+                    }
+                }
+                if (imageUris.value.isNotEmpty()) {
+                    Button(
+                        onClick = {
+                            disabled.value = true
+                            imageUris.value.forEach { uri ->
+                                val uriPathHelper = URIPathHelper()
+                                val filePath = uriPathHelper.getPath(context, uri)
+                                val file = File(filePath.toString())
+                                val body = UploadRequestBody(file, "image")
 
-//                AsyncImage(
-//                    model = "https://lk.mzpo-s.ru/build/images/$loaded",
-//                    contentDescription = null,
-//                    modifier = Modifier
-//                        .size(150.dp)
-//                        .padding(20.dp)
-//                )
+                                UploadImage().uploadImage(
+                                    "Bearer " + token?.trim('"'),
+                                    MultipartBody.Part.createFormData(
+                                        "files[]", // Используем массив files[]
+                                        file.name, body
+                                    ), contract, admission, verify
+                                ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                        Log.e("API Request", "Ошибка при загрузке")
+                                        Toast.makeText(
+                                            context,
+                                            "Произошла ошибка. Попробуйте позже!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        disabled.value = false
+                                    }
+
+                                    override fun onResponse(
+                                        call: Call<ResponseBody>,
+                                        response: Response<ResponseBody>
+                                    ) {
+                                        if (response.isSuccessful) {
+                                            Toast.makeText(
+                                                context,
+                                                "Документ отправлен на проверку",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                })
+                            }
+                        },
+                        enabled = !disabled.value,
+                        colors = ButtonDefaults.buttonColors(containerColor = Aggressive_red)
+                    ) {
+                        Text("Загрузить", color = Color.White)
+                    }
+                }
+            }
+            LazyRow(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                itemsIndexed(bitmaps.value) { _, bitmap ->
+                    bitmap?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .padding(8.dp)
+                        )
+                    }
+                }
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-
-
     }
+
+
+
+
+
+
+
+
+
+    Spacer(modifier = Modifier.height(12.dp))
 
 
 }
@@ -1246,13 +1237,18 @@ fun LoadingDots() {
 fun decodeUrl(encodedUrl: String): String {
     return URLDecoder.decode(encodedUrl, StandardCharsets.UTF_8.toString())
 }
+
 @Composable
-fun ImageView(imageId: String, token: String, bitmap: MutableState<ImageBitmap?>) {
+fun ImageView(
+    imageId: String,
+    token: String,
+    bitmap: MutableState<ImageBitmap?>,
+    modifier: Modifier = Modifier
+) {
 
     var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
-    if (bitmap.value == null)
-    {
+    if (bitmap.value == null) {
         LaunchedEffect(key1 = "") {
             ImageService().getImage(
                 "Bearer $token",
@@ -1272,12 +1268,10 @@ fun ImageView(imageId: String, token: String, bitmap: MutableState<ImageBitmap?>
                     Log.d("API Request", response.raw().body.toString())
                     Log.d("API Request", response.code().toString())
                     val inputStream = response.body()?.byteStream()
-                    if(inputStream !== null)
-                    {
+                    if (inputStream !== null) {
                         imageBitmap = BitmapFactory.decodeStream(inputStream).asImageBitmap()
                         bitmap.value = imageBitmap
-                    } else
-                    {
+                    } else {
                         imageBitmap = null
                         bitmap.value = null
                     }
@@ -1286,24 +1280,31 @@ fun ImageView(imageId: String, token: String, bitmap: MutableState<ImageBitmap?>
             })
         }
 
-        Box (modifier = Modifier.fillMaxWidth()){
+        Box(modifier = modifier.fillMaxWidth()) {
             imageBitmap?.let {
-                Image(bitmap = it, contentDescription = null, modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .align(Alignment.TopCenter))
+                Image(
+                    bitmap = it, contentDescription = null, modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .align(Alignment.TopCenter)
+                )
             } ?: run {
                 // Отображение загрузки или ошибки
-                Image(painter = painterResource(id = R.drawable.image_preview), contentDescription = null, modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .align(Alignment.TopCenter))
+                Image(
+                    painter = painterResource(id = R.drawable.image_preview),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .align(Alignment.TopCenter)
+                )
             }
         }
-    } else
-    {
-        Box (modifier = Modifier.fillMaxWidth()){
-            Image(bitmap = bitmap.value!!, contentDescription = null, modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .align(Alignment.TopCenter))
+    } else {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Image(
+                bitmap = bitmap.value!!, contentDescription = null, modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .align(Alignment.TopCenter)
+            )
         }
 
     }
