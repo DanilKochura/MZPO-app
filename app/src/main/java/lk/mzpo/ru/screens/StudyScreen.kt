@@ -988,14 +988,15 @@ fun Schedule(studyViewModel: StudyViewModel) {
         if (studyViewModel.schedules.isNotEmpty()) {
             for (item in studyViewModel.schedules) {
 
+
+                if(item.group !== null)
+                {
                     Text(
                         text = "Группа " + item.group.title,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold
                     )
-                if(item.group !== null)
-                {
                     if (!item.group.exam.isNullOrEmpty())
                     {
                         val exam = LocalDate.parse(item.group.exam)
@@ -1006,32 +1007,33 @@ fun Schedule(studyViewModel: StudyViewModel) {
                             fontWeight = FontWeight.Bold
                         )
                     }
-                }
-
-
-                Divider()
-                for (i in item.group.allSchedules) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-
-                        val date = LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = date.format(secondFormatter).toString())
-                            Text(text = date.format(timeFrmtEnd).toString())
-                        }
-                        Text(text = i.auditory.toString())
-                        Text(
-                            text = if (i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан",
-                            modifier = Modifier.fillMaxWidth(0.4f)
-                        )
-                    }
                     Divider()
+                    for (i in item.group.allSchedules) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            val date = LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(text = date.format(secondFormatter).toString())
+                                Text(text = date.format(timeFrmtEnd).toString())
+                            }
+                            Text(text = i.auditory.toString())
+                            Text(
+                                text = if (i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан",
+                                modifier = Modifier.fillMaxWidth(0.4f)
+                            )
+                        }
+                        Divider()
+                    }
+                    Divider(thickness = 3.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
-                Divider(thickness = 3.dp)
-                Spacer(modifier = Modifier.height(10.dp))
+
+
+
             }
         } else {
             Box(

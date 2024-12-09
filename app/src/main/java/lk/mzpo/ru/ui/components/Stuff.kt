@@ -1268,13 +1268,15 @@ fun ImageView(
                     Log.d("API Request", response.raw().body.toString())
                     Log.d("API Request", response.code().toString())
                     val inputStream = response.body()?.byteStream()
-                    if (inputStream !== null) {
+                    try {
                         imageBitmap = BitmapFactory.decodeStream(inputStream).asImageBitmap()
                         bitmap.value = imageBitmap
-                    } else {
+                    } catch (_: Exception)
+                    {
                         imageBitmap = null
                         bitmap.value = null
                     }
+
 
                 }
             })
