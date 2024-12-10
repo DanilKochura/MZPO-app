@@ -2,20 +2,10 @@ package lk.mzpo.ru.screens
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,36 +16,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.LinearProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,32 +37,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.doOnLayout
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.rizzi.bouquet.ResourceType
 import com.rizzi.bouquet.VerticalPDFReader
 import com.rizzi.bouquet.rememberVerticalPdfReaderState
-import dev.zt64.compose.pdf.component.PdfColumn
-import dev.zt64.compose.pdf.rememberLocalPdfState
-import dev.zt64.compose.pdf.rememberRemotePdfState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
-import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.models.Contract
-import lk.mzpo.ru.models.study.ActiveMaterials
-import lk.mzpo.ru.network.retrofit.ExtendRequest
+import lk.mzpo.ru.models.study.NewMaterials
 import lk.mzpo.ru.network.retrofit.SaveLastPageService
-import lk.mzpo.ru.ui.components.LoadableScreen
-import lk.mzpo.ru.ui.pdf.PdfViewer
-import lk.mzpo.ru.ui.theme.Active_Green
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Orange
@@ -97,11 +55,7 @@ import lk.mzpo.ru.viewModel.FileViewModel
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
-import java.io.File
-import kotlin.math.log
 import kotlin.math.roundToInt
-
-
 
 
 @SuppressLint("UnrememberedMutableInteractionSource", "UnusedMaterialScaffoldPaddingParameter")
@@ -109,13 +63,13 @@ import kotlin.math.roundToInt
 @Composable
 fun PdfScreen(
     navHostController: NavHostController,
-    material: ActiveMaterials,
+    material: NewMaterials,
     contract: Int,
     fileViewModel: FileViewModel = viewModel(),
 ) {
     val ctx = LocalContext.current
     val pdfState = rememberVerticalPdfReaderState(
-        resource = ResourceType.Remote("https://lk.mzpo-s.ru/"+material.activeFile?.upload),
+        resource = ResourceType.Remote("https://lk.mzpo-s.ru/"+material.file?.upload),
         isZoomEnable = true
     )
 
@@ -123,8 +77,8 @@ fun PdfScreen(
     val progress = remember {
         mutableStateOf(0)
     }
-    if (material.activeFile?.userProgress != null && material.activeFile?.userProgress!!.progress !== null) {
-        progress.value = material.activeFile?.userProgress!!.progress!!
+    if (material.watched != 0 && material.percent !== null) {
+        progress.value = material.watched
     }
     val pref = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
     val token_ = pref.getString("token_lk", "")
@@ -144,8 +98,7 @@ fun PdfScreen(
             SaveLastPageService().send(
                 "Bearer " + token_?.trim('"'),
                 SaveLastPageService.PostBody(
-                    material = material.id!!,
-                    contract = contract,
+                    progress = material.id,
                     page =  progress.value
                 )
 

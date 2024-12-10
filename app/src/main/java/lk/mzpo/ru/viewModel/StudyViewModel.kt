@@ -133,10 +133,11 @@ class StudyViewModel: ViewModel() {
                        }
                        this.studyModules.value = array
                        loaded.value = true
-                   } catch (_: Exception)
+                   } catch (e: Exception)
                    {
                        loaded.value = true
                        error.value = true
+                       Log.e("MYLOG", e.message.toString())
                        return@Listener;
                    }
 

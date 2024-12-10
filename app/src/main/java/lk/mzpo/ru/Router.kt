@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,30 +18,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.gson.Gson
 import lk.mzpo.ru.models.BottomItem
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.Gift
 import lk.mzpo.ru.models.User
-import lk.mzpo.ru.models.UserData
 import lk.mzpo.ru.models.study.ActiveFile
-import lk.mzpo.ru.models.study.ActiveMaterials
+import lk.mzpo.ru.models.study.NewMaterials
 import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.screens.CartScreen
 import lk.mzpo.ru.screens.CatalogScreen
@@ -72,7 +65,6 @@ import lk.mzpo.ru.screens.profile.PrivateScreen
 import lk.mzpo.ru.screens.profile.ScheduleScreen
 import lk.mzpo.ru.screens.profile.UserDataScreen
 import lk.mzpo.ru.ui.components.WebViewPage
-import kotlin.math.log
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
@@ -428,7 +420,7 @@ fun NavGraph(
                 val contract =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("contract")
                 val gson = Gson()
-                val material = gson.fromJson(userJson, ActiveMaterials::class.java)
+                val material = gson.fromJson(userJson, NewMaterials::class.java)
                 if (material !== null && contract !== null) {
                     VideoScreen(navHostController = navHostController, video = material, contract.toInt())
                 } else
@@ -458,7 +450,7 @@ fun NavGraph(
                 val userJson =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("MATERIAL")
                 val gson = Gson()
-                val userObject = gson.fromJson(userJson, ActiveMaterials::class.java)
+                val userObject = gson.fromJson(userJson, NewMaterials::class.java)
                 val contract =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<Int>("CONTRACT")
                 if (userObject !== null && contract !== null) {

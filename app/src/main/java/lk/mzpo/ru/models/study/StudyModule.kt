@@ -3,8 +3,9 @@ package lk.mzpo.ru.models.study
 import com.google.gson.annotations.SerializedName
 
 
-data class StudyModule (
 
+
+data class Module (
     @SerializedName("id"               ) var id              : Int?                       = null,
     @SerializedName("study_course_id"  ) var studyCourseId   : Int?                       = null,
     @SerializedName("name"             ) var name            : String?                    = null,
@@ -13,16 +14,25 @@ data class StudyModule (
     @SerializedName("parent_id"        ) var parentId        : String?                    = null,
     @SerializedName("status"           ) var status          : String?                    = null,
     @SerializedName("active_materials" ) var activeMaterials : ArrayList<ActiveMaterials> = arrayListOf(),
+)
+
+data class StudyModule (
+
+    @SerializedName("module"               ) var module       : Module?                       = null,
+    @SerializedName("module_passed"  ) var module_passed   : Boolean                       = false,
+    @SerializedName("watched"             ) var watched            : Boolean                    = false,
+    @SerializedName("materials" ) var materials : ArrayList<NewMaterials> = arrayListOf(),
+    @SerializedName("tests")            var tests: ArrayList<ActiveMaterials> = arrayListOf(),
+    @SerializedName("percent"             ) var percent             : Int?                       = null,
+
 
 
 )
 
 
 data class Ticket (
-
     @SerializedName("answer"   ) var answer   : String? = null,
     @SerializedName("question" ) var question : String? = null
-
 )
 
 data class Exam (

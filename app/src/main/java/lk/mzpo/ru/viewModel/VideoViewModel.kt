@@ -1,38 +1,12 @@
 package lk.mzpo.ru.viewModel
 
-import CoursePreview
 import android.content.Context
-import android.provider.ContactsContract.CommonDataKinds.Email
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
 import com.android.volley.AuthFailureError
 import com.android.volley.Response
-import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.google.gson.Gson
-import lk.mzpo.ru.models.Course
-import lk.mzpo.ru.models.Document
-import lk.mzpo.ru.models.Group
-import lk.mzpo.ru.models.Module
-import lk.mzpo.ru.models.User
-import lk.mzpo.ru.models.UserData
-import lk.mzpo.ru.network.retrofit.AuthData
-import lk.mzpo.ru.network.retrofit.AuthService
-import lk.mzpo.ru.network.retrofit.AuthStatus
-import org.json.JSONArray
-import org.json.JSONObject
-import java.nio.charset.Charset
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import kotlin.math.log
 
 
 class VideoViewModel  (
@@ -43,18 +17,15 @@ class VideoViewModel  (
         ctx: Context,
         id: Int,
         time: Float,
-        duration: Float,
-        spendTime: Float,
-        contract: Int
+        progress: Int
     ) {
 
         val queue = Volley.newRequestQueue(ctx)
-//        Log.d("MyLog", time.toString()+" "+duration.toString()+" "+spendTime.toString())
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
             "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id",
             Response.Listener { response ->
-//                Log.d("MyLog", response)
+                Log.d("MyLog", response)
 //                Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id")
             },
 
@@ -81,9 +52,7 @@ class VideoViewModel  (
                 val params: MutableMap<String, String> =
                     HashMap()
                 params["time"] = time.toString()
-                params["duration"] = duration.toString()
-                params["spendTime"] = spendTime.times(1000).toString()
-                params["contract"] = contract.toString()
+                params["progress"] = progress.toString()
 //                Log.d("MyLog", params.toString());
                 return params
             }

@@ -772,37 +772,29 @@ fun module(
     var files = 0;
     var tests = 0;
     var videos = 0;
-    for (i in studyModule.activeMaterials) {
-        if (i.activeFile !== null)
+    for (i in studyModule.materials) {
+        if (i.file !== null)
         {
-            if (i.activeFile!!.type == "video") {
-                sum += i.activeFile!!.size ?: 0
+            if (i.file!!.type == "video") {
+                sum += i.file!!.size ?: 0
                 videos+=1;
-            } else if (i.activeFile!!.type == "file") {
-                sum += (i.activeFile!!.size ?: 0) * 120
+            } else if (i.file!!.type == "file") {
+                sum += (i.file!!.size ?: 0) * 120
                 files+=1;
 
-            } else if (i.activeFile!!.type == "test" || i.activeFile!!.type == "final_test") {
+            } else if (i.file!!.type == "test" || i.file!!.type == "final_test") {
                 sum += 1200
                 tests+=1;
 
             }
 
-            if (i.activeFile!!.userProgress !== null) {
-                if (checked != 1) {
-                    if (i.activeFile!!.userProgress?.viewed == "1") {
-                        checked = 1;
-                    }
-                    if (i.activeFile!!.userProgress?.viewed == "2") {
-                        checked = 2;
-                    }
-                }
-            } else {
-                if (checked != 0) {
-                    checked = 1
-                }
-            }
+
         }
+    }
+    for (i in studyModule.tests)
+    {
+        sum += 1200
+        tests+=1;
     }
 
     Row(
@@ -820,7 +812,7 @@ fun module(
                 .padding(vertical = 20.dp)
         ) {
             Text(
-                text = "${int + 1}.  ${studyModule.name} ",
+                text = "${int + 1}.  ${studyModule.module!!.name} ",
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
@@ -853,7 +845,7 @@ fun module(
             }
         }
         Box(modifier = Modifier.fillMaxSize()) {
-            if (checked == 2) {
+            if (studyModule.module_passed) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "",
@@ -862,7 +854,7 @@ fun module(
                         Alignment.Center
                     ).fillMaxSize()
                 )
-            } else if (checked == 1) {
+            } else if (studyModule.watched) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "",
