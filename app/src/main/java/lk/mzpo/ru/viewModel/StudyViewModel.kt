@@ -29,6 +29,9 @@ class StudyViewModel: ViewModel() {
     val loaded = mutableStateOf(false)
     val error = mutableStateOf(false)
 
+
+    val answered = mutableStateOf(false)
+
     val auth_tested = mutableStateOf(AuthStatus.TEST)
 
     val studyModules = mutableStateOf(listOf<StudyModule>())

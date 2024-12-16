@@ -1,5 +1,6 @@
 package lk.mzpo.ru.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,7 +26,6 @@ import io.sanghun.compose.video.VideoPlayer
 import io.sanghun.compose.video.cache.VideoPlayerCacheManager
 import io.sanghun.compose.video.controller.VideoPlayerControllerConfig
 import io.sanghun.compose.video.uri.VideoPlayerMediaItem
-import lk.mzpo.ru.models.study.ActiveMaterials
 import lk.mzpo.ru.models.study.NewMaterials
 import lk.mzpo.ru.viewModel.VideoViewModel
 
@@ -52,7 +52,11 @@ fun VideoScreen(
 //
 //        )
         VideoPlayerCacheManager.initialize(ctx, 1024 * 1024 * 10)    // 10Mb
-
+        if (video.file == null)
+        {
+            Toast.makeText(ctx, "Произошла ошибка!", Toast.LENGTH_SHORT).show()
+            navHostController.navigateUp()
+        }
 //        Log.d("TEST", "https://lk.mzpo-s.ru/build/videos/${video.file!!.upload}")
         VideoPlayer(
             mediaItems = listOf(
@@ -106,7 +110,7 @@ fun VideoScreen(
             val gson = Gson()
             val video_ = gson.toJson(
                 video,
-                ActiveMaterials::class.java
+                NewMaterials::class.java
             )
 
             navHostController.currentBackStackEntry?.savedStateHandle?.set(

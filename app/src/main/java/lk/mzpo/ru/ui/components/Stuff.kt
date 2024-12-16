@@ -294,7 +294,8 @@ fun CustomTextField(
     value: MutableState<TextFieldValue>,
     isError: MutableState<Boolean> = mutableStateOf(false),
     modifier: Modifier = Modifier,
-    readonly: Boolean = false
+    readonly: Boolean = false,
+    singleLine: Boolean = true
 ) {
     OutlinedTextField(
         value = value.value,
@@ -317,7 +318,7 @@ fun CustomTextField(
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
         isError = isError.value,
-        singleLine = true,
+        singleLine = singleLine,
         readOnly = readonly,
         enabled = !readonly,
     )

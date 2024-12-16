@@ -53,6 +53,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +65,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -77,6 +79,9 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.study.StudyModule
+import lk.mzpo.ru.network.retrofit.SaveExamAnswersService
+import lk.mzpo.ru.network.retrofit.SendExamAnswersService
+import lk.mzpo.ru.ui.components.CustomTextField
 import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.components.PickImageFromGallery
 import lk.mzpo.ru.ui.theme.Active_Green
@@ -86,6 +91,9 @@ import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Orange
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.StudyViewModel
+import okhttp3.ResponseBody
+import retrofit2.Call
+import retrofit2.Response
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -150,8 +158,7 @@ fun StudyScreen(
                             .height(45.dp),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        if (contract.docs_errors > 0 && false)
-                        {
+                        if (contract.docs_errors > 0 && false) {
                             BadgedBox(badge = { Badge { Text(contract.docs_errors.toString()) } }) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
@@ -162,8 +169,7 @@ fun StudyScreen(
                                     Text(text = "Загрузить документы", color = Color.White)
                                 }
                             }
-                        } else
-                        {
+                        } else {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
@@ -258,65 +264,93 @@ fun StudyScreen(
                                     maxLines = 2,
                                     fontWeight = FontWeight.Bold
                                 )
-                                if (studyViewModel.examNew.size > 0)
-                                {
-                                    if (!studyViewModel.examNew[0].accessed.isNullOrEmpty())
-                                    {
+                                if (studyViewModel.examNew.size > 0) {
+                                    if (!studyViewModel.examNew[0].accessed.isNullOrEmpty()) {
                                         Text(
                                             buildAnnotatedString {
                                                 append("Экзамен: ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                withStyle(
+                                                    SpanStyle(
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Aggressive_red
+                                                    )
+                                                ) {
                                                     append(studyViewModel.examNew[0].accessed)
                                                 }
-                                            }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp
+                                            },
+                                            modifier = Modifier.padding(bottom = 5.dp),
+                                            fontSize = 12.sp
                                         )
-                                    } else if (studyViewModel.examNew[0].many.isNotEmpty())
-                                    {
-                                        if (studyViewModel.examNew[0].many.size > 1)
-                                        {
+                                    } else if (studyViewModel.examNew[0].many.isNotEmpty()) {
+                                        if (studyViewModel.examNew[0].many.size > 1) {
                                             Text(
                                                 buildAnnotatedString {
                                                     append("Экзамены: ")
-                                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
-                                                        for (i in 0..studyViewModel.examNew[0].many.size - 1)
-                                                        {
+                                                    withStyle(
+                                                        SpanStyle(
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Aggressive_red
+                                                        )
+                                                    ) {
+                                                        for (i in 0..studyViewModel.examNew[0].many.size - 1) {
                                                             append(studyViewModel.examNew[0].many[i])
-                                                            if (i < studyViewModel.examNew[0].many.size-1)
-                                                            {
+                                                            if (i < studyViewModel.examNew[0].many.size - 1) {
                                                                 append(", ")
                                                             }
                                                         }
                                                     }
-                                                }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp)
-                                        } else
-                                        {
+                                                },
+                                                modifier = Modifier.padding(bottom = 5.dp),
+                                                fontSize = 12.sp
+                                            )
+                                        } else {
                                             Text(
                                                 buildAnnotatedString {
                                                     append("Окончание обучения: ")
-                                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
-                                                            append(studyViewModel.examNew[0].many[0])
-                                                        }
-                                                }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp)
+                                                    withStyle(
+                                                        SpanStyle(
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Aggressive_red
+                                                        )
+                                                    ) {
+                                                        append(studyViewModel.examNew[0].many[0])
+                                                    }
+                                                },
+                                                modifier = Modifier.padding(bottom = 5.dp),
+                                                fontSize = 12.sp
+                                            )
                                         }
-                                    } else if (!studyViewModel.examNew[0].corp.isNullOrEmpty())
-                                    {
+                                    } else if (!studyViewModel.examNew[0].corp.isNullOrEmpty()) {
                                         Text(
                                             buildAnnotatedString {
                                                 append("Окончание обучения: ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                withStyle(
+                                                    SpanStyle(
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Aggressive_red
+                                                    )
+                                                ) {
                                                     append(studyViewModel.examNew[0].corp)
                                                 }
-                                            }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp
+                                            },
+                                            modifier = Modifier.padding(bottom = 5.dp),
+                                            fontSize = 12.sp
                                         )
-                                    } else if (!studyViewModel.examNew[0].close.isNullOrEmpty())
-                                    {
+                                    } else if (!studyViewModel.examNew[0].close.isNullOrEmpty()) {
                                         Text(
                                             buildAnnotatedString {
                                                 append("С итоговым экзаменом: ")
-                                                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Aggressive_red)) {
+                                                withStyle(
+                                                    SpanStyle(
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Aggressive_red
+                                                    )
+                                                ) {
                                                     append(studyViewModel.examNew[0].close)
                                                 }
-                                            }, modifier = Modifier.padding(bottom = 5.dp), fontSize = 12.sp
+                                            },
+                                            modifier = Modifier.padding(bottom = 5.dp),
+                                            fontSize = 12.sp
                                         )
                                     }
 
@@ -397,7 +431,7 @@ fun StudyScreen(
                             }
                         }
                         if (studyViewModel.contract.status == 7) {
-                            Column (Modifier.fillMaxWidth()) {
+                            Column(Modifier.fillMaxWidth()) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -524,21 +558,19 @@ fun StudyScreen(
                                 var count = 0
                                 for (j in studyViewModel.documents) {
                                     if (admission.id == j.admissionId) {
-                                        if (j.file !== null)
-                                        {
-                                            if (!loaded.contains(j.file!!))
-                                            {
+                                        if (j.file !== null) {
+                                            if (!loaded.contains(j.file!!)) {
                                                 loaded.add(j.file!!)
                                             }
                                         }
                                         status = j.docCondition
-                                        if (j.comment !== null)
-                                        {
+                                        if (j.comment !== null) {
                                             comment = j.comment
                                         }
                                     }
                                 }
-                                count = studyViewModel.documents.filter { it.docCondition === "0"  }.size
+                                count =
+                                    studyViewModel.documents.filter { it.docCondition === "0" }.size
                                 Text(
                                     text = admission.name.toString(),
                                     fontWeight = FontWeight.Bold,
@@ -673,8 +705,7 @@ fun StudyScreen(
                                     Spacer(modifier = Modifier.height(5.dp))
                                 }
                                 Divider()
-                                if (studyViewModel.practiceData.isNotEmpty())
-                                {
+                                if (studyViewModel.practiceData.isNotEmpty()) {
                                     if (!studyViewModel.practiceData[0].courses.isNullOrEmpty()) {
                                         Text(
                                             text = "Рекомендуем курсы для платной практики",
@@ -773,28 +804,26 @@ fun module(
     var tests = 0;
     var videos = 0;
     for (i in studyModule.materials) {
-        if (i.file !== null)
-        {
+        if (i.file !== null) {
             if (i.file!!.type == "video") {
                 sum += i.file!!.size ?: 0
-                videos+=1;
+                videos += 1;
             } else if (i.file!!.type == "file") {
                 sum += (i.file!!.size ?: 0) * 120
-                files+=1;
+                files += 1;
 
             } else if (i.file!!.type == "test" || i.file!!.type == "final_test") {
                 sum += 1200
-                tests+=1;
+                tests += 1;
 
             }
 
 
         }
     }
-    for (i in studyModule.tests)
-    {
+    for (i in studyModule.tests) {
         sum += 1200
-        tests+=1;
+        tests += 1;
     }
 
     Row(
@@ -816,27 +845,52 @@ fun module(
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )
-            Row (horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(text = "~ ${sum.div(60).toInt()} мин.")
 
                 Row {
                     if (files > 0) {
-                        Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)) {
-                            Icon(painter = painterResource(id = R.drawable.baseline_library_books_24), contentDescription = "", Modifier.size(20.dp), tint = Primary_Green)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_library_books_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = Primary_Green
+                            )
                             Text(text = files.toString())
                         }
                     }
-                    if (videos > 0)
-                    {
-                        Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)){
-                            Icon(painter = painterResource(id = R.drawable.baseline_video_library_24), contentDescription = "", Modifier.size(20.dp), tint = Primary_Green)
+                    if (videos > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_video_library_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = Primary_Green
+                            )
                             Text(text = videos.toString())
                         }
                     }
-                    if (tests > 0)
-                    {
-                        Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 10.dp)) {
-                            Icon(painter = painterResource(id = R.drawable.baseline_quiz_24), contentDescription = "", Modifier.size(20.dp), tint = Primary_Green)
+                    if (tests > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_quiz_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = Primary_Green
+                            )
                             Text(text = tests.toString())
                         }
                     }
@@ -850,18 +904,22 @@ fun module(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "",
                     tint = Primary_Green,
-                    modifier = Modifier.align(
-                        Alignment.Center
-                    ).fillMaxSize()
+                    modifier = Modifier
+                        .align(
+                            Alignment.Center
+                        )
+                        .fillMaxSize()
                 )
             } else if (studyModule.watched) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "",
                     tint = Orange,
-                    modifier = Modifier.align(
-                        Alignment.Center
-                    ).fillMaxSize()
+                    modifier = Modifier
+                        .align(
+                            Alignment.Center
+                        )
+                        .fillMaxSize()
                 )
 
             }
@@ -916,7 +974,7 @@ fun Schedule(studyViewModel: StudyViewModel) {
 
         if (studyViewModel.exam.isNotEmpty()) {
             //region Билеты экзамен
-            if (studyViewModel.exam[0].answered != 1) {
+            if (studyViewModel.exam[0].answered != 1 && !studyViewModel.answered.value) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -940,7 +998,7 @@ fun Schedule(studyViewModel: StudyViewModel) {
                     )
                     {
                         Text(
-                            text = "Необходимо отправить ответы с компьютера до " + studyViewModel.exam[0].send_answer,
+                            text = "Необходимо отправить ответы до " + studyViewModel.exam[0].send_answer,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(
@@ -950,13 +1008,165 @@ fun Schedule(studyViewModel: StudyViewModel) {
                             textAlign = TextAlign.Center
                         )
                     }
+                    val answers = arrayListOf<MutableState<TextFieldValue>>()
+                    if (!studyViewModel.exam[0].ticket.isNullOrEmpty()) {
                         for (i in 0 until studyViewModel.exam[0].ticket.size) {
+                            val answer = remember {
+                                mutableStateOf(TextFieldValue(studyViewModel.exam[0].ticket[i].answer))
+                            }
+                            answers.add(answer)
                             Text(
                                 text = "Вопрос №" + (i + 1) + " " + studyViewModel.exam[0].ticket[i].question.toString(),
                                 fontWeight = FontWeight.Bold
                             )
+                            CustomTextField(
+                                name = "Ответ",
+                                placeholder = "Ваш ответ...",
+                                value = answers[i],
+                                singleLine = false,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                            )
 
                         }
+                        val context = LocalContext.current
+                        Row (Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween){
+                            Button(
+                                colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = Color.Gray,
+                                    contentColor = Color.White
+                                ),
+                                modifier = Modifier
+                                    .width(100.dp)
+                                    .padding(vertical = 5.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                onClick = {
+                                    val _answers = arrayListOf<String>();
+                                    for (i in answers) {
+                                        _answers.add(i.value.text)
+                                    }
+                                    val test = context.getSharedPreferences(
+                                        "session",
+                                        Context.MODE_PRIVATE
+                                    )
+                                    val token_ = test.getString("token_lk", "")
+                                    SaveExamAnswersService().send(
+                                        "Bearer " + token_?.trim('"'),
+                                        SaveExamAnswersService.PostBody(
+                                            answers = _answers,
+                                            contract_id = studyViewModel.contract.id,
+                                            module_id = studyViewModel.exam[0].moduleId!!,
+                                            ticket = studyViewModel.exam[0].num!!
+                                        )
+
+                                    ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                                        override fun onFailure(
+                                            call: Call<ResponseBody>,
+                                            t: Throwable
+                                        ) {
+                                            Log.e(
+                                                "API Request",
+                                                "I got an error and i don't know why :("
+                                            )
+                                            Log.e("API Request", t.message.toString())
+                                        }
+
+                                        override fun onResponse(
+                                            call: Call<ResponseBody>,
+                                            response: Response<ResponseBody>
+                                        ) {
+                                            Log.d("API Request", response.body().toString())
+                                            Log.d("API Request", response.message())
+                                            Log.d("API Request", response.errorBody().toString())
+                                            Log.d("API Request", response.raw().body.toString())
+                                            if (response.isSuccessful) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Ответы сохранены!",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    })
+                                }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_save_24),
+                                    contentDescription = "",
+                                    tint = Color.White
+                                )
+                            }
+                            Button(
+                                colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = Primary_Green,
+                                    contentColor = Color.White
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth(0.5f)
+                                    .padding(vertical = 5.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                onClick = {
+                                    val _answers = arrayListOf<String>();
+                                    for (i in answers) {
+                                        _answers.add(i.value.text)
+                                    }
+                                    val test = context.getSharedPreferences(
+                                        "session",
+                                        Context.MODE_PRIVATE
+                                    )
+                                    val token_ = test.getString("token_lk", "")
+                                    SendExamAnswersService().send(
+                                        "Bearer " + token_?.trim('"'),
+                                        SendExamAnswersService.PostBody(
+                                            answers = _answers,
+                                            contract_id = studyViewModel.contract.id,
+                                            module_id = studyViewModel.exam[0].moduleId!!,
+                                            ticket = studyViewModel.exam[0].num!!
+                                        )
+
+                                    ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                                        override fun onFailure(
+                                            call: Call<ResponseBody>,
+                                            t: Throwable
+                                        ) {
+                                            Log.e(
+                                                "API Request",
+                                                "I got an error and i don't know why :("
+                                            )
+                                            Log.e("API Request", t.message.toString())
+                                        }
+
+                                        override fun onResponse(
+                                            call: Call<ResponseBody>,
+                                            response: Response<ResponseBody>
+                                        ) {
+                                            Log.d("API Request", response.body().toString())
+                                            Log.d("API Request", response.message())
+                                            Log.d("API Request", response.errorBody().toString())
+                                            Log.d("API Request", response.raw().body.toString())
+                                            if (response.isSuccessful) {
+                                                studyViewModel.answered.value = true
+                                                Toast.makeText(
+                                                    context,
+                                                    "Ответы сохранены!",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                    })
+                                }) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "",
+                                    tint = Color.White
+                                )
+                                Text(text = "Отправить", color = Color.White)
+                            }
+
+                        }
+
+                    }
+
                     HorizontalDivider()
                 }
             } else {
@@ -981,16 +1191,14 @@ fun Schedule(studyViewModel: StudyViewModel) {
             for (item in studyViewModel.schedules) {
 
 
-                if(item.group !== null)
-                {
+                if (item.group !== null) {
                     Text(
                         text = "Группа " + item.group.title,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold
                     )
-                    if (!item.group.exam.isNullOrEmpty())
-                    {
+                    if (!item.group.exam.isNullOrEmpty()) {
                         val exam = LocalDate.parse(item.group.exam)
                         Text(
                             text = "Дата экзамена: " + exam.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
@@ -1007,7 +1215,8 @@ fun Schedule(studyViewModel: StudyViewModel) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
 
-                            val date = LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
+                            val date =
+                                LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(text = date.format(secondFormatter).toString())
                                 Text(text = date.format(timeFrmtEnd).toString())
@@ -1023,7 +1232,6 @@ fun Schedule(studyViewModel: StudyViewModel) {
                     Divider(thickness = 3.dp)
                     Spacer(modifier = Modifier.height(10.dp))
                 }
-
 
 
             }
@@ -1097,9 +1305,12 @@ fun Materials(
                                 "StudyModule", smJson
                             )
                             navHostController.navigate("study/module")
-                        } catch (e: Exception)
-                        {
-                            Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже!", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                ctx,
+                                "Произошла ошибка. Попробуйте позже!",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     })
                 }

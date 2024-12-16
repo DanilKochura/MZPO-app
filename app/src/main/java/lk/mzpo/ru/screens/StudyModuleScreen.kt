@@ -147,7 +147,7 @@ fun StudyModuleScreen(
                                                     )
 
                                                     navHostController.navigate("video")
-                                                } else if (i.file!!.type == "file") {
+                                                } else if (i.file!!.type == "file" || i.file!!.type == "downloadable") {
                                                     val material = gson.toJson(
                                                         i,
                                                         NewMaterials::class.java
@@ -268,7 +268,7 @@ fun StudyModuleScreen(
                                                 }
                                             }
                                             if (i.watched != 0 && i.percent !== null) {
-                                                if (i.watched == i.file!!.size) {
+                                                if (i.percent == 100) {
                                                     Icon(
                                                         imageVector = Icons.Default.CheckCircle,
                                                         contentDescription = "",

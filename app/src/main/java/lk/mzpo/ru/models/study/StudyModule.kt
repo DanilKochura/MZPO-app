@@ -31,7 +31,7 @@ data class StudyModule (
 
 
 data class Ticket (
-    @SerializedName("answer"   ) var answer   : String? = null,
+    @SerializedName("answer"   ) var answer   : String = "",
     @SerializedName("question" ) var question : String? = null
 )
 
