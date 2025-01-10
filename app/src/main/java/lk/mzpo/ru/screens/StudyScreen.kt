@@ -358,15 +358,15 @@ fun StudyScreen(
 
 
                             }
-                            AsyncImage(
-                                model = contract.course!!.image,
-                                contentDescription = "",
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(
-                                        RoundedCornerShape(10.dp)
-                                    )
-                            )
+                                AsyncImage(
+                                    model = contract.course!!.image,
+                                    contentDescription = "",
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(
+                                            RoundedCornerShape(10.dp)
+                                        )
+                                )
                         }
                         Row(
                             Modifier
