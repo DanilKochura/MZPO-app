@@ -144,7 +144,8 @@ fun EmailTextField(
     email: MutableState<TextFieldValue>,
     isError: MutableState<Boolean>,
     modifier: Modifier = Modifier,
-    readonly: Boolean = false
+    readonly: Boolean = false,
+    title: String = "Email"
 ) {
     OutlinedTextField(
         value = email.value,
@@ -157,7 +158,7 @@ fun EmailTextField(
                 contentDescription = "Email Icon"
             )
         },
-        label = { Text(text = "Email") },
+        label = { Text(text = title) },
         modifier = modifier.padding(top = 10.dp),
         colors = customTextFieldBorderColor(),
         isError = isError.value,

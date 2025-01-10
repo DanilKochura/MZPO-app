@@ -137,29 +137,40 @@ fun StudyScreen(
 //                }
 //            },
         floatingActionButton = {
-            if (bottomSheetState.targetValue == ModalBottomSheetValue.Hidden && bottomPracticeState.targetValue == ModalBottomSheetValue.Hidden) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 30.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    FloatingActionButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                bottomSheetState.show()
-                            }
-                        },
-                        containerColor = Primary_Green,
-                        contentColor = Color.White,
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .weight(1f)
-                            .height(45.dp),
-                        shape = RoundedCornerShape(10.dp)
+            if (studyViewModel.contract.status!! !in arrayOf(0, 15) || studyViewModel.contract.need_docs ) {
+                if (bottomSheetState.targetValue == ModalBottomSheetValue.Hidden && bottomPracticeState.targetValue == ModalBottomSheetValue.Hidden) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 30.dp),
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        if (contract.docs_errors > 0 && false) {
-                            BadgedBox(badge = { Badge { Text(contract.docs_errors.toString()) } }) {
+                        FloatingActionButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    bottomSheetState.show()
+                                }
+                            },
+                            containerColor = Primary_Green,
+                            contentColor = Color.White,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .weight(1f)
+                                .height(45.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            if (contract.docs_errors > 0 && false) {
+                                BadgedBox(badge = { Badge { Text(contract.docs_errors.toString()) } }) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "",
+                                            modifier = Modifier.padding(end = 5.dp)
+                                        )
+                                        Text(text = "Загрузить документы", color = Color.White)
+                                    }
+                                }
+                            } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.Edit,
@@ -169,45 +180,36 @@ fun StudyScreen(
                                     Text(text = "Загрузить документы", color = Color.White)
                                 }
                             }
-                        } else {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = "",
-                                    modifier = Modifier.padding(end = 5.dp)
-                                )
-                                Text(text = "Загрузить документы", color = Color.White)
-                            }
                         }
-                    }
-                    if ((studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) && !studyViewModel.verify_docs.value) {
-                        FloatingActionButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    bottomPracticeState.show()
+                        if ((studyViewModel.practiceData.isNotEmpty() || studyViewModel.practiceOcno.isNotEmpty()) && !studyViewModel.verify_docs.value) {
+                            FloatingActionButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        bottomPracticeState.show()
+                                    }
+                                },
+                                containerColor = Aggressive_red,
+                                contentColor = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth(0.7f)
+                                    .weight(1f)
+                                    .height(45.dp)
+                                    .padding(start = 10.dp),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = "",
+                                        modifier = Modifier.padding(end = 5.dp)
+                                    )
+                                    Text(text = "Практика", color = Color.White)
                                 }
-                            },
-                            containerColor = Aggressive_red,
-                            contentColor = Color.White,
-                            modifier = Modifier
-                                .fillMaxWidth(0.7f)
-                                .weight(1f)
-                                .height(45.dp)
-                                .padding(start = 10.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = "",
-                                    modifier = Modifier.padding(end = 5.dp)
-                                )
-                                Text(text = "Практика", color = Color.White)
                             }
                         }
                     }
-                }
 
+                }
             }
         },
         bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },

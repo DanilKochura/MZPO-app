@@ -461,7 +461,7 @@ fun Login(token: String?, navHostController: NavHostController) {
         )
 
 
-        EmailTextField(email = login, isError = bl)
+        EmailTextField(email = login, isError = bl, title = "Email/Телефон")
         PasswordTextField(password = password, isError = bl)
         Row(
             modifier = Modifier.padding(all = 8.dp),
@@ -615,7 +615,7 @@ fun ActiveTab(
 @Composable
 fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
     val courses =
-        contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17 || it.status == 15}
+        contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17 || it.status == 15 }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -623,7 +623,21 @@ fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHo
                 itemsIndexed(courses)
                 { i, contract ->
                     if (contract.course !== null) {
-                        ContractCard(contract, Modifier, navHostController)
+                        ContractCard(contract, Modifier, navHostController,
+                            onClick = {
+                                val gson = Gson()
+                                val contractJson = gson.toJson(
+                                    contract,
+                                    Contract::class.java
+                                )
+                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                    "Contract",
+                                    contractJson
+                                )
+
+                                navHostController.navigate("study")
+
+                            })
                     }
 
                 }
@@ -729,7 +743,7 @@ fun ContractCard(
                             9,
                             10,
                             11,
-                        14
+                            14
                         )
                     ) {
                         onClick.invoke()
@@ -807,13 +821,29 @@ fun ContractCard(
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (contract.status!! == 0) {
+                    if (contract.status!! == 0 || contract.status!! == 15) {
                         Text(
                             text = "Вы успешно прошли обучение!",
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(bottom = 7.dp),
                             color = Aggressive_red
                         )
+                        Button(
+                            onClick = {
+                                onClick.invoke()
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 5.dp),
+                            shape = RoundedCornerShape(30),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Aggressive_red,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text("Смотреть материалы", color = Color.White)
+
+                        }
                     }
                     Text(
                         buildAnnotatedString {
@@ -845,17 +875,17 @@ fun ContractCard(
                             )
                         }
                     }
-                    if (contract.debt != 0) {
-                        Text(
-                            text = "Для получения документа, Вам необходимо оплатить долг в размере ${contract.debt} руб.",
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 7.dp),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+//                    if (contract.debt != 0 && contract.legal !== "2") {
+//                        Text(
+//                            text = "Для получения документа, Вам необходимо оплатить долг в размере ${contract.debt} руб.",
+//                            textAlign = TextAlign.Center,
+//                            modifier = Modifier.padding(bottom = 7.dp),
+//                            fontWeight = FontWeight.Bold
+//                        )
+//                    }
                     if (contract.need_docs) {
                         Text(
-                            text = "Чтобы получить документ об образовании загрузите документы с компьютера и ожидайте уведомление о статусе проверки",
+                            text = "Чтобы получить документ об образовании загрузите документы и ожидайте уведомление о статусе проверки",
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(bottom = 7.dp),
                         )
@@ -869,6 +899,7 @@ fun ContractCard(
                     }
 
                 }
+
             }
             if (contract.status == 5 || contract.status == 2) {
                 Text(text = "Отказ от курса", color = Aggressive_red, textAlign = TextAlign.Center)
@@ -898,7 +929,8 @@ fun ContractCard(
                     9,
                     10,
                     11,
-                    14
+                    14,
+//                0, 15
                 )
             ) {
                 Button(
@@ -917,7 +949,10 @@ fun ContractCard(
                     Text("Перейти", color = Color.White)
 
                 }
-            } else if (contract.status!! in intArrayOf(1, 6, 7, 9, 10, 11)) {
+            }
+
+            //region Продление
+            else if (contract.status!! in intArrayOf(1, 6, 7, 9, 10, 11)) {
 
 
                 if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
@@ -965,7 +1000,10 @@ fun ContractCard(
                     }
                 }
 
-            } else if (contract.status!! in intArrayOf(8)) {
+            }
+            //endregion
+
+            else if (contract.status!! in intArrayOf(8)) {
 
                 Button(
                     onClick = {
@@ -1082,8 +1120,8 @@ fun GiftCard(
                 .height(200.dp)
                 .fillMaxWidth()
                 .clickable {
-                        onClick.invoke()
-                    },
+                    onClick.invoke()
+                },
             contentScale = ContentScale.Crop
         )
         Column(

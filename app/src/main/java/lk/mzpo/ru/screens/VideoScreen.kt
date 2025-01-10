@@ -39,19 +39,7 @@ fun VideoScreen(
             mutableStateOf(0F)
         }
         val ctx = LocalContext.current
-//        val pdfState = rememberVerticalPdfReaderState(
-//            resource = ResourceType.Remote("https://lk.mzpo-s.ru/build/course_files/1/1_2.pdf"),
-//            isZoomEnable = true,
-//            isAccessibleEnable = true
-//        )
-//        VerticalPDFReader(
-//            state = pdfState,
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(color = Color.Gray)
-//
-//        )
-        VideoPlayerCacheManager.initialize(ctx, 1024 * 1024 * 10)    // 10Mb
+        VideoPlayerCacheManager.initialize(ctx, 1024 * 1024 * 100)    // 10Mb
         if (video.file == null)
         {
             Toast.makeText(ctx, "Произошла ошибка!", Toast.LENGTH_SHORT).show()
@@ -102,6 +90,7 @@ fun VideoScreen(
             playerInstance = {
 //                Log.d("MyLog", "aaaa")// ExoPlayer instance (Experimental)
             },
+
             modifier = Modifier
                 .fillMaxSize(),
 

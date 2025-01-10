@@ -22,6 +22,7 @@ data class Contract (
         @SerializedName("uid"             ) var uid            : String? = null,
         @SerializedName("docs_errors"     ) var docs_errors    : Int = 0,
         @SerializedName("order_date"      ) var orderDate      : String? = null,
+        @SerializedName("legal"      ) var legal      : String = "0",
         @SerializedName("close_date"      ) var closeDate      : String? = null,
         @SerializedName("progress"        ) var progress       : Progress? = null,
         @SerializedName("extended"        ) var extended       : String? = null,
