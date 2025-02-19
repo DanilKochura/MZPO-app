@@ -1,11 +1,8 @@
 package lk.mzpo.ru.screens
 
-import CoursePreview
-import Prices
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.res.Resources.Theme
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,7 +15,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,7 +26,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -39,7 +34,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,18 +62,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat.startActivity
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import kotlinx.coroutines.launch
-import lk.mzpo.ru.InDev
-import lk.mzpo.ru.OrderActivity
+import kotlinx.coroutines.delay
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.CartItem
@@ -87,35 +75,27 @@ import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.network.retrofit.PaymentRequest
+import lk.mzpo.ru.network.retrofit.PaymentResponse
 import lk.mzpo.ru.network.retrofit.PurchaseService
-import lk.mzpo.ru.network.retrofit.RetrofitClient
+import lk.mzpo.ru.network.retrofit.YookassaConfigs
 import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CartViewModel
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import ru.yoomoney.sdk.kassa.payments.Checkout
 import ru.yoomoney.sdk.kassa.payments.Checkout.createTokenizeIntent
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.Amount
-import ru.yoomoney.sdk.kassa.payments.checkoutParameters.GooglePayParameters
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.PaymentMethodType
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.PaymentParameters
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.SavePaymentMethod
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.TestParameters
-import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
-import kotlin.math.round
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import lk.mzpo.ru.network.retrofit.CheckPaymentRequest
-import lk.mzpo.ru.network.retrofit.PaymentResponse
-import lk.mzpo.ru.network.retrofit.YookassaConfigs
-import lk.mzpo.ru.ui.components.LoadableScreen
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+
 fun sendTokenToServer(token: String, app_token: String, uri: UriHandler, cartId: Int, cartViewModel: CartViewModel) {
     val request = PaymentRequest(
         token = token,
@@ -374,7 +354,7 @@ fun CartScreen(
                                             shopId = config.shopId,
 //                                            shopId = "957329",
                                             savePaymentMethod = SavePaymentMethod.OFF,
-                                            customReturnUrl = "https://lk.mzpo-s.ru",
+                                            customReturnUrl = "https://trayektoriya.ru",
                                             paymentMethodTypes = paymentMethodTypes,
 //                                            authCenterClientId =  "n2af44sofjfjsftsig09i5j5m32ui0pi6",
                                             clientApplicationKey =  config.clientApplicationKey,
@@ -569,7 +549,7 @@ fun CartCourse(item: CartItem, price: Int, onDelete: () -> Unit, onImageClick: (
                 Text(
                     text = "договора оферты",
                     modifier = Modifier.clickable {
-                        uriHandler.openUri("https://lk.mzpo-s.ru/build/documents/oferta_"+item.org_id+".pdf")
+                        uriHandler.openUri("https://trayektoriya.ru/build/documents/oferta_"+item.org_id+".pdf")
                     },
                     color = Color.Blue, fontSize = 12.sp)
 

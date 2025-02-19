@@ -19,7 +19,7 @@ interface SendExamAnswersService {
     companion object {
         operator fun invoke(): SendExamAnswersService{
             return Retrofit.Builder()
-                .baseUrl("https://lk.mzpo-s.ru/")
+                .baseUrl("https://trayektoriya.ru/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(SendExamAnswersService::class.java)

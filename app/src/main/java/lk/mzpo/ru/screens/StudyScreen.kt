@@ -685,7 +685,7 @@ fun StudyScreen(
                                         itemsIndexed(studyViewModel.practiceData[0].blanks) { index, item ->
                                             Button(
                                                 onClick = {
-                                                    uri.openUri("https://lk.mzpo-s.ru/" + item.path)
+                                                    uri.openUri("https://trayektoriya.ru/" + item.path)
                                                 },
                                                 colors = ButtonDefaults.buttonColors(backgroundColor = Primary_Green),
                                                 modifier = Modifier.padding(vertical = 5.dp)

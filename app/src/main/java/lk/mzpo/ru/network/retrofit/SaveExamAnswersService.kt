@@ -19,7 +19,7 @@ interface SaveExamAnswersService {
     companion object {
         operator fun invoke(): SaveExamAnswersService{
             return Retrofit.Builder()
-                .baseUrl("https://lk.mzpo-s.ru/")
+                .baseUrl("https://trayektoriya.ru/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(SaveExamAnswersService::class.java)

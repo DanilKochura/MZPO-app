@@ -69,7 +69,7 @@ fun PdfScreen(
 ) {
     val ctx = LocalContext.current
     val pdfState = rememberVerticalPdfReaderState(
-        resource = ResourceType.Remote("https://lk.mzpo-s.ru/"+material.file?.upload),
+        resource = ResourceType.Remote("https://trayektoriya.ru/"+material.file?.upload),
         isZoomEnable = true
     )
 

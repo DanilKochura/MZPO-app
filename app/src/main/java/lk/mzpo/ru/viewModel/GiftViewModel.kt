@@ -9,23 +9,10 @@ import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
-import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.Gift
-import lk.mzpo.ru.models.PracticeData
-import lk.mzpo.ru.models.PracticeOchno
-import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.study.ActiveFile
-import lk.mzpo.ru.models.study.ActiveMaterials
-import lk.mzpo.ru.models.study.Admission
-import lk.mzpo.ru.models.study.CourseSchedule
-import lk.mzpo.ru.models.study.Exam
-import lk.mzpo.ru.models.study.PassedModules
-import lk.mzpo.ru.models.study.StudyModule
-import lk.mzpo.ru.models.study.UserDocument
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
-import org.json.JSONObject
-import kotlin.math.log
 
 class GiftViewModel: ViewModel() {
 
@@ -40,8 +27,7 @@ class GiftViewModel: ViewModel() {
 
     fun getData(context: Context)
     {
-        Log.d("MyLog", "Here")
-        val url = "https://lk.mzpo-s.ru/mobile/user/gifts/${gift.id}"
+        val url = "https://trayektoriya.ru/mobile/user/gifts/${gift.id}"
         val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         val token = test.getString("token_lk", "")
         val queue = Volley.newRequestQueue(context)

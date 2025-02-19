@@ -9,13 +9,9 @@ import com.android.volley.AuthFailureError
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.google.gson.Gson
 import lk.mzpo.ru.BuildConfig
-import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.User
-import lk.mzpo.ru.models.UserData
 import lk.mzpo.ru.network.retrofit.Feedback
-import org.json.JSONArray
 import org.json.JSONObject
 
 
@@ -36,7 +32,7 @@ class HelpViewModel  (
 
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
-            "https://lk.mzpo-s.ru/mobile/user/feedback",
+            "https://trayektoriya.ru/mobile/user/feedback",
             Response.Listener { response ->
                 Log.d("FeedbackLog", response)
                 try {

@@ -19,7 +19,7 @@ interface SaveLastPageService {
     companion object {
         operator fun invoke(): SaveLastPageService{
             return Retrofit.Builder()
-                .baseUrl("https://lk.mzpo-s.ru/")
+                .baseUrl("https://trayektoriya.ru/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(SaveLastPageService::class.java)

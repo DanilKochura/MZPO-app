@@ -30,7 +30,7 @@ class ProfileViewModel  (
     val error = mutableStateOf(false)
     fun getData(token: String, context: Context)
     {
-        val url = "https://lk.mzpo-s.ru/mobile/user/test"
+        val url = "https://trayektoriya.ru/mobile/user/test"
         val queue = Volley.newRequestQueue(context)
         val stringReq: StringRequest =
             object : StringRequest(
@@ -92,7 +92,7 @@ class ProfileViewModel  (
 
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
-            "https://lk.mzpo-s.ru/mobile/user/profile",
+            "https://trayektoriya.ru/mobile/user/profile",
             Response.Listener { response ->
                Toast.makeText(ctx,"Данные успешно сохранены!", Toast.LENGTH_SHORT).show()
             },
@@ -139,7 +139,7 @@ class ProfileViewModel  (
 
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
-            "https://lk.mzpo-s.ru/mobile/user/userData",
+            "https://trayektoriya.ru/mobile/user/userData",
             Response.Listener { response ->
                 Log.d("userData", response)
                 Toast.makeText(ctx,"Данные успешно сохранены!", Toast.LENGTH_SHORT).show()

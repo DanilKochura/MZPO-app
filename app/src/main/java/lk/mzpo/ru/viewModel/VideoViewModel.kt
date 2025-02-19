@@ -23,10 +23,9 @@ class VideoViewModel  (
         val queue = Volley.newRequestQueue(ctx)
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
-            "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id",
+            "https://trayektoriya.ru/mobile/user/study/saveTime/$id",
             Response.Listener { response ->
                 Log.d("MyLog", response)
-//                Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/user/study/saveTime/$id")
             },
 
             Response.ErrorListener { error ->

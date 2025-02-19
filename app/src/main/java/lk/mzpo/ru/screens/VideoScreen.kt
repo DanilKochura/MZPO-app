@@ -45,11 +45,10 @@ fun VideoScreen(
             Toast.makeText(ctx, "Произошла ошибка!", Toast.LENGTH_SHORT).show()
             navHostController.navigateUp()
         }
-//        Log.d("TEST", "https://lk.mzpo-s.ru/build/videos/${video.file!!.upload}")
         VideoPlayer(
             mediaItems = listOf(
                 VideoPlayerMediaItem.NetworkMediaItem(
-                    url = "https://lk.mzpo-s.ru/build/videos/${video.file!!.upload}",
+                    url = "https://trayektoriya.ru/build/videos/${video.file!!.upload}",
                     mediaMetadata = MediaMetadata.Builder().setTitle("Widevine DASH cbcs: Tears").build(),
                     mimeType = MimeTypes.APPLICATION_M3U8,
                 )

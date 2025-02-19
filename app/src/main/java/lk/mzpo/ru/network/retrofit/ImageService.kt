@@ -27,7 +27,7 @@ interface ImageService {
                 .build()
             Log.d("MyLog", this.toString())
             return Retrofit.Builder()
-                .baseUrl("https://lk.mzpo-s.ru/")
+                .baseUrl("https://trayektoriya.ru/")
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

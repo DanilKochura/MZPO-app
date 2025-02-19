@@ -495,7 +495,7 @@ fun Login(token: String?, navHostController: NavHostController) {
                 color = Color.Blue,
                 textDecoration = TextDecoration.Underline,
                 modifier = Modifier.clickable {
-                    urlHandler.openUri("https://lk.mzpo-s.ru/password/reset")
+                    urlHandler.openUri("https://trayektoriya.ru/password/reset")
                 })
         }
     }

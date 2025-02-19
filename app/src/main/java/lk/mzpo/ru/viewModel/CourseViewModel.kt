@@ -2,9 +2,7 @@ package lk.mzpo.ru.viewModel
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
@@ -12,20 +10,15 @@ import com.android.volley.toolbox.Volley
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
-import lk.mzpo.ru.models.Cart
-import lk.mzpo.ru.models.Category
 import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.models.CourseReview
 import lk.mzpo.ru.models.Document
-import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.models.GroupCart
 import lk.mzpo.ru.models.Module
 import lk.mzpo.ru.models.Prices
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.LocalDate
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class CourseViewModel(
@@ -276,7 +269,7 @@ class CourseViewModel(
     fun getData(id: Int, context: Context) {
         Log.d("MyLog1", id.toString())
 
-        val url = "https://lk.mzpo-s.ru/mobile/course/$id"
+        val url = "https://trayektoriya.ru/mobile/course/$id"
         val queue = Volley.newRequestQueue(context)
         val sRequest = StringRequest(
             Request.Method.GET,

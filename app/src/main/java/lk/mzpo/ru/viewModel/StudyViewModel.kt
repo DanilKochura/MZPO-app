@@ -55,8 +55,7 @@ class StudyViewModel: ViewModel() {
     val verify_docs = mutableStateOf(false)
     fun getData(context: Context)
     {
-        Log.d("MyLog", "Here")
-        val url = "https://lk.mzpo-s.ru/mobile/user/contract/${contract.id}"
+        val url = "https://trayektoriya.ru/mobile/user/contract/${contract.id}"
         val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         val token = test.getString("token_lk", "")
         val queue = Volley.newRequestQueue(context)

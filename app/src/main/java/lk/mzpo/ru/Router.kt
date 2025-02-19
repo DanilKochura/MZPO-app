@@ -333,7 +333,7 @@ fun NavGraph(
             composable("home",
                 deepLinks = listOf(
                     navDeepLink {
-                        uriPattern = "https://lk.mzpo-s.ru"
+                        uriPattern = "https://trayektoriya.ru"
                         action = Intent.ACTION_VIEW
                     }
                 )
@@ -344,7 +344,7 @@ fun NavGraph(
             composable("login",
                 deepLinks = listOf(
                     navDeepLink {
-                        uriPattern = "https://lk.mzpo-s.ru/login"
+                        uriPattern = "https://trayektoriya.ru/login"
                         action = Intent.ACTION_VIEW
                     }
                 ))
@@ -407,7 +407,7 @@ fun NavGraph(
                 val contract = it.arguments?.getString("contract")
                 if (material != null) {
                     WebViewPage(
-                        url = "https://lk.mzpo-s.ru/mobile/study/${contract}/${material}/${token}"
+                        url = "https://trayektoriya.ru/mobile/study/${contract}/${material}/${token}"
                     )
 //                CoursePage(id = id, navController = navHostController)
                 }

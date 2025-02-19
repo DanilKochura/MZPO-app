@@ -5,9 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.android.volley.AuthFailureError
-import com.android.volley.NoConnectionError
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -24,7 +22,7 @@ class AuthService {
 
             val stringRequest: StringRequest = object : StringRequest(
                 Method.POST,
-                "https://lk.mzpo-s.ru/mobile/login",
+                "https://trayektoriya.ru/mobile/login",
                 Response.Listener { response ->
                     val test =  ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
                     test.edit().putString("token_lk", response).apply()
@@ -80,7 +78,7 @@ class AuthService {
          * отправляет запрос с токеном: в ответ либо guest либо auth
          */
         fun testAuth(context: Context, navHostController: NavHostController, auth_tested: MutableState<AuthStatus>, redirect: Boolean = true){
-            val url = "https://lk.mzpo-s.ru/api/testAuth"
+            val url = "https://trayektoriya.ru/api/testAuth"
             val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
             val token = test.getString("token_lk", "")
             if(token.isNullOrBlank())

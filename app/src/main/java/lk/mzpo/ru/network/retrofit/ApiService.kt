@@ -32,7 +32,7 @@ interface UploadImage {
     companion object {
         operator fun invoke(): UploadImage{
             return Retrofit.Builder()
-                .baseUrl("https://lk.mzpo-s.ru/")
+                .baseUrl("https://trayektoriya.ru/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(UploadImage::class.java)

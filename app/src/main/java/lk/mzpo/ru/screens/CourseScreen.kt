@@ -1,7 +1,6 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
-import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -25,7 +24,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -68,7 +66,6 @@ import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -96,7 +93,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -105,14 +101,11 @@ import coil.compose.AsyncImage
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Course
-import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.models.GroupCart
-import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.network.retrofit.Data2Amo
@@ -121,21 +114,15 @@ import lk.mzpo.ru.ui.components.EmailTextField
 import lk.mzpo.ru.ui.components.NameTextField
 import lk.mzpo.ru.ui.components.PhoneTextField
 import lk.mzpo.ru.ui.components.Privacy
-import lk.mzpo.ru.ui.components.WebViewScreen
 import lk.mzpo.ru.ui.components.isValidEmail
 import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.Gold
 import lk.mzpo.ru.ui.theme.MainRounded
-import lk.mzpo.ru.ui.theme.Passive_Green
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CartViewModel
 import lk.mzpo.ru.viewModel.CourseViewModel
 import java.math.RoundingMode
-import java.time.LocalDate
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import kotlin.math.log
-import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -513,7 +500,7 @@ fun CourseReviews(courseViewModel: CourseViewModel) {
                                        .clip(CircleShape)
                                ) {
                                    AsyncImage(
-                                       model = "https://lk.mzpo-s.ru/build/images/" + review.user_avatar,
+                                       model = "https://trayektoriya.ru/build/images/" + review.user_avatar,
                                        contentDescription = "",
                                        contentScale = ContentScale.Crop,
                                    )
@@ -813,7 +800,7 @@ fun CourseDocs(course: Course) {
             )
             list.forEachIndexed { index, doc ->
                 AsyncImage(
-                    model = "https://lk.mzpo-s.ru/build/images/documents/" + doc.image,
+                    model = "https://trayektoriya.ru/build/images/documents/" + doc.image,
                     contentDescription = "", modifier = Modifier
                         .padding(horizontal = 5.dp, vertical = 15.dp)
 //                        .clip(
@@ -932,7 +919,7 @@ fun CourseGroup(
         "LocalDate.now()",
         "LocalTime.now()",
         "uid",
-        "https://lk.mzpo-s.ru/build/images/teachers/2.jpg",
+        "https://trayektoriya.ru/build/images/teachers/2.jpg",
         "Михайлов Р.С",
         1
     ),

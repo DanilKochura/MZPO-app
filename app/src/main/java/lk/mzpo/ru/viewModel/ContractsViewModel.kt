@@ -1,11 +1,9 @@
 package lk.mzpo.ru.viewModel
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -13,10 +11,7 @@ import com.google.gson.Gson
 import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.Gift
 import lk.mzpo.ru.models.User
-import lk.mzpo.ru.network.retrofit.AuthData
-import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
-import org.json.JSONArray
 import org.json.JSONObject
 
 
@@ -51,7 +46,7 @@ class ContractsViewModel  (
      */
     fun getData(token: String, context: Context)
     {
-        val url = "https://lk.mzpo-s.ru/mobile/user/study"
+        val url = "https://trayektoriya.ru/mobile/user/study"
         val queue = Volley.newRequestQueue(context)
         val stringReq: StringRequest =
             object : StringRequest(

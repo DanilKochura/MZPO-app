@@ -4,21 +4,13 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
-import lk.mzpo.ru.models.Contract
-import lk.mzpo.ru.models.User
-import lk.mzpo.ru.models.study.Notification
 import lk.mzpo.ru.models.study.NotificationNew
-import lk.mzpo.ru.network.retrofit.AuthData
-import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.ui.components.stories.NotificationPromo
-import org.json.JSONArray
-import org.json.JSONObject
 
 
 class NotificationPromoViewModel  (
@@ -34,7 +26,7 @@ class NotificationPromoViewModel  (
 
     fun getData( context: Context, alias: String)
     {
-        val url = "https://lk.mzpo-s.ru/mobile/$alias"
+        val url = "https://trayektoriya.ru/mobile/$alias"
         val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         val token = test.getString("token_lk", "")
         val queue = Volley.newRequestQueue(context)

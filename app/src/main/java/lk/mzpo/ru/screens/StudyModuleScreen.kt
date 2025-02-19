@@ -175,7 +175,7 @@ fun StudyModuleScreen(
                                         {
                                             if (i.file!!.image !== null) {
                                                 AsyncImage(
-                                                    model = "https://lk.mzpo-s.ru/build/images/videos/${i.file!!.image}",
+                                                    model = "https://trayektoriya.ru/build/images/videos/${i.file!!.image}",
                                                     contentDescription = "",
                                                     modifier = Modifier
                                                         .fillMaxWidth(),
@@ -218,8 +218,8 @@ fun StudyModuleScreen(
                                                 if (i.file!!.type == "file" || i.file!!.type == "downloadable") {
                                                     IconButton(
                                                         onClick = {
-//                                                               Log.d("MyLog", "https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
-//                                                               uriHandler.openUri("https://lk.mzpo-s.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
+//
+//                                                               uriHandler.openUri("https://trayektoriya.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
 //                                                               navHostController.navigate("material/${contract.id}/${i.id}/${token?.trim('\"')}" )
                                                             val material = gson.toJson(
                                                                 i,

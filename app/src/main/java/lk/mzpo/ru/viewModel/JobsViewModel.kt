@@ -1,36 +1,16 @@
 package lk.mzpo.ru.viewModel
 
-import CoursePreview
 import android.content.Context
-import android.provider.ContactsContract.CommonDataKinds.Email
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
-import androidx.navigation.NavHostController
 import com.android.volley.AuthFailureError
 import com.android.volley.Response
-import com.android.volley.VolleyError
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.google.gson.Gson
-import lk.mzpo.ru.models.Contract
-import lk.mzpo.ru.models.Course
-import lk.mzpo.ru.models.Document
-import lk.mzpo.ru.models.Group
-import lk.mzpo.ru.models.Module
 import lk.mzpo.ru.models.User
-import lk.mzpo.ru.models.UserData
-import lk.mzpo.ru.network.retrofit.AuthData
-import org.json.JSONArray
 import org.json.JSONObject
-import java.nio.charset.Charset
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import kotlin.system.exitProcess
 
 
 class JobsViewModel  (
@@ -52,7 +32,7 @@ class JobsViewModel  (
 
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
-            "https://lk.mzpo-s.ru/mobile/user/jobs",
+            "https://trayektoriya.ru/mobile/user/jobs",
             Response.Listener { response ->
             try {
                 Log.d("jobsRequest", response)

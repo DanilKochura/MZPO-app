@@ -1,7 +1,5 @@
 package lk.mzpo.ru.screens.profile
 
-import android.content.Context
-import android.provider.ContactsContract.CommonDataKinds.Email
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,23 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.magnifier
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,33 +31,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.models.ProfileItem
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.screens.ProfileHeader
-import lk.mzpo.ru.ui.components.DatePickerDemo
-import lk.mzpo.ru.ui.components.EmailTextField
-import lk.mzpo.ru.ui.components.NameTextField
-import lk.mzpo.ru.ui.components.PhoneTextField
-import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.components.checkPhone
-import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
-import lk.mzpo.ru.viewModel.BillsViewModel
 import lk.mzpo.ru.viewModel.JobsViewModel
-import lk.mzpo.ru.viewModel.ProfileViewModel
-import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -197,7 +170,7 @@ fun JobsScreen(
                                        Text(
                                            text = "Договора оферты",
                                            modifier = Modifier.clickable {
-                                            uriHandler.openUri("https://lk.mzpo-s.ru/build/documents/oferta_aplicant.pdf")
+                                            uriHandler.openUri("https://trayektoriya.ru/build/documents/oferta_aplicant.pdf")
                                        },
                                            color = Color.Blue)
 

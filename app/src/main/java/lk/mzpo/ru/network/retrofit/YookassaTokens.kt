@@ -1,14 +1,14 @@
 package lk.mzpo.ru.network.retrofit
 
-import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.POST
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.Headers
+import retrofit2.http.POST
 
 data class PaymentResponse(val status: String, val payment_id: String?, val redirect_url:String?)
 
@@ -46,7 +46,7 @@ data class PaymentRequest(
 
 
 object PurchaseService {
-    private const val BASE_URL = "https://lk.mzpo-s.ru/mobile/"
+    private const val BASE_URL = "https://trayektoriya.ru/mobile/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

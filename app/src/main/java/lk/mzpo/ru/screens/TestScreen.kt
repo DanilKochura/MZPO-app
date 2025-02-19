@@ -216,7 +216,7 @@ fun TestScreen(
                                                 )
                                                 if (testViewModel.question.value!!.file !== null)
                                                 {
-                                                    AsyncImage(model = "https://lk.mzpo-s.ru/uploads/files/"+testViewModel.question.value!!.file, contentDescription = "", modifier = Modifier.fillMaxWidth())
+                                                    AsyncImage(model = "https://trayektoriya.ru/uploads/files/"+testViewModel.question.value!!.file, contentDescription = "", modifier = Modifier.fillMaxWidth())
                                                 }
 //                                                   Text(testViewModel.question.value!!.label.toString(), fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top=5.dp))
                                             }
@@ -270,7 +270,7 @@ fun TestScreen(
                                                         ) {
                                                             if (item.image !== null)
                                                             {
-                                                                AsyncImage(model = "https://lk.mzpo-s.ru/uploads/files/"+item.image, contentDescription = "", modifier = Modifier
+                                                                AsyncImage(model = "https://trayektoriya.ru/uploads/files/"+item.image, contentDescription = "", modifier = Modifier
                                                                     .fillMaxWidth(0.6f)
                                                                     .height(150.dp))
                                                             } else
@@ -382,7 +382,7 @@ fun TestScreen(
                                                         ) {
                                                             if (item.image !== null)
                                                             {
-                                                                AsyncImage(model = "https://lk.mzpo-s.ru/uploads/files/"+item.image, contentDescription = "", modifier = Modifier
+                                                                AsyncImage(model = "https://trayektoriya.ru/uploads/files/"+item.image, contentDescription = "", modifier = Modifier
                                                                     .fillMaxWidth(0.6f)
                                                                     .height(150.dp))
                                                             } else

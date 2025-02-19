@@ -128,7 +128,7 @@ class MainViewModel
      */
     @OptIn(ExperimentalMaterialApi::class)
     fun getStories(context: Context, uri: UriHandler) {
-        val url = "https://lk.mzpo-s.ru/mobile/main"
+        val url = "https://trayektoriya.ru/mobile/main"
         val queue = Volley.newRequestQueue(context)
         val sRequest = StringRequest(
             Request.Method.GET,

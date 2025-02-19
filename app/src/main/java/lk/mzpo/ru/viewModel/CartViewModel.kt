@@ -1,32 +1,21 @@
 package lk.mzpo.ru.viewModel
 
-import CoursePreview
-import Prices
 import android.content.Context
-import android.util.JsonToken
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import lk.mzpo.ru.models.Cart
 import lk.mzpo.ru.models.CartItem
-import lk.mzpo.ru.models.Category
-import lk.mzpo.ru.models.Group
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthStatus
-import lk.mzpo.ru.network.retrofit.CheckPaymentRequest
-import lk.mzpo.ru.network.retrofit.PurchaseService
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -54,7 +43,7 @@ class CartViewModel  (
             ids += cart["id"]+","
         }
         ids.trimEnd(',')
-        val url1 = "https://lk.mzpo-s.ru/mobile/courses/$ids"
+        val url1 = "https://trayektoriya.ru/mobile/courses/$ids"
         val queue = Volley.newRequestQueue(context)
         val sRequest = StringRequest(
             Request.Method.GET,
@@ -94,7 +83,7 @@ class CartViewModel  (
 
         val stringRequest: StringRequest = object : StringRequest(
             Method.GET,
-            "https://lk.mzpo-s.ru/mobile/user/cart",
+            "https://trayektoriya.ru/mobile/user/cart",
             Response.Listener { response ->
                     Log.d("MyLog", response)
                 val jsonArray = JSONArray(response)
@@ -148,7 +137,7 @@ class CartViewModel  (
 
         val stringRequest: StringRequest = object : StringRequest(
             Method.DELETE,
-            "https://lk.mzpo-s.ru/mobile/user/cart/delete/$id",
+            "https://trayektoriya.ru/mobile/user/cart/delete/$id",
             Response.Listener { response ->
                     Log.d("MyLog", response)
 
@@ -193,7 +182,7 @@ class CartViewModel  (
 
             val stringRequest: StringRequest = object : StringRequest(
                 Method.POST,
-                "https://lk.mzpo-s.ru/mobile/user/cart/add",
+                "https://trayektoriya.ru/mobile/user/cart/add",
                 Response.Listener { response ->
                 },
 
@@ -244,7 +233,7 @@ class CartViewModel  (
 
             val stringRequest: StringRequest = object : StringRequest(
                 Method.GET,
-                "https://lk.mzpo-s.ru/mobile/user/cart/sum",
+                "https://trayektoriya.ru/mobile/user/cart/sum",
                 Response.Listener { response ->
                     try {
                         val json = JSONArray(response)

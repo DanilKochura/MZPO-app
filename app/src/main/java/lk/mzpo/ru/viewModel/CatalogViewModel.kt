@@ -44,7 +44,7 @@ class CatalogViewModel
         //region Получение курсов
         Log.d("MyCataLog", "started "+page.value.toString())
 
-        val url1 = "https://lk.mzpo-s.ru/mobile/catalog/$url/${page.value}"
+        val url1 = "https://trayektoriya.ru/mobile/catalog/$url/${page.value}"
         val queue = Volley.newRequestQueue(context)
         val sRequest = StringRequest(
             Request.Method.GET,
@@ -84,7 +84,7 @@ class CatalogViewModel
 
         //region Получение вложенных категорий категорий
         val cats = arrayListOf<Category>()
-        val url_cats = "https://lk.mzpo-s.ru/mobile/category/$url"
+        val url_cats = "https://trayektoriya.ru/mobile/category/$url"
         if(url.isNotBlank() and url.isNotEmpty())
         {
             val sRequest1 = StringRequest(
@@ -137,7 +137,7 @@ class CatalogViewModel
      * @param query - Строка запроса (минимум 3 символа)
      */
     fun searchCourses(context: Context, query: String) {
-        val url1 = "https://lk.mzpo-s.ru/mobile/search?q=$query"
+        val url1 = "https://trayektoriya.ru/mobile/search?q=$query"
 
         if (maxPageExpired.value) { // не делать повторный запрос, если ЛК вернул ошибку
             return

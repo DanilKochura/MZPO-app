@@ -1,9 +1,6 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
-import android.os.Build
-import android.os.Build.VERSION
-import android.os.Build.VERSION_CODES
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -29,9 +26,6 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -192,7 +186,7 @@ fun ProfileScreen(
                                     Column(Modifier) {
                                         if (profileViewModel.user.value.avatar !== null) {
                                             AsyncImage(
-                                                model = "https://lk.mzpo-s.ru/build/images/" + profileViewModel.user.value.avatar,
+                                                model = "https://trayektoriya.ru/build/images/" + profileViewModel.user.value.avatar,
                                                 contentDescription = "",
                                                 modifier = Modifier
 
@@ -387,7 +381,6 @@ fun ProfileScreen(
 //                                ) {
 //                                    Text(text = "Выйти")
 //                                }
-////                                Text(text = "Версия:" + System.getProperty("lk.mzpo-s.com.app-version"))
 //                            }
 
                         }
