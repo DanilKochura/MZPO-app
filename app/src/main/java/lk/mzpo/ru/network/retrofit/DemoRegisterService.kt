@@ -10,7 +10,7 @@ import retrofit2.http.POST
 
 interface DemoRegisterRequest {
 
-    @POST("api/mzpo/demo-user")
+    @POST("api/mzpo/demo-user-mobile")
     fun send(
         @Header("Authorization") authHeader: String,
         @Body postBody: PostBody
@@ -31,6 +31,7 @@ interface DemoRegisterRequest {
         val email: String,
         val phone: String,
         val demo_key: String = "AnWqKt8xSkQlTPI",
+        val course_id: Int? = null
     )
 }
 

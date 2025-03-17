@@ -9,8 +9,10 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import ru.yoomoney.sdk.kassa.payments.checkoutParameters.PaymentMethodType
 
-data class PaymentResponse(val status: String, val payment_id: String?, val redirect_url:String?)
+data class PaymentResponse(val status: String, val payment_id: String?, val redirect_url:String?, val order_id: Int?)
+data class CheckPaymentStatusResponse(val status: String, val payment_status: Int?, val details: String?)
 
 interface ApiService {
     @Headers(
@@ -36,11 +38,21 @@ interface ApiService {
         @Header("Authorization") authHeader: String,
         @Body request: CheckPaymentRequest
     ): Call<CheckPaymentResponse>
-}
+    @POST("/mobile/user/purchase-status")
+    fun checkOrderStatus(
+        @Header("Authorization") authHeader: String,
+        @Body request: CheckPaymentStatusRequest
+    ): Call<CheckPaymentStatusResponse>
 
+
+}
+data class CheckPaymentStatusRequest(
+    val order_id: Int
+)
 data class PaymentRequest(
     val token: String,
     val cartId: Int,
+    val type: PaymentMethodType
     //    val returnUrl: String
 )
 
@@ -69,7 +81,7 @@ object PurchaseService {
     }
 }
 
-data class CheckPaymentResponse(val status: String, val payment_status: String?, val details: String?)
+data class CheckPaymentResponse(val status: String, val payment_status: String?, val details: String?, val order_id: Int?)
 
 
 data class CheckPaymentRequest(

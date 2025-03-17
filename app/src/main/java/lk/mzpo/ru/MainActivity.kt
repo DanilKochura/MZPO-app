@@ -31,6 +31,7 @@ import lk.mzpo.ru.network.HttpsTrustManager
 import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
+import lk.mzpo.ru.services.CustomTabHelper
 import lk.mzpo.ru.ui.theme.MzpoTheme
 import lk.mzpo.ru.viewModel.CartViewModel
 import ru.yoomoney.sdk.kassa.payments.Checkout
@@ -41,11 +42,24 @@ import ru.yoomoney.sdk.kassa.payments.checkoutParameters.PaymentMethodType
 
 class MainActivity : ComponentActivity() {
     private lateinit var analytics: FirebaseAnalytics
+    private lateinit var customTabHelper: CustomTabHelper
+
     fun start3DSecure() {
         val intent = createConfirmationIntent(
             this,
             "https://3dsurl.com/",
             PaymentMethodType.BANK_CARD,
+            "clientApplicationKey",
+            "shopId"
+        )
+        startActivityForResult(intent, 1)
+    }
+
+    fun startConfirmSberPay() {
+        val intent = createConfirmationIntent(
+            this,
+            "your_app_scheme://invoicing/sberpay",
+            PaymentMethodType.SBERBANK,
             "clientApplicationKey",
             "shopId"
         )
@@ -75,6 +89,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Log.d("MainActivity", "onResume called")
+        customTabHelper.handleReturnToCart() // Проверяем, вернулся ли пользователь
     }
 
     override fun onPause() {
@@ -90,11 +105,18 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d("MainActivity", "onDestroy called")
+        if (::customTabHelper.isInitialized) {
+            customTabHelper.unbindService()
+        }
     }
+
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+        customTabHelper = CustomTabHelper(this) {
+
+        }
         adjustFontScale(resources.configuration);
         AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_NO)
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -149,7 +171,7 @@ class MainActivity : ComponentActivity() {
 
 
             MzpoTheme {
-                NavGraph(navHostController = nav, cart_sum)
+                NavGraph(navHostController = nav, cart_sum, customTabHelper)
             }
         }
 

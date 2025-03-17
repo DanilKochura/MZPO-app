@@ -64,13 +64,15 @@ import lk.mzpo.ru.screens.profile.JobsScreen
 import lk.mzpo.ru.screens.profile.PrivateScreen
 import lk.mzpo.ru.screens.profile.ScheduleScreen
 import lk.mzpo.ru.screens.profile.UserDataScreen
+import lk.mzpo.ru.services.CustomTabHelper
 import lk.mzpo.ru.ui.components.WebViewPage
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun NavGraph(
     navHostController: NavHostController,
-    cart_sum: MutableState<Int>
+    cart_sum: MutableState<Int>,
+    customTabHelper: CustomTabHelper
 ) {
     Column(
         modifier = Modifier
@@ -332,10 +334,7 @@ fun NavGraph(
             }
             composable("home",
                 deepLinks = listOf(
-                    navDeepLink {
-                        uriPattern = "https://trayektoriya.ru"
-                        action = Intent.ACTION_VIEW
-                    }
+
                 )
             )
             {
@@ -357,7 +356,20 @@ fun NavGraph(
             }
             composable("cart")
             {
-                CartScreen(navHostController = navHostController, cart_sum = cart_sum)
+                CartScreen(navHostController = navHostController, cart_sum = cart_sum, customTabHelper = customTabHelper, fromDeep =  false)
+            }
+            composable("cart-deep", deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "https://trayektoriya.ru/mobile/cart"
+                    action = Intent.ACTION_VIEW
+                },
+                navDeepLink {
+                    uriPattern = "https://trayektoriya.ru/category/cart"
+                    action = Intent.ACTION_VIEW
+                }
+            ))
+            {
+                CartScreen(navHostController = navHostController, cart_sum = cart_sum, customTabHelper = customTabHelper, fromDeep =  true)
             }
             composable("notifications")
             {

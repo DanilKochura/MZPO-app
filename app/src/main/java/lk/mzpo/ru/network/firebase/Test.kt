@@ -2,18 +2,10 @@ package lk.mzpo.ru.network.firebase
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.MutableState
-import com.android.volley.AuthFailureError
-import com.android.volley.Response
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import lk.mzpo.ru.network.retrofit.Data2Amo
-import kotlin.math.log
 
 class FirebaseHelpers()
 {
@@ -113,7 +105,6 @@ class FirebaseHelpers()
 
         fun deleteFromCart(token: String?, id: Int)
         {
-            Log.d("MyLog111", token.toString())
             db.collection("users")
 
                     .whereEqualTo("token", token)
@@ -137,7 +128,7 @@ class FirebaseHelpers()
 
         fun getCart(token: String?, cartL: MutableState<List<HashMap<String, String>>>) {
             val list = arrayListOf<HashMap<String, String>>()
-
+            Log.d("CartLog", token.toString())
             db.collection("users")
                 .whereEqualTo("token", token)
                 .get()
@@ -153,12 +144,14 @@ class FirebaseHelpers()
                         }
 
                     }
+                    Log.d("CartLog", list.joinToString(", "))
                     cartL.value = list
                     return@addOnSuccessListener
 
 
                 }
                 .addOnFailureListener {
+                    Log.d("CartLog", it.message.toString())
                     cartL.value = emptyList()
                 }
         }

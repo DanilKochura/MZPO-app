@@ -16,7 +16,7 @@ class AuthService {
 
     companion object
     {
-        fun login(data: AuthData, ctx: Context, navHostController: NavHostController, redirect: Boolean = true)
+        fun login(data: AuthData, ctx: Context, navHostController: NavHostController, redirect: Boolean = true, customRedirect: () -> Unit = {})
         {
             val queue = Volley.newRequestQueue(ctx)
 
@@ -31,6 +31,7 @@ class AuthService {
                     {
                         navHostController.navigate("contracts")
                     }
+                    customRedirect.invoke()
                 },
 
                 Response.ErrorListener { error ->
@@ -103,7 +104,14 @@ class AuthService {
                         if(resp.getString(0).equals("guest"))
                         {
                             Log.d("AuthTest", "guested")
-
+                            test
+                                .edit()
+                                .remove("token_lk")
+                                .apply()
+                            test
+                                .edit()
+                                .remove("auth_data")
+                                .apply()
                             val gson = Gson()
                             auth_tested.value = AuthStatus.GUEST
                             val authData = test.getString("auth_data", "")
@@ -111,6 +119,7 @@ class AuthService {
                             {
                                 if(redirect)
                                 {
+                                    Log.d("MyLog", "Auth redirect to login")
                                     navHostController.navigate("login")
                                 }
                             } else

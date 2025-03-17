@@ -1,9 +1,7 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
-import android.util.JsonToken
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,55 +12,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.MimeTypes
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.analytics.AnalyticsListener
-import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
-import io.sanghun.compose.video.VideoPlayer
-import io.sanghun.compose.video.uri.VideoPlayerMediaItem
-import lk.mzpo.ru.InDev
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.network.retrofit.AuthData
-import lk.mzpo.ru.network.retrofit.AuthService
-import lk.mzpo.ru.network.retrofit.Data2Amo
-import lk.mzpo.ru.network.retrofit.SendDataToAmo
-import lk.mzpo.ru.ui.components.EmailTextField
-import lk.mzpo.ru.ui.components.PasswordTextField
 import lk.mzpo.ru.ui.components.SearchViewPreview
-import lk.mzpo.ru.ui.components.isValidEmail
-import lk.mzpo.ru.ui.theme.Aggressive_red
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 
@@ -147,12 +117,12 @@ fun LoginScreen(
                         {
                             LaunchedEffect(key1 = "test")
                             {
-                                Log.d("MyLog", "Study to login!")
+                                Log.d("MyLog", "Login to Study!")
                                 navHostController.navigate("contracts")
                             }
                         }
                         val device = test.getString("token", "")
-                        Log.d("MyLog", "test")
+                        Log.d("MyLoginScreenLog", "test")
                         Login(token = device, navHostController)
 
                     }

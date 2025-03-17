@@ -106,6 +106,7 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Course
 import lk.mzpo.ru.models.GroupCart
+import lk.mzpo.ru.network.firebase.FirebaseHelpers
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.network.retrofit.Data2Amo
@@ -312,13 +313,13 @@ fun CourseScreen(
                                 CartViewModel.addToCart(ctxx, courseViewModel.courses.value[0].id, group.first().id)
                             }
                         } else if (courseViewModel.auth_tested.value == AuthStatus.GUEST) {
-//                            FirebaseHelpers.addToCart(
-//                                token, hashMapOf(
-//                                    "id" to courseViewModel.courses.value.get(0).id.toString(),
-//                                    "type" to courseViewModel.selectedType.value
-//                                )
-//                            )
-                            navHostController.navigate("register")
+                            FirebaseHelpers.addToCart(
+                                token, hashMapOf(
+                                    "id" to courseViewModel.courses.value.get(0).id.toString(),
+                                    "type" to courseViewModel.selectedType.value
+                                )
+                            )
+//                            navHostController.navigate("register")
                         }
 
                         if (ok === 0) {

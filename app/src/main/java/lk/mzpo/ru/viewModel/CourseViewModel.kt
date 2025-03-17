@@ -241,6 +241,8 @@ class CourseViewModel(
         }
         try {
             dist = obj.getInt("dist")
+            selectedType.value = "dist"
+            selectedPrice.value = dist
         } catch (e: Exception) {
 
         }

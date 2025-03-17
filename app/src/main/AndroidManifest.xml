@@ -67,11 +67,29 @@
                 <data
                     android:scheme="https"
                     android:host="trayektoriya.ru"
-                    android:pathPattern="/.*"
-                    android:pathPrefix="/build"
+                    android:pathPrefix="/mobile/cart"
                     tools:node="remove" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
 
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="trayektoriya.ru" />
+                <data android:pathPattern="/.*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="trayektoriya.ru" />
+                <data android:pathPrefix="/build" />
+            </intent-filter>
         </activity>
         <!--        <activity-->
         <!--            android:name="ru.yoomoney.sdk.kassa.payments.ui.CheckoutActivity"-->
