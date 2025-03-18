@@ -5,5 +5,6 @@ data class Prices (
     var sale15: Int?,
     val dist: Int?,
     val ind: Int?,
-    val weekend: Int?
+    val weekend: Int?,
+    val intensive: Int?
         )

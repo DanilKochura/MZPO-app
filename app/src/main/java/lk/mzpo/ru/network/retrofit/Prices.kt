@@ -17,5 +17,6 @@ data class Prices (
 	@SerializedName("sale15") val sale15 : Int?,
 	@SerializedName("ind") val ind : Int?,
 	@SerializedName("weekend") val weekend : Int?,
-	@SerializedName("dist") val dist : Int?
+	@SerializedName("dist") val dist : Int?,
+	@SerializedName("intensive") val intensive : Int?
 )

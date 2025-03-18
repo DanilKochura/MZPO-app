@@ -229,6 +229,7 @@ class CourseViewModel(
         var ind = 0
         var dist = 0
         var weekend = 0;
+        var intensive = 0;
         try {
             sale15 = obj.getInt("sale15")
         } catch (e: Exception) {
@@ -236,6 +237,11 @@ class CourseViewModel(
         }
         try {
             ind = obj.getInt("ind")
+        } catch (e: Exception) {
+
+        }
+        try {
+            intensive = obj.getInt("intensive")
         } catch (e: Exception) {
 
         }
@@ -260,7 +266,7 @@ class CourseViewModel(
                 this.selectedPrice.value = if (sale15 != 0) sale15 else ind;
             }
         }
-        return Prices(sale15, dist, ind, weekend)
+        return Prices(sale15, dist, ind, weekend, intensive)
     }
 
     /**

@@ -28,14 +28,18 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,7 +50,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
@@ -92,6 +98,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -100,6 +107,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -1314,3 +1322,108 @@ fun ImageView(
     }
 }
 
+@Composable
+fun PromocodeTextField(
+    icon: ImageVector? = null,
+    value: MutableState<TextFieldValue>,
+    isError: MutableState<Boolean> = mutableStateOf(false),
+    modifier: Modifier = Modifier,
+    readonly: Boolean = false,
+    singleLine: Boolean = true
+) {
+    OutlinedTextField(
+        value = value.value,
+        placeholder = { Text(text = "Промокод",
+            Modifier
+                .alpha(0.5f)
+                .fillMaxHeight(), fontSize = 10.sp) },
+        onValueChange = { value.value = it },
+//        leadingIcon = {
+//            if (icon != null)
+//            {
+//                Icon(
+//                    imageVector = icon,
+//                    contentDescription = placeholder+" Icon"
+//                )
+//            }
+//            else
+//            {
+//                null
+//            }
+//        },
+//        label = { Text(text = "Промокод") },
+        modifier = modifier.height(40.dp),
+        colors = customTextFieldBorderColor(),
+        isError = isError.value,
+        singleLine = singleLine,
+        readOnly = readonly,
+        enabled = !readonly,
+        maxLines = 1,
+        textStyle = TextStyle.Default.copy(fontSize = 10.sp),
+
+    )
+}
+@Composable
+fun PromoCodeInputField(
+    value: MutableState<String>,
+    isError: MutableState<Boolean>,
+    onApplyClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp) // Отступ между элементами
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(30.dp)
+                .border(
+                    1.dp,
+                    if (isError.value) Color.Red else Color.Gray,
+                    RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 8.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            BasicTextField(
+                value = value.value,
+                onValueChange = { value.value = it },
+                textStyle = TextStyle(color = Color.Black, fontSize = 10.sp),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardActions = KeyboardActions(onDone = {
+                    onApplyClick.invoke()
+                }),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+
+            )
+        }
+
+        Button(
+            onClick = onApplyClick,
+            modifier = Modifier
+                .height(30.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+            border = BorderStroke(1.dp, Color.Red),
+            shape = RoundedCornerShape(4.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            Text("Применить", color = Color.Red, fontSize = 10.sp)
+        }
+    }
+}
+
+
+
+@Preview
+@Composable
+fun PromoTest()
+{
+    val promo = remember {
+        mutableStateOf("")
+    }
+    var iserror = remember {
+        mutableStateOf(false)
+    }
+    PromoCodeInputField(value = promo, isError = iserror, {})
+}

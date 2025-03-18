@@ -1,8 +1,5 @@
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Text
-import androidx.compose.ui.text.font.FontWeight
+
 import com.google.gson.annotations.SerializedName
-import lk.mzpo.ru.ui.theme.Aggressive_red
 
 
 data class CoursePreview (
@@ -22,5 +19,53 @@ data class CoursePreview (
 			return true;
 		}
 		return false
+	}
+
+	fun getMinPrice(): Int
+	{
+		if (this.isDist())
+		{
+			return this.prices.dist!!
+		} else
+		{
+			if (this.prices.sale15 != 0 && this.prices.sale15 != null)
+			{
+				return this.prices.sale15
+			} else if (this.prices.weekend != 0 && this.prices.weekend != null)
+			{
+				return this.prices.weekend
+			} else if (this.prices.intensive != 0 && this.prices.intensive != null)
+			{
+				return this.prices.intensive
+			} else if (this.prices.ind != 0 && this.prices.ind != null)
+			{
+				return this.prices.ind
+			}
+			return 0;
+		}
+	}
+
+	fun getMinPriceType(): String
+	{
+		if (this.isDist())
+		{
+			return "Дистанционно"
+		} else
+		{
+			if (this.prices.sale15 != 0 && this.prices.sale15 != null)
+			{
+				return "Очно"
+			} else if (this.prices.weekend != 0 && this.prices.weekend != null)
+			{
+				return "Выходные"
+			} else if (this.prices.intensive != 0 && this.prices.intensive != null)
+			{
+				return "Интенсив"
+			} else if (this.prices.ind != 0 && this.prices.ind != null)
+			{
+				return "Индивидуально"
+			}
+			return "";
+		}
 	}
 }

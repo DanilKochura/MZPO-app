@@ -530,6 +530,7 @@ fun CourseCardDual(course: CoursePreview, modifier: Modifier = Modifier)
                 }
             } else
             {
+
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -537,11 +538,11 @@ fun CourseCardDual(course: CoursePreview, modifier: Modifier = Modifier)
                     Box(modifier = Modifier.padding(7.dp))
                     {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            androidx.compose.material3.Text(text = "Очно: ", fontWeight = FontWeight.Bold,
+                            androidx.compose.material3.Text(text = course.getMinPriceType()+": ", fontWeight = FontWeight.Bold,
                                 color = Color.White,
                                 fontSize = 11.sp)
                             androidx.compose.material3.Text(
-                                text = "от " + course.prices.sale15.toString() + " руб.",
+                                text = "от " + course.getMinPrice().toString() + " руб.",
                                 color = Color.White, fontSize = 16.sp
                             )
 

@@ -55,6 +55,7 @@ import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -84,7 +85,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -199,7 +199,11 @@ fun CartScreen(
             initialValue = ModalBottomSheetValue.Hidden,
             skipHalfExpanded = true
         )
-
+    val bottomSheetStatePrepare =
+        rememberModalBottomSheetState(
+            initialValue = ModalBottomSheetValue.Hidden,
+            skipHalfExpanded = true
+        )
     if (bottomSheetStatePayment.currentValue != ModalBottomSheetValue.Hidden) {
         DisposableEffect(Unit) {
             onDispose {
@@ -591,7 +595,7 @@ fun CartScreen(
                         ) {
                             if (!passStage.value) {
                                 Text(
-                                    text = "Для получения доступа к учебным материалам и покупкам, заполните контактные данные",
+                                    text = "Для получения доступа к покупкам и выбора дат и формы обучения, заполните контактные данные",
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(10.dp)
                                 )
@@ -741,7 +745,7 @@ fun CartScreen(
 //            }
                             } else {
                                 Text(
-                                    text = "На вашу почту " + login.value.text + " выслан пароль. Введите его в поле ниже для входа в созданный аккаунт",
+                                    text = "У вас уже есть аккаунт. Введите пароль, чтобы авторизоваться",
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.padding(10.dp)
                                 )
@@ -942,7 +946,7 @@ fun CartScreen(
                                                 )
                                             }
                                         }
-                                        if (course.course.prices.weekend != 0) {
+                                        if (course.course.prices.weekend != null) {
                                             Column(
                                                 modifier = Modifier
                                                     .height(45.dp)
@@ -982,6 +986,49 @@ fun CartScreen(
                                                     text = "Учись в выходной",
                                                     Modifier.padding(10.dp),
                                                     color = if (cartViewModel.selectedPrice.value == course.course.prices.weekend) Color.White else Color.Black
+                                                )
+                                            }
+                                        }
+                                        if (course.course.prices.intensive != null) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .height(45.dp)
+                                                    .padding(end = 7.dp)
+                                                    .clip(
+                                                        RoundedCornerShape(20)
+                                                    )
+                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.intensive) Primary_Green else Color.Transparent)
+                                                    .border(
+                                                        width = 1.dp,
+                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.intensive) Primary_Green else Color.LightGray,
+                                                        RoundedCornerShape(20)
+                                                    )
+                                                    .clickable {
+                                                        cartViewModel.selectedPrice.value =
+                                                            course.course.prices.intensive!!
+                                                        cartViewModel.selectedType.value = "intensive"
+
+                                                        val cartItem =
+                                                            cartViewModel.courses.get(cartViewModel.selectedCourseIndex.value)
+                                                        cartItem.price =
+                                                            course.course.prices.intensive
+                                                        cartViewModel.courses[cartViewModel.selectedCourseIndex.value] =
+                                                            cartItem
+
+                                                        cartViewModel.updateType(
+                                                            context = ctx,
+                                                            token,
+                                                            course.id,
+                                                            cartViewModel.selectedType.value
+                                                        )
+
+                                                    }, verticalArrangement = Arrangement.Center
+                                            )
+                                            {
+                                                Text(
+                                                    text = "Интенсив",
+                                                    Modifier.padding(10.dp),
+                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.intensive) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -1153,13 +1200,16 @@ fun CartScreen(
                             }
                         }
 
-                            LaunchedEffect(Unit) {
-                                checkPaymentStatus(1, token, onPaymentSuccess = {
-                                    success.value = true
+                            if (fromDeep == true) {
+                                LaunchedEffect(Unit) {
+                                    checkPaymentStatus(1, token, onPaymentSuccess = {
+                                        success.value = true
+                                        return@checkPaymentStatus
 
-                                }, onPaymentFailed = {
-                                    success.value = false
-                                })
+                                    }, onPaymentFailed = {
+                                        success.value = false
+                                    })
+                                }
                             }
                     },
                     sheetState = bottomSheetStatePayment,
@@ -1167,6 +1217,8 @@ fun CartScreen(
                 ) {
 
                 }
+
+
             }
         }
     )
@@ -1197,6 +1249,8 @@ fun CartCourse(
         text = "Очно в группе"
     } else if (item.course.prices.ind == price) {
         text = "Индивидуально"
+    }else if (item.course.prices.intensive == price) {
+        text = "Интенсив"
     } else if (item.course.prices.weekend == price) {
         text = "Учись в выходной"
     }
@@ -1223,7 +1277,7 @@ fun CartCourse(
                 AsyncImage(model = item.course.image,
                     contentDescription = item.course.id.toString(),
                     modifier = Modifier
-                        .height(120.dp)
+                        .height(135.dp)
                         .weight(1f)
                         .fillMaxWidth()
                         .clickable {
@@ -1235,7 +1289,7 @@ fun CartCourse(
                     modifier = Modifier
                         .weight(2f)
                         .padding(start = 10.dp)
-                        .height(120.dp), verticalArrangement = Arrangement.SpaceBetween
+                        .height(135.dp), verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
                         Modifier.fillMaxWidth(),
@@ -1354,105 +1408,115 @@ fun CartCourse(
                 .padding(7.dp)
                 .fillMaxWidth()
         ) {
+
+            val uriHandler = LocalUriHandler.current
+
             Divider(Modifier.padding(vertical = 5.dp))
+
+
             val agreement = remember {
                 mutableStateOf(false)
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    item.course.name,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Bold
-                )
-                if (item.course.isDist()) {
-                    Row {
-                        Text(text = "Дистанционно: ", fontWeight = FontWeight.Bold)
-                        Text(text = "9000 руб.", color = Aggressive_red)
-                    }
-                } else {
-                    Row {
-                        Text(text = "Очно: ", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-            val ctx = LocalContext.current
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Column(modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 5.dp)) {
                     Text(
-                        text = price.toString(),
-                        fontWeight = FontWeight.Bold,
-                        color = Aggressive_red,
-                        fontSize = 25.sp
+                        item.course.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontWeight = FontWeight.Bold
                     )
-                    if (item.purchase_type == "course") {
-                        Text(
-                            text = price.times(1.15).toBigDecimal().setScale(-2, RoundingMode.UP)
-                                .toInt().toString(),
-                            textDecoration = TextDecoration.LineThrough,
-                            modifier = Modifier.padding(start = 10.dp),
-                            fontSize = 18.sp
-                        )
+                    if (item.course.isDist()) {
+                        Row {
+                            Text(text = "Дистанционно: ", fontWeight = FontWeight.Bold)
+                            Text(text = "9000 руб.", color = Aggressive_red)
+                        }
+                    } else {
+                        Row {
+                            Text(text = "Очно: ", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
-
-                Button(
-                    onClick = {
-                        if (agreement.value) {
-                            onBuy.invoke()
-                            if (authStatus == AuthStatus.AUTH) {
-                                paymentLaucher.launch(paymentIntent)
-                            } else {
-                                coroutineScope.launch {
-
-                                    bottomSheet.show()
-                                }
-                            }
-                        } else {
-                            Toast.makeText(
-                                ctx,
-                                "Вы не подтвердили согласие с договором оферты",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
-                    modifier = Modifier,
-                    shape = RoundedCornerShape(10),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Aggressive_red,
-                        contentColor = Color.White
-                    )
+                val ctx = LocalContext.current
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Купить", color = Color.White)
-                }
-            }
-            val uriHandler = LocalUriHandler.current
-            if (item.purchase_type == "recovery") {
-                Text(text = "Продление доступа за 50% стоимости")
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = agreement.value,
-                    onCheckedChange = { agreement.value = it },
-                    modifier = Modifier
-                        .padding(start = 5.dp, end = 10.dp)
-                        .size(12.dp),
-                    colors = androidx.compose.material3.CheckboxDefaults.colors(checkedColor = Primary_Green)
-                )
-                Text(text = "Согласен с условиями ", fontSize = 12.sp)
-                Text(
-                    text = "договора оферты",
-                    modifier = Modifier.clickable {
-                        uriHandler.openUri("https://trayektoriya.ru/build/documents/oferta_" + item.org_id + ".pdf")
-                    },
-                    color = Color.Blue, fontSize = 12.sp
-                )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = price.toString(),
+                            fontWeight = FontWeight.Bold,
+                            color = Aggressive_red,
+                            fontSize = 25.sp
+                        )
+                        if (item.purchase_type == "course") {
+                            Text(
+                                text = price.times(1.15).toBigDecimal().setScale(-2, RoundingMode.UP)
+                                    .toInt().toString(),
+                                textDecoration = TextDecoration.LineThrough,
+                                modifier = Modifier.padding(start = 10.dp),
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
 
-            }
+                    Button(
+                        onClick = {
+                            if (agreement.value) {
+                                onBuy.invoke()
+                                if (authStatus == AuthStatus.AUTH) {
+                                    paymentLaucher.launch(paymentIntent)
+                                } else {
+                                    coroutineScope.launch {
+
+                                        bottomSheet.show()
+                                    }
+                                }
+                            } else {
+                                Toast.makeText(
+                                    ctx,
+                                    "Вы не подтвердили согласие с договором оферты",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        },
+                        modifier = Modifier,
+                        shape = RoundedCornerShape(10),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Aggressive_red,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Купить", color = Color.White)
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                    Checkbox(
+                        checked = agreement.value,
+                        onCheckedChange = { agreement.value = it },
+                        modifier = Modifier
+                            .padding(start = 5.dp, end = 10.dp)
+                            .size(12.dp),
+                        colors = CheckboxDefaults.colors(checkedColor = Primary_Green)
+                    )
+                    Text(text = "Согласен с условиями ", fontSize = 12.sp)
+                    Text(
+                        text = "договора оферты",
+                        modifier = Modifier.clickable {
+                            uriHandler.openUri("https://trayektoriya.ru/build/documents/oferta_" + item.org_id + ".pdf")
+                        },
+                        color = Color.Blue, fontSize = 12.sp
+                    )
+
+                }
+
+
+
+
+
         }
     }
     
@@ -1488,19 +1552,4 @@ fun PaymentWebView(url: String, navController: NavHostController, onClose: () ->
         },
         modifier = Modifier.fillMaxSize()
     )
-}
-
-
-@Preview
-@Composable
-fun test() {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(10.dp)) {
-        Text(text = "Подождите, платеж обрабатывается банком", fontSize = 25.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(10.dp))
-        CircularProgressIndicator(
-            modifier = Modifier.size(100.dp),
-            color = Primary_Green,
-            strokeWidth = 10.dp,
-        )
-        Icon(imageVector = Icons.Default.Check, contentDescription = "", tint = Primary_Green, modifier = Modifier.size(100.dp))
-    }
 }

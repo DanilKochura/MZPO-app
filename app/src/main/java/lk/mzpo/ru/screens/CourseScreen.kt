@@ -622,7 +622,7 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                 .padding(vertical = 15.dp)
                 .horizontalScroll(rememberScrollState())
         ) {
-            if (courseViewModel.isDist.value) {
+            if (course.prices.dist != 0) {
                 if (course.prices.dist != 0) {
                     Column(
                         modifier = Modifier

@@ -14,5 +14,13 @@ class CartItem(
   @SerializedName("purchase_type")  val purchase_type: String?,
   @SerializedName("course_id")  val course_id: Int,
   @SerializedName("course")  val course: CoursePreview,
+  @SerializedName("priceNew")  val priceCart: PriceCart,
   @SerializedName("dist_dates")  val dist_dates: ArrayList<String> = ArrayList(),
+  @SerializedName("sale")  val sale: Int  = 0,
+)
+
+class PriceCart(
+  @SerializedName("full_price")  val full_price: Int,
+  @SerializedName("price")  val price: Int,
+  @SerializedName("sale")  val sale: Int
 )
