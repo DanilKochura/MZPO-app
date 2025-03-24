@@ -641,7 +641,7 @@ fun Main(
 
 @Preview
 @Composable
-fun CourseCard(course: CoursePreview = CoursePreview(1, "https://trayektoriya.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3, 4, 0), 1,""), modifier: Modifier = Modifier.width(300.dp), obClick: () -> Unit = {})
+fun CourseCard(course: CoursePreview = CoursePreview(1, "https://trayektoriya.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3, 4, 0), "", 1,""), modifier: Modifier = Modifier.width(300.dp), obClick: () -> Unit = {})
 {
     Card(modifier = modifier
         .padding(end = 5.dp)

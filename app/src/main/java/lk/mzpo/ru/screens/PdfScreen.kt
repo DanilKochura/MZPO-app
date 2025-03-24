@@ -70,7 +70,7 @@ fun PdfScreen(
     val ctx = LocalContext.current
     val pdfState = rememberVerticalPdfReaderState(
         resource = ResourceType.Remote("https://trayektoriya.ru/"+material.file?.upload),
-        isZoomEnable = true
+        isZoomEnable = true,
     )
 
 
@@ -85,6 +85,8 @@ fun PdfScreen(
     val loading = remember {
         mutableStateOf(false)
     }
+
+    Log.d("MyLogProgress", material.watched.toString())
 
     LaunchedEffect(key1 = pdfState.currentPage) {
 

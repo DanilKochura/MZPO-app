@@ -17,7 +17,24 @@ class CartItem(
   @SerializedName("priceNew")  val priceCart: PriceCart,
   @SerializedName("dist_dates")  val dist_dates: ArrayList<String> = ArrayList(),
   @SerializedName("sale")  val sale: Int  = 0,
-)
+  @SerializedName("promocode")  val promocode: String  = "",
+) {
+  fun getPriceName(): String {
+    var text = "";
+    if (this.type == "dist") {
+      text = "Дистанционно"
+    } else if (this.type == "sale15") {
+      text = "Очно в группе"
+    } else if (this.course.prices.ind == price) {
+      text = "Индивидуально"
+    }else if (this.course.prices.intensive == price) {
+      text = "Интенсив"
+    } else if (this.course.prices.weekend == price) {
+      text = "Учись в выходной"
+    }
+    return text;
+  }
+}
 
 class PriceCart(
   @SerializedName("full_price")  val full_price: Int,

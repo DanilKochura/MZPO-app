@@ -10,6 +10,7 @@ data class CoursePreview (
 	@SerializedName("prefix") val prefix : String,
 	@SerializedName("hours") val hours : Int,
 	@SerializedName("prices") val prices : Prices,
+	@SerializedName("uid") val uid : String,
 	@SerializedName("category") val category : Int,
 	@SerializedName("doctype") val doctype : String
 ) {

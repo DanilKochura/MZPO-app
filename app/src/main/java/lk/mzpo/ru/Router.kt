@@ -40,6 +40,7 @@ import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.screens.CartScreen
 import lk.mzpo.ru.screens.CatalogScreen
 import lk.mzpo.ru.screens.CategoriesScreen
+import lk.mzpo.ru.screens.ConfirmationScreen
 import lk.mzpo.ru.screens.ContactsScreen
 import lk.mzpo.ru.screens.ContractsScreen
 import lk.mzpo.ru.screens.CourseScreen
@@ -139,10 +140,10 @@ fun NavGraph(
                 "profile/certs"
             ) {
 //                val userJson =  it.arguments?.getString("user")
-                    CertificatesScreen(
-                        navHostController = navHostController,
-                        cart_sum = cart_sum
-                    )
+                CertificatesScreen(
+                    navHostController = navHostController,
+                    cart_sum = cart_sum
+                )
             }
             composable(
                 "profile/reviews"
@@ -316,7 +317,8 @@ fun NavGraph(
                     val moduleJson =
                         navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("StudyModule")
                     module = gson.fromJson(moduleJson, StudyModule::class.java)
-                } catch (_: Exception){}
+                } catch (_: Exception) {
+                }
 
                 if (contract !== null && module !== null) {
                     StudyModuleScreen(
@@ -332,7 +334,8 @@ fun NavGraph(
             composable("notifications") {
                 InDev()
             }
-            composable("home",
+            composable(
+                "home",
                 deepLinks = listOf(
 
                 )
@@ -356,7 +359,34 @@ fun NavGraph(
             }
             composable("cart")
             {
-                CartScreen(navHostController = navHostController, cart_sum = cart_sum, customTabHelper = customTabHelper, fromDeep =  false)
+                CartScreen(
+                    navHostController = navHostController,
+                    cart_sum = cart_sum,
+                    customTabHelper = customTabHelper,
+                    fromDeep = false
+                )
+            }
+
+            composable(
+                route = "confirmation/{id}",
+                arguments = listOf(navArgument("id")
+                {
+                    type = NavType.IntType
+                })
+            )
+
+            {
+                val id = it.arguments?.getInt("id")
+                if (id !== null)
+                {
+                    ConfirmationScreen(
+                        navHostController = navHostController,
+                        cart_sum = cart_sum,
+                        customTabHelper = customTabHelper,
+                        fromDeep = false,
+                        cartId = id
+                    )
+                }
             }
             composable("cart-deep", deepLinks = listOf(
                 navDeepLink {
@@ -369,7 +399,12 @@ fun NavGraph(
                 }
             ))
             {
-                CartScreen(navHostController = navHostController, cart_sum = cart_sum, customTabHelper = customTabHelper, fromDeep =  true)
+                CartScreen(
+                    navHostController = navHostController,
+                    cart_sum = cart_sum,
+                    customTabHelper = customTabHelper,
+                    fromDeep = true
+                )
             }
             composable("notifications")
             {
@@ -404,11 +439,11 @@ fun NavGraph(
                     {
                         type = NavType.StringType
                     },
-                            navArgument ("material")
+                    navArgument("material")
                     {
                         type = NavType.StringType
                     },
-                            navArgument ("token")
+                    navArgument("token")
                     {
                         type = NavType.StringType
                     }
@@ -434,9 +469,12 @@ fun NavGraph(
                 val gson = Gson()
                 val material = gson.fromJson(userJson, NewMaterials::class.java)
                 if (material !== null && contract !== null) {
-                    VideoScreen(navHostController = navHostController, video = material, contract.toInt())
-                } else
-                {
+                    VideoScreen(
+                        navHostController = navHostController,
+                        video = material,
+                        contract.toInt()
+                    )
+                } else {
                     ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
             }
@@ -450,9 +488,12 @@ fun NavGraph(
                 val gson = Gson()
                 val material = gson.fromJson(userJson, ActiveFile::class.java)
                 if (material !== null && gift !== null) {
-                    VideoGiftScreen(navHostController = navHostController, video = material, gift.toInt())
-                } else
-                {
+                    VideoGiftScreen(
+                        navHostController = navHostController,
+                        video = material,
+                        gift.toInt()
+                    )
+                } else {
                     ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
             }
@@ -466,9 +507,12 @@ fun NavGraph(
                 val contract =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<Int>("CONTRACT")
                 if (userObject !== null && contract !== null) {
-                    PdfScreen(navHostController = navHostController, material = userObject, contract = contract)
-                } else
-                {
+                    PdfScreen(
+                        navHostController = navHostController,
+                        material = userObject,
+                        contract = contract
+                    )
+                } else {
                     navHostController.navigate("study")
                 }
             }
@@ -482,9 +526,12 @@ fun NavGraph(
                 val contract =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<Int>("gift")
                 if (userObject !== null && contract !== null) {
-                    PdfGiftScreen(navHostController = navHostController, material = userObject, gift = contract)
-                } else
-                {
+                    PdfGiftScreen(
+                        navHostController = navHostController,
+                        material = userObject,
+                        gift = contract
+                    )
+                } else {
                     navHostController.navigate("study")
                 }
             }

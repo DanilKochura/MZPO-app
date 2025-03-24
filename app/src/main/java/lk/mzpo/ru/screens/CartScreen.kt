@@ -3,17 +3,12 @@ package lk.mzpo.ru.screens
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import android.util.Patterns
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -54,8 +49,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -78,7 +71,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -102,9 +94,6 @@ import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
 import lk.mzpo.ru.network.retrofit.DemoRegisterRequest
-import lk.mzpo.ru.network.retrofit.PaymentRequest
-import lk.mzpo.ru.network.retrofit.PaymentResponse
-import lk.mzpo.ru.network.retrofit.PurchaseService
 import lk.mzpo.ru.network.retrofit.YookassaConfigs
 import lk.mzpo.ru.services.CustomTabHelper
 import lk.mzpo.ru.ui.components.EmailTextField
@@ -119,9 +108,7 @@ import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CartViewModel
 import okhttp3.ResponseBody
 import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.Response
-import ru.yoomoney.sdk.kassa.payments.Checkout
 import ru.yoomoney.sdk.kassa.payments.Checkout.createTokenizeIntent
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.Amount
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.PaymentMethodType
@@ -131,57 +118,6 @@ import ru.yoomoney.sdk.kassa.payments.checkoutParameters.TestParameters
 import java.math.RoundingMode
 import java.util.Currency
 
-
-fun sendTokenToServer(
-    token: String,
-    app_token: String,
-    uri: UriHandler,
-    cartId: Int,
-    cartViewModel: CartViewModel,
-    ctx: Context,
-    customTabHelper: CustomTabHelper,
-    type: PaymentMethodType
-) {
-    val request = PaymentRequest(
-        token = token,
-        cartId = cartId,
-        type = type
-    )
-    Log.d("MyLogTest", token)
-    Log.d("MyLogTest", app_token)
-    Log.d("MyLogTest", cartId.toString())
-
-    PurchaseService.apiService.completePayment("Bearer $app_token", request)
-        .enqueue(object : Callback<PaymentResponse> {
-            override fun onResponse(
-                call: Call<PaymentResponse>,
-                response: Response<PaymentResponse>
-            ) {
-                if (response.isSuccessful) {
-                    val paymentResponse = response.body()
-                    cartViewModel.payment_id.value = paymentResponse?.payment_id.toString()
-                    Log.d("MyLogTEST", paymentResponse?.redirect_url.toString())
-                    Log.d("Payment", "Server response: ${paymentResponse?.status}")
-//                    uri.openUri(paymentResponse?.redirect_url.toString())
-//                    openPaymentPage(context = ctx, paymentResponse?.redirect_url.toString())
-                    customTabHelper.onClosed = {
-                        cartViewModel.orderId.value = paymentResponse?.order_id
-                        cartViewModel.showDialog.value = true
-                    }
-                    customTabHelper.openUrl(paymentResponse?.redirect_url.toString())
-                    // Обработайте успешный ответ сервера
-                } else {
-                    Log.e("Payment", "Server error: ${response.errorBody()?.string()}")
-                    // Обработайте ошибку сервера
-                }
-            }
-
-            override fun onFailure(call: Call<PaymentResponse>, t: Throwable) {
-                Log.e("Payment", "Network error: ${t.message}")
-                // Обработайте сетевую ошибку
-            }
-        })
-}
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -207,7 +143,7 @@ fun CartScreen(
     if (bottomSheetStatePayment.currentValue != ModalBottomSheetValue.Hidden) {
         DisposableEffect(Unit) {
             onDispose {
-                navHostController.navigate("study ")
+                navHostController.navigate("contracts")
             }
         }
     }
@@ -244,38 +180,6 @@ fun CartScreen(
     val token = test.getString("token_lk", "")!!.trim('"')
     val token_fb = test.getString("token", "")
 
-    val paymentLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val token_yoo = Checkout.createTokenizationResult(result.data!!).paymentToken
-            val data = Checkout.createTokenizationResult(result.data!!).paymentMethodType
-            Log.d("Payment", "Payment successful, token: $token_yoo")
-//            Toast.makeText(ctx, "Payment successful, token: $token_yoo", Toast.LENGTH_SHORT).show()
-            token_yoo.let {
-//                Toast.makeText(ctx, cartViewModel.selected_course.value.toString(), Toast.LENGTH_SHORT).show()
-                sendTokenToServer(
-                    it,
-                    token,
-                    uri,
-                    cartViewModel.selected_course.value,
-                    cartViewModel,
-                    ctx,
-                    customTabHelper,
-                    data
-                )
-            }
-            // Обработайте успешное получение токена
-        } else if (result.resultCode == Activity.RESULT_CANCELED) {
-            Log.d("Payment", "Payment canceled")
-//            Toast.makeText(ctx, "Payment canceled", Toast.LENGTH_SHORT).show()
-            // Обработайте отмену оплаты
-        } else {
-            Log.e("Payment", "Payment error:")
-            Toast.makeText(ctx, "Payment error", Toast.LENGTH_SHORT).show()
-            // Обработайте ошибку
-        }
-    }
 
     val bottomSheetState =
         rememberModalBottomSheetState(
@@ -522,12 +426,9 @@ fun CartScreen(
                                                 cartViewModel.selected_course.value = value.id
                                             }
                                             cartViewModel.selected_course_org.value = value.org_id
-//                                        paymentLauncher.launch(intent)
                                         },
                                         authStatus = cartViewModel.auth_tested.value,
                                         bottomSheet = bottomSheetState,
-                                        paymentIntent = intent,
-                                        paymentLaucher = paymentLauncher,
                                         onDatesClick = {
 
                                             if (cartViewModel.selectedCourseIndex.value != index) cartViewModel.groups.clear()
@@ -542,6 +443,9 @@ fun CartScreen(
 
                                         },
                                         datesState = bottomSheetStateDates,
+                                        onAuthBuy = {
+                                            navHostController.navigate("confirmation/"+value.id)
+                                        }
                                     )
 
                                 }
@@ -814,6 +718,10 @@ fun CartScreen(
                     sheetContent = {
                         Column(modifier = Modifier.padding(horizontal = 10.dp)) {
                             if (cartViewModel.courses.size > 0) {
+                                if (cartViewModel.courses.size-1 < cartViewModel.selectedCourseIndex.value)
+                                {
+                                    cartViewModel.selectedCourseIndex.value = 0
+                                }
                                 val course =
                                     cartViewModel.courses.get(cartViewModel.selectedCourseIndex.value)
                                 Row(
@@ -1204,6 +1112,11 @@ fun CartScreen(
                                 LaunchedEffect(Unit) {
                                     checkPaymentStatus(1, token, onPaymentSuccess = {
                                         success.value = true
+//                                        sleep(3)
+                                        scope_for_payments.launch {
+                                            delay(2000)
+                                            bottomSheetState.hide()
+                                        }
                                         return@checkPaymentStatus
 
                                     }, onPaymentFailed = {
@@ -1234,13 +1147,14 @@ fun CartCourse(
     onDelete: () -> Unit,
     onImageClick: () -> Unit = {},
     onBuy: () -> Unit = {},
-    paymentIntent: Intent,
-    paymentLaucher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+//    paymentIntent: Intent,
+//    paymentLaucher: ManagedActivityResultLauncher<Intent, ActivityResult>,
     authStatus: AuthStatus = AuthStatus.GUEST,
     bottomSheet: ModalBottomSheetState,
     datesState: ModalBottomSheetState,
     onDatesClick: () -> Unit = {},
     modifier: Modifier = Modifier,
+    onAuthBuy: () -> Unit = {}
 ) {
     var text = "";
     if (item.type == "dist") {
@@ -1409,14 +1323,11 @@ fun CartCourse(
                 .fillMaxWidth()
         ) {
 
-            val uriHandler = LocalUriHandler.current
 
             Divider(Modifier.padding(vertical = 5.dp))
 
 
-            val agreement = remember {
-                mutableStateOf(false)
-            }
+
 
                 Column(modifier = Modifier
                     .weight(1f)
@@ -1464,23 +1375,18 @@ fun CartCourse(
 
                     Button(
                         onClick = {
-                            if (agreement.value) {
+
                                 onBuy.invoke()
                                 if (authStatus == AuthStatus.AUTH) {
-                                    paymentLaucher.launch(paymentIntent)
+//                                    paymentLaucher.launch(paymentIntent)
+                                    onAuthBuy.invoke()
                                 } else {
                                     coroutineScope.launch {
 
                                         bottomSheet.show()
                                     }
                                 }
-                            } else {
-                                Toast.makeText(
-                                    ctx,
-                                    "Вы не подтвердили согласие с договором оферты",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+
                         },
                         modifier = Modifier,
                         shape = RoundedCornerShape(10),
@@ -1489,29 +1395,10 @@ fun CartCourse(
                             contentColor = Color.White
                         )
                     ) {
-                        Text("Купить", color = Color.White)
+                        Text("Оформить", color = Color.White)
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
 
-                    Checkbox(
-                        checked = agreement.value,
-                        onCheckedChange = { agreement.value = it },
-                        modifier = Modifier
-                            .padding(start = 5.dp, end = 10.dp)
-                            .size(12.dp),
-                        colors = CheckboxDefaults.colors(checkedColor = Primary_Green)
-                    )
-                    Text(text = "Согласен с условиями ", fontSize = 12.sp)
-                    Text(
-                        text = "договора оферты",
-                        modifier = Modifier.clickable {
-                            uriHandler.openUri("https://trayektoriya.ru/build/documents/oferta_" + item.org_id + ".pdf")
-                        },
-                        color = Color.Blue, fontSize = 12.sp
-                    )
-
-                }
 
 
 

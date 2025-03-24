@@ -851,7 +851,10 @@ fun ContractCard(
                             withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
                                 if (contract.certs.isNotEmpty()) {
                                     append(contract.certs[0])
-                                } else {
+                                } else if(contract.legal == "2") {
+                                    append("будет передан в вашу организацию.")
+                                } else
+                                {
                                     append("изготавливается")
                                 }
                             }

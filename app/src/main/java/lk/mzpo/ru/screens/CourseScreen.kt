@@ -561,7 +561,7 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                 .padding(vertical = 5.dp)
         ) {
             Text(
-                text = "Артикул: " + course.prefix,
+                text = "Арт: " + course.prefix,
                 fontSize = 15.sp,
                 color = Color.LightGray,
                 modifier = Modifier.padding(end = 10.dp)
@@ -898,7 +898,7 @@ fun CourseGroups(
         }
         Column {
             courses.value.forEachIndexed { index, group ->
-                CourseGroup(course.id, group, navHostController)
+                CourseGroup(course.id, group, navHostController, courseViewModel.auth_tested.value)
             }
         }
         Spacer(modifier = Modifier.height(70.dp))
@@ -924,12 +924,17 @@ fun CourseGroup(
         "Михайлов Р.С",
         1
     ),
-    navHostController: NavHostController
+    navHostController: NavHostController,
+    authStatus: AuthStatus
 ) {
     val ctx = LocalContext.current
     val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val formaTime = DateTimeFormatter.ofPattern("HH:mm")
     var ok = 0;
+    val test = ctx.getSharedPreferences("session", Context.MODE_PRIVATE)
+
+    val token = test.getString("token", "")
+
     Row(
         Modifier
             .fillMaxWidth()
@@ -942,27 +947,9 @@ fun CourseGroup(
                 0.5f
             )
             .clip(RoundedCornerShape(10.dp)).clickable {
-                CartViewModel.addToCart(ctx, course_id, group.id)
-                if (ok == 0) {
-                    ok = 1
-                    val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    if (vibrator.hasVibrator()) { // Vibrator availability checking
-                        vibrator.vibrate(
-                            VibrationEffect.createOneShot(
-                                200,
-                                VibrationEffect.DEFAULT_AMPLITUDE
-                            )
-                        ) // New vibrate method for API Level 26 or higher
-                    }
 
-                }
-                navHostController.navigate("cart")
-            },
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly) {
-            IconButton(
-                onClick = {
+                if (authStatus == AuthStatus.AUTH)
+                {
                     CartViewModel.addToCart(ctx, course_id, group.id)
                     if (ok == 0) {
                         ok = 1
@@ -977,6 +964,48 @@ fun CourseGroup(
                         }
 
                     }
+                } else {
+                    FirebaseHelpers.addToCart(
+                        token, hashMapOf(
+                            "id" to course_id.toString(),
+                            "type" to "sale15"
+                        )
+                    )
+                }
+
+
+                navHostController.navigate("cart")
+            },
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly) {
+            IconButton(
+                onClick = {
+                    if (authStatus == AuthStatus.AUTH)
+                    {
+                        CartViewModel.addToCart(ctx, course_id, group.id)
+                        if (ok == 0) {
+                            ok = 1
+                            val vibrator = ctx.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                            if (vibrator.hasVibrator()) { // Vibrator availability checking
+                                vibrator.vibrate(
+                                    VibrationEffect.createOneShot(
+                                        200,
+                                        VibrationEffect.DEFAULT_AMPLITUDE
+                                    )
+                                ) // New vibrate method for API Level 26 or higher
+                            }
+
+                        }
+                    } else {
+                        FirebaseHelpers.addToCart(
+                            token, hashMapOf(
+                                "id" to course_id.toString(),
+                                "type" to "sale15"
+                            )
+                        )
+                    }
+
                     navHostController.navigate("cart")
 
                 },

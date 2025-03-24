@@ -1,14 +1,17 @@
 package lk.mzpo.ru.network.retrofit
 
+import lk.mzpo.ru.models.CartItem
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Path
 import ru.yoomoney.sdk.kassa.payments.checkoutParameters.PaymentMethodType
 
 data class PaymentResponse(val status: String, val payment_id: String?, val redirect_url:String?, val order_id: Int?)
@@ -44,10 +47,33 @@ interface ApiService {
         @Body request: CheckPaymentStatusRequest
     ): Call<CheckPaymentStatusResponse>
 
+    @GET("/mobile/user/cart/get/{id}")
+    fun getCartItem(
+        @Path("id") id: Int,
+        @Header("Authorization") authHeader: String,
+    ): Call<CartItem>
+
+    @POST("/mobile/user/cart/check-promocode")
+    fun checkPromocode(
+        @Header("Authorization") authHeader: String,
+        @Body request: CheckPromocodeRequest
+    ): Call<CheckPromocodeResponse>
 
 }
 data class CheckPaymentStatusRequest(
     val order_id: Int
+)
+
+data class CheckPromocodeRequest(
+    val course: String,
+    val org_id: Int,
+    val promocode: String,
+    val item: Int
+)
+data class CheckPromocodeResponse(
+    val answer: String,
+    val sale: Int?,
+    val total: Int?,
 )
 data class PaymentRequest(
     val token: String,
