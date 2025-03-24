@@ -1,5 +1,8 @@
 package lk.mzpo.ru.screens
 
+import android.content.Context
+import android.os.PowerManager
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +13,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,11 +39,27 @@ import lk.mzpo.ru.viewModel.VideoViewModel
 fun VideoScreen(
     navHostController: NavHostController, video: NewMaterials, contract: Int, videoViewModel: VideoViewModel = viewModel()
 ) {
+    val ctx = LocalContext.current
+
+    val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+    val wakeLock = remember { powerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "VideoScreen:WakeLock") }
+
+    // Запрещаем автоблокировку при старте воспроизведения
+    LaunchedEffect(Unit) {
+        Log.d("MyWakeLog", "test")
+        wakeLock.acquire(100*60*1000L /*100 minutes*/)  // Захватываем блокировку экрана
+    }
+
+    // Освобождаем блокировку, когда видео завершено или экран закрывается
+    DisposableEffect(Unit) {
+        onDispose {
+            wakeLock.release()  // Освобождаем блокировку экрана
+        }
+    }
     Box(modifier = Modifier.fillMaxSize()) {
         val state = remember {
             mutableStateOf(0F)
         }
-        val ctx = LocalContext.current
         VideoPlayerCacheManager.initialize(ctx, 1024 * 1024 * 100)    // 10Mb
         if (video.file == null)
         {
@@ -74,12 +95,11 @@ fun VideoScreen(
             ),
             volume = 0.5f,  // volume 0.0f to 1.0f
             onCurrentTimeChanged = { // long type, current player time (millisec)
-                if (it/1000 - state.value  > 20 ||  video.file!!.size!!.toFloat() - it/1000f < 10)
+                if (it/1000 - state.value  > 30)
                 {
-//                    Log.e("CurrentTime", it.div(1000).toFloat().toString())
                     state.value = it/1000F
                     var send = it/1000.toFloat()
-                    if (video.file!!.size!!.toFloat() - it/1000f < 10)
+                    if (video.file!!.size!!.toFloat() - it/1000f < 40)
                     {
                         send = video.file!!.size!!.toFloat()
                     }
