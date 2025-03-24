@@ -1086,6 +1086,10 @@ fun CartScreen(
                         val success = remember {
                             mutableStateOf<Boolean?>(null)
                         }
+
+                        val final = remember {
+                            mutableStateOf(false)
+                        }
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(10.dp)) {
 
                             if (success.value == null)
@@ -1096,8 +1100,9 @@ fun CartScreen(
                                     color = Primary_Green,
                                     strokeWidth = 10.dp,
                                 )
-                            } else if (success.value == true)
+                            } else if (success.value == true || final.value)
                             {
+                                final.value = true
                                 Text(text = "Платеж успешно проведен!", fontSize = 25.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Primary_Green, modifier = Modifier.padding(10.dp))
                                 Text(text = "Курс скоро появится в разделе \"Обучение\"", fontSize = 14.sp, textAlign = TextAlign.Center, color = Color.Gray, modifier = Modifier.padding(10.dp))
                                 Icon(imageVector = Icons.Default.Check, contentDescription = "", tint = Primary_Green, modifier = Modifier.size(100.dp))
@@ -1113,10 +1118,7 @@ fun CartScreen(
                                     checkPaymentStatus(1, token, onPaymentSuccess = {
                                         success.value = true
 //                                        sleep(3)
-                                        scope_for_payments.launch {
-                                            delay(2000)
-                                            bottomSheetState.hide()
-                                        }
+
                                         return@checkPaymentStatus
 
                                     }, onPaymentFailed = {
