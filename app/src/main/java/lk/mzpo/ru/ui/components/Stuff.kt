@@ -867,20 +867,25 @@ fun PickImageFromGallery(
                         onClick = {
                             // Camera permission state
 
-                            val permissionCheck = ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.CAMERA
-                            )
-                            if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-                                launcher.launch("image/*")
-                            } else {
-                                rem.launch(Manifest.permission.CAMERA)
-//                    cameraPermissionState.launchPermissionRequest()
-                                Toast.makeText(
+                            try {
+                                val permissionCheck = ContextCompat.checkSelfPermission(
                                     context,
-                                    "Разрешите приложению доступ к галерее",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                    Manifest.permission.CAMERA
+                                )
+                                if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                                    launcher.launch("image/*")
+                                } else {
+                                    rem.launch(Manifest.permission.CAMERA)
+//                    cameraPermissionState.launchPermissionRequest()
+                                    Toast.makeText(
+                                        context,
+                                        "Разрешите приложению доступ к галерее",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            } catch (_: Exception)
+                            {
+                                Toast.makeText(context, "Произошла ошибка!", Toast.LENGTH_SHORT).show()
                             }
 
                         },
@@ -899,7 +904,11 @@ fun PickImageFromGallery(
                                 val filePath = uriPathHelper.getPath(context, uri)
                                 val file = File(filePath.toString())
                                 val body = UploadRequestBody(file, "image")
-
+//                                Log.d("MyLog", uri.path.toString())
+//                                Log.d("MyLog", file.name)
+//                                Log.d("MyLog", file.path.toString())
+//                                Log.d("MyLog", filePath.toString())
+//                                Log.d("MyLog", file.absolutePath)
                                 UploadImage().uploadImage(
                                     "Bearer " + token?.trim('"'),
                                     MultipartBody.Part.createFormData(

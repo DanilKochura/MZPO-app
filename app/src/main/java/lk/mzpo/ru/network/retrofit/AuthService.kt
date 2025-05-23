@@ -11,6 +11,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import org.json.JSONArray
+import org.json.JSONObject
 
 class AuthService {
 
@@ -39,9 +40,24 @@ class AuthService {
                         "session",
                         Context.MODE_PRIVATE
                     )
+
                     test.edit().remove("token_lk").apply()
                     test.edit().remove("auth_data").apply()
-                    Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже", Toast.LENGTH_SHORT).show()
+                    if (error.networkResponse.statusCode == 401)
+                    {
+                        val responseBody = String(error.networkResponse.data)
+                        try {
+                            val errorJson = JSONObject(responseBody)
+                            val errorMessage = errorJson.optString("error", "Произошла ошибка. Попробуйте позже")
+                            Toast.makeText(ctx, errorMessage, Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже", Toast.LENGTH_SHORT).show()
+                        }
+                    } else
+                    {
+                        Toast.makeText(ctx, "Произошла ошибка. Попробуйте позже", Toast.LENGTH_SHORT).show()
+                    }
                     error.printStackTrace()
 
                 }) {
