@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -589,33 +590,53 @@ fun ActiveTab(
             flingBehavior = rememberSnapFlingBehavior(listState)
         )
     } else {
-        Column(
-            Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = "Тут пока ничего нет")
-            Text(text = "Самое время что-нибудь подобрать")
-            OutlinedButton(
-                onClick = { navHostController.navigate("categories") },
-                border = BorderStroke(2.dp, Primary_Green),
-                modifier = Modifier.padding(vertical = 10.dp)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
+            Text("Активные курсы", fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Primary_Green)
+            Image(
+                painter = painterResource(id = R.drawable.books__1_),
+                contentDescription = "lebed_back",
+                modifier = Modifier.fillMaxWidth(0.6f)
+            )
+            Text("Тут пока ничего нет...",  fontSize = 22.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+//            Text("Самое время что-нибудь подобрать",  fontSize = 22.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(20.dp))
+            Button(
+                onClick = {
+                    navHostController.navigate("categories")
+                },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.width(200.dp)
             ) {
-                Text(
-                    text = "Перейти в каталог",
-                    color = Primary_Green,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(text = "За покупками", color = Color.White)
             }
+
         }
+
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class,
+    ExperimentalMaterial3Api::class
+)
 @Composable
 fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHostController) {
     val courses =
         contractsViewModel.contracts.value.filter { it.status == 0 || it.status == 4 || it.status == 17 || it.status == 15 }
+
+    val active_courses =
+        contractsViewModel.contracts.value.filter {
+            it.status!! in intArrayOf(
+                1,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                14
+            )
+        }
     val listState: LazyListState = rememberLazyListState()
     if (courses.isNotEmpty()) {
         LazyRow(
@@ -646,6 +667,45 @@ fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHo
             state = listState,
             flingBehavior = rememberSnapFlingBehavior(listState)
         )
+    } else
+    {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
+            Text("Завершенные курсы", fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Primary_Green)
+            Image(
+                painter = painterResource(id = R.drawable.books__1_),
+                contentDescription = "lebed_back",
+                modifier = Modifier.fillMaxWidth(0.6f)
+            )
+            Text("Вы еще не завершили ни одного курса",  fontSize = 18.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(20.dp))
+            if (active_courses.isNotEmpty())
+            {
+                Button(
+                    onClick = {
+                        contractsViewModel.selected.value = "Активные"
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.width(200.dp)
+                ) {
+                    Text(text = "Перейти к учебе", color = Color.White)
+                }
+            } else
+            {
+                Button(
+                    onClick = {
+                        navHostController.navigate("categories")
+                    },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.width(200.dp)
+                ) {
+                    Text(text = "Выбрать курс", color = Color.White)
+                }
+            }
+
+        }
+//        Icon(painter = painterResource(R.drawable.books__1_))
     }
 }
 

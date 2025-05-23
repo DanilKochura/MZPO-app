@@ -2,104 +2,52 @@ package lk.mzpo.ru.ui.components
 
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.TextFieldDefaults.indicatorLine
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
-import lk.mzpo.ru.R
-import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.ui.components.stories.Story
-import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
-import lk.mzpo.ru.ui.theme.Aggressive_red
-import lk.mzpo.ru.ui.theme.Primary_Green
-import lk.mzpo.ru.viewModel.MainViewModel
-import kotlin.math.abs
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun Search()
-{
+fun Search() {
     TextField(
         value = "Пfиск",
         onValueChange = {},
@@ -126,14 +74,14 @@ fun SearchView(state: MutableState<String>, navHostController: NavHostController
         textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
 
         leadingIcon = {
-            if (state.value !="") {
-                Log.d("MyLog", "catalog?search=_"+state.value)
+            if (state.value != "") {
+                Log.d("MyLog", "catalog?search=_" + state.value)
                 IconButton(onClick = {
-                    if (state.value.length > 3)
-                    {
+                    if (state.value.length > 3) {
                         try {
-                            navHostController.navigate("catalog?search=_"+state.value)
-                        }catch (_: Exception){}
+                            navHostController.navigate("catalog?search=_" + state.value)
+                        } catch (_: Exception) {
+                        }
                     }
                 }) {
                     Icon(
@@ -143,20 +91,19 @@ fun SearchView(state: MutableState<String>, navHostController: NavHostController
                             .size(24.dp)
                     )
                 }
-            } else
-            {
+            } else {
                 Icon(
-                Icons.Default.Search,
-                contentDescription = "",
-                modifier = Modifier
-                    .size(24.dp)
-            )
+                    Icons.Default.Search,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .size(24.dp)
+                )
 
             }
         },
 
         trailingIcon = {
-            if (state.value !="") {
+            if (state.value != "") {
                 IconButton(
                     onClick = {
                         state.value =
@@ -182,29 +129,34 @@ fun SearchView(state: MutableState<String>, navHostController: NavHostController
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent
         ),
-        placeholder = { Text(text = "Поиск...")},
-         keyboardActions = KeyboardActions(onSearch = {
-             if (state.value.length > 3)
-         {
-             try {
-                 navHostController.navigate("catalog?search=_"+state.value)
-             } catch (e:Exception){
-                 Toast.makeText(ctx, "Произошла ошибка. Попробуйте еще раз", Toast.LENGTH_SHORT).show()
-                 Log.e("MySearchLog", e.toString())
-             }
-         }}),
+        placeholder = { Text(text = "Поиск...") },
+        keyboardActions = KeyboardActions(onSearch = {
+            if (state.value.length > 3) {
+                try {
+                    navHostController.navigate("catalog?search=_" + state.value)
+                } catch (e: Exception) {
+                    Toast.makeText(ctx, "Произошла ошибка. Попробуйте еще раз", Toast.LENGTH_SHORT)
+                        .show()
+                    Log.e("MySearchLog", e.toString())
+                }
+            } else {
+                Toast.makeText(ctx, "Введите минимум 4 символа", Toast.LENGTH_SHORT).show()
+            }
+        }),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search)
-        )
+    )
 }
 
 @Composable
-fun SearchViewPreview(navHostController: NavHostController, textState: MutableState<String>? = null) {
+fun SearchViewPreview(
+    navHostController: NavHostController,
+    textState: MutableState<String>? = null
+) {
     var ts = remember {
         mutableStateOf("")
     }
-    if(textState != null)
-    {
-       ts = textState
+    if (textState != null) {
+        ts = textState
     }
     SearchView(ts, navHostController = navHostController)
 }
@@ -230,7 +182,12 @@ fun MyTextField(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     shape: Shape = TextFieldDefaults.TextFieldShape,
     colors: TextFieldColors = TextFieldDefaults.textFieldColors(),
-    contentPadding: PaddingValues = PaddingValues(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp)
+    contentPadding: PaddingValues = PaddingValues(
+        start = 10.dp,
+        end = 10.dp,
+        top = 5.dp,
+        bottom = 5.dp
+    )
 ) {
     // If color is not provided via the text style, use content color as a default
     val textColor = textStyle.color.takeOrElse {
@@ -239,7 +196,7 @@ fun MyTextField(
     val mergedTextStyle = textStyle.merge(TextStyle(color = textColor))
 
     @OptIn(ExperimentalMaterialApi::class)
-    (BasicTextField (
+    (BasicTextField(
         value = value,
         modifier = modifier
             .background(colors.backgroundColor(enabled).value, shape)

@@ -15,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.Indicator
 
@@ -94,10 +96,15 @@ fun StoryImage(
     Box(modifier = Modifier.fillMaxSize()) {
         StoryAsyncImage(url, screenWidth, onLeftClick, onRightClick)
         LinearProgressIndicator(
-            progress = progress,
+            progress = {progress},
             modifier = indicator.modifier,
             color = indicator.indicatorColor,
-            trackColor = indicator.indicatorTrackColor
+            trackColor = indicator.indicatorTrackColor,
+            gapSize = 0.dp,
+            strokeCap = StrokeCap.Square,
+            drawStopIndicator = {
+
+            }
         )
     }
 }

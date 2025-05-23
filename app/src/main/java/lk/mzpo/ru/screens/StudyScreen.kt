@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Badge
@@ -58,7 +59,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -67,18 +71,25 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
+import lk.mzpo.ru.models.study.AllSchedules
+import lk.mzpo.ru.models.study.DocumentCondition
+import lk.mzpo.ru.models.study.Module
 import lk.mzpo.ru.models.study.StudyModule
+import lk.mzpo.ru.models.study.Teacher
 import lk.mzpo.ru.network.retrofit.SaveExamAnswersService
 import lk.mzpo.ru.network.retrofit.SendExamAnswersService
 import lk.mzpo.ru.ui.components.CustomTextField
@@ -399,20 +410,29 @@ fun StudyScreen(
                                     .div(100f) > 0.1f
                             ) contract.progress!!.total!!.toFloat().div(100f) else 0.1f
                             LinearProgressIndicator(
-                                progress = progress,
+                                progress = {progress},
                                 Modifier
                                     .fillMaxSize()
                                     .clip(
                                         RoundedCornerShape(50)
-                                    ), color = Primary_Green, trackColor = Color.LightGray
+                                    ),
+                                color = Primary_Green,
+                                trackColor = Color.LightGray,
+                                gapSize = 0.dp,
+                                strokeCap = StrokeCap.Square,
+                                drawStopIndicator = {
+
+                                }
                             ) //70% progress
+
+
                             Text(
                                 text = contract.progress!!.total!!.toInt().toString() + "%",
                                 color = Color.White,
                                 modifier = Modifier.padding(horizontal = 7.dp)
                             )
                         }
-                        if (contract.course!!.prices.dist !== null && contract.course!!.prices.dist !== 0) {
+                        if (contract.course!!.isDist()) {
                             Row(
                                 Modifier
                                     .fillMaxWidth()
@@ -556,8 +576,11 @@ fun StudyScreen(
                             { index, admission ->
                                 val loaded: ArrayList<String> = arrayListOf()
                                 var comment: String? = null
-                                var status: String? = null
+                                var status: String? = "0"
                                 var count = 0
+                                var condition: DocumentCondition? = null
+                                var uploaded_at: String? = null
+                                var required: String? = null
                                 for (j in studyViewModel.documents) {
                                     if (admission.id == j.admissionId) {
                                         if (j.file !== null) {
@@ -565,12 +588,16 @@ fun StudyScreen(
                                                 loaded.add(j.file!!)
                                             }
                                         }
+                                        uploaded_at = j.uploadedAt
+                                        condition = j.cond
                                         status = j.docCondition
+                                        required = j.required
                                         if (j.comment !== null) {
                                             comment = j.comment
                                         }
                                     }
                                 }
+
                                 count =
                                     studyViewModel.documents.filter { it.docCondition === "0" }.size
                                 Text(
@@ -580,23 +607,33 @@ fun StudyScreen(
                                     textAlign = TextAlign.Center,
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                if (loaded.isNotEmpty()) {
+
                                     Row(
                                         Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.Center
                                     ) {
-                                        when (status) {
-                                            null -> Text("")
-                                            "0" -> Text(
-                                                text = "Документ на проверке", modifier = Modifier
+                                        if (uploaded_at !== null && condition !== null)
+                                        {
+                                            Text(
+                                                text = condition.condition, modifier = Modifier
                                                     .clip(
                                                         RoundedCornerShape(3.dp)
                                                     )
-                                                    .background(Color.Blue.copy(0.3f))
+                                                    .background(
+                                                        (
+                                                                if(condition.style == "success")
+                                                                    Color.Green
+                                                                else if(condition.style == "danger")
+                                                                    Aggressive_red
+                                                                else
+                                                                    Color.Blue
+                                                                ).copy(0.3f)
+                                                    )
                                                     .padding(3.dp)
                                             )
-
-                                            "1" -> Text(
+                                        } else if (status == "1")
+                                        {
+                                            Text(
                                                 text = "Документ принят", modifier = Modifier
                                                     .padding(3.dp)
                                                     .clip(
@@ -605,21 +642,30 @@ fun StudyScreen(
                                                     .background(Color.Green.copy(0.3f))
                                                     .padding(3.dp)
                                             )
-
-                                            "2" -> {
-                                                Text(
-                                                    text = comment.toString(), modifier = Modifier
-                                                        .padding(3.dp)
-                                                        .clip(
-                                                            RoundedCornerShape(3.dp)
-                                                        )
-                                                        .background(Aggressive_red.copy(0.3f))
-                                                        .padding(3.dp)
+                                        } else if (status == "2")
+                                        {
+                                            Text(
+                                                text = comment.toString(), modifier = Modifier
+                                                    .padding(3.dp)
+                                                    .clip(
+                                                        RoundedCornerShape(3.dp)
+                                                    )
+                                                    .background(Aggressive_red.copy(0.3f))
+                                                    .padding(3.dp)
+                                            )
+                                        } else if (required == "0")
+                                        {
+                                             Text(
+                                                text = "Не обязателен", modifier = Modifier
+                                                .padding(3.dp)
+                                                .clip(
+                                                    RoundedCornerShape(3.dp)
                                                 )
-                                            }
+                                                .background(Color.Green.copy(0.3f))
+                                                .padding(3.dp)
+                                            )
                                         }
                                     }
-                                }
 
                                 PickImageFromGallery(
                                     contract.id,
@@ -932,15 +978,18 @@ fun module(
 
 }
 
+
+
 @Composable
 fun Schedule(studyViewModel: StudyViewModel) {
     val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-    val secondFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+    val secondFormatter = DateTimeFormatter.ofPattern("dd.MM")
     val timeFrmtEnd = DateTimeFormatter.ofPattern("HH:mm")
 
     Column(
         Modifier
             .fillMaxSize()
+//            .background(Primary_Green_BG.copy(0.4f))
             .verticalScroll(rememberScrollState())
     ) {
         if (studyViewModel.passedModules.isNotEmpty()) {
@@ -1210,26 +1259,56 @@ fun Schedule(studyViewModel: StudyViewModel) {
                         )
                     }
                     Divider()
-                    for (i in item.group.allSchedules) {
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            val date =
-                                LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = date.format(secondFormatter).toString())
-                                Text(text = date.format(timeFrmtEnd).toString())
+                    Column (Modifier.padding(horizontal = 5.dp)) {
+                        for (i in item.group.allSchedules) {
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val date =
+                                    LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
+                                val dateEnd =
+                                    LocalDateTime.parse(i.date + " " + i.timeEnd, firstApiFormat)
+                                Row (
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(5.dp)
+                                        .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(Color.White),
+                                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column (Modifier.weight(2f), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally){
+                                        Text(text = date.format(secondFormatter).toString())
+                                        Text(text = date.format(timeFrmtEnd).toString())
+//                                        Text("-")
+//                                        Text(text = dateEnd.format(timeFrmtEnd).toString())
+                                    }
+                                    Column (Modifier.weight(7f)){
+//                                        Text(date.format(secondFormatter).toString())
+                                        Text(text = i.auditory.toString(), fontWeight = FontWeight.Bold, color = Primary_Green)
+                                        Text(
+                                            text = if (i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан",
+                                            modifier = Modifier,
+                                            fontWeight = FontWeight.Bold, color = Color.Gray, fontSize = 14.sp
+                                        )
+                                        if (item.module !== null)
+                                        {
+                                            Text(item.module!!.name, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        }
+                                    }
+                                    if (!i.teacher?.image.isNullOrEmpty())
+                                    {
+                                        AsyncImage(model = "https://trayektoriya.ru/build/images/teachers/"+i.teacher?.image,
+                                            contentDescription = "",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.height(100.dp).weight(2f))
+                                    }
+                                }
                             }
-                            Text(text = i.auditory.toString())
-                            Text(
-                                text = if (i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан",
-                                modifier = Modifier.fillMaxWidth(0.4f)
-                            )
+                            Spacer(Modifier.height(5.dp))
                         }
-                        Divider()
                     }
                     Divider(thickness = 3.dp)
                     Spacer(modifier = Modifier.height(10.dp))
@@ -1291,7 +1370,7 @@ fun Materials(
             } else {
                 itemsIndexed(studyViewModel.studyModules.value) { i, item ->
 
-                    module(studyModule = item, int = i, navHostController, onClick = {
+                    moduleNew(studyModule = item, int = i, navHostController, onClick = {
                         try {
                             val gson = Gson()
                             val contractJson = gson.toJson(
@@ -1324,4 +1403,360 @@ fun Materials(
             .padding(horizontal = 10.dp)
             .fillMaxWidth()
     )
+}
+
+
+@Preview
+@Composable
+fun Sched()
+{
+    val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val secondFormatter = DateTimeFormatter.ofPattern("dd.MM.YYYY")
+    val timeFrmtEnd = DateTimeFormatter.ofPattern("HH:mm")
+    val allSchedules = listOf(
+        AllSchedules(0, 0, "2025-04-28", "09:00:00", "15:00:00", "АВТ", "231 МММ", 6, "", "1", Teacher(1,  "Селявин Михаил Юрьевич" ,"6.jpg")),
+        AllSchedules(0, 0, "2025-04-28", "09:00:00", "15:00:00", "АВТ", "231 МММ", 6, "", "1", Teacher(1,  "Селявин Михаил Юрьевич" ,"6.jpg")),
+        AllSchedules(0, 0, "2025-04-28", "09:00:00", "15:00:00", "АВТ", "231 МММ", 6, "", "1", Teacher(1,  "Селявин Михаил Юрьевич" ,"6.jpg")),
+        AllSchedules(0, 0, "2025-04-28", "09:00:00", "15:00:00", "АВТ", "231 МММ", 6, "", "1", Teacher(1,  "Селявин Михаил Юрьевич" ,"6.jpg"))
+    )
+    Column {
+        for (i in allSchedules) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                val date =
+                    LocalDateTime.parse(i.date + " " + i.timeStart, firstApiFormat)
+                val dateEnd =
+                    LocalDateTime.parse(i.date + " " + i.timeEnd, firstApiFormat)
+                Row (
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(5.dp)
+                        .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column (Modifier.fillMaxWidth(0.2f), verticalArrangement = Arrangement.SpaceBetween, horizontalAlignment = Alignment.CenterHorizontally){
+                        Text(text = date.format(timeFrmtEnd).toString())
+                        Text(text = dateEnd.format(timeFrmtEnd).toString())
+                    }
+                    Column (Modifier.fillMaxWidth()){
+                        Text(date.format(secondFormatter).toString())
+                        Text(text = i.auditory.toString())
+                        Text(
+                            text = if (i.teacher !== null) i.teacher?.name.toString() else "Преподаватель не указан",
+                            modifier = Modifier
+                        )
+                    }
+                    if (!i.teacher?.image.isNullOrEmpty())
+                    {
+                        AsyncImage(model = "https://trayektoriya.ru/build/images/teachers/"+i.teacher?.image, contentDescription = "", modifier = Modifier.height(40.dp).clip(
+                            CircleShape))
+                    }
+                }
+            }
+            Divider()
+        }
+    }
+}
+
+
+@Composable
+fun moduleNew(
+    studyModule: StudyModule,
+    int: Int,
+    navHostController: NavHostController,
+    onClick: () -> Unit = {}
+) {
+
+    var sum = 0;
+    var checked = 0;
+    var files = 0;
+    var tests = 0;
+    var videos = 0;
+    for (i in studyModule.materials) {
+        if (i.file !== null) {
+            if (i.file!!.type == "video") {
+                sum += i.file!!.size ?: 0
+                videos += 1;
+            } else if (i.file!!.type == "file") {
+                sum += (i.file!!.size ?: 0) * 120
+                files += 1;
+
+            } else if (i.file!!.type == "test" || i.file!!.type == "final_test") {
+                sum += 1200
+                tests += 1;
+
+            }
+
+
+        }
+    }
+    for (i in studyModule.tests) {
+        sum += 1200
+        tests += 1;
+    }
+
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+            .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White)
+            .clickable {
+                onClick.invoke()
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "${int + 1}",
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(0.2f).padding(horizontal = 10.dp)
+        )
+        Column(
+            Modifier
+                .fillMaxWidth(0.8f)
+                .padding(vertical = 20.dp)
+        ) {
+            Text(
+                text = "${studyModule.module!!.name}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(text = "~ ${sum.div(60).toInt()} мин.")
+
+                Row {
+                    if (files > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_library_books_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = Primary_Green
+                            )
+                            Text(text = files.toString())
+                        }
+                    }
+                    if (videos > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_video_library_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = Primary_Green
+                            )
+                            Text(text = videos.toString())
+                        }
+                    }
+                    if (tests > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_quiz_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = Primary_Green
+                            )
+                            Text(text = tests.toString())
+                        }
+                    }
+                }
+
+            }
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (studyModule.module_passed) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "",
+                    tint = Primary_Green,
+                    modifier = Modifier
+                        .align(
+                            Alignment.Center
+                        )
+                        .fillMaxSize()
+                )
+            } else if (studyModule.watched) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "",
+                    tint = Orange,
+                    modifier = Modifier
+                        .align(
+                            Alignment.Center
+                        )
+                        .fillMaxSize()
+                )
+
+            }
+        }
+    }
+
+
+}
+
+@Composable
+fun moduleNew2(
+    studyModule: StudyModule,
+    int: Int,
+    navHostController: NavHostController,
+    onClick: () -> Unit = {}
+) {
+
+    var sum = 0;
+    var checked = 0;
+    var files = 0;
+    var tests = 0;
+    var videos = 0;
+    for (i in studyModule.materials) {
+        if (i.file !== null) {
+            if (i.file!!.type == "video") {
+                sum += i.file!!.size ?: 0
+                videos += 1;
+            } else if (i.file!!.type == "file") {
+                sum += (i.file!!.size ?: 0) * 120
+                files += 1;
+
+            } else if (i.file!!.type == "test" || i.file!!.type == "final_test") {
+                sum += 1200
+                tests += 1;
+
+            }
+
+
+        }
+    }
+    for (i in studyModule.tests) {
+        sum += 1200
+        tests += 1;
+    }
+
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(5.dp)
+            .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (studyModule.module_passed) Primary_Green else if(studyModule.watched) Orange else Color.White)
+            .clickable {
+                onClick.invoke()
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "${int + 1}",
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(0.2f).padding(horizontal = 10.dp),
+            color = if (studyModule.module_passed) Color.White else if(studyModule.watched) Color.White else Color.Black
+        )
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp)
+        ) {
+            Text(
+                text = "${studyModule.module!!.name}",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = if (studyModule.module_passed) Color.White else if(studyModule.watched) Color.White else Color.Black
+
+            )
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth().padding(end = 10.dp)
+            ) {
+                Text(text = "~ ${sum.div(60).toInt()} мин.",
+                    color = if (studyModule.module_passed) Color.White else if(studyModule.watched) Color.White else Color.Black
+                    )
+
+                Row {
+                    if (files > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_library_books_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = if(studyModule.watched || studyModule.module_passed) Color.White else Primary_Green
+                            )
+                            Text(text = files.toString(),
+                                color = if (studyModule.module_passed) Color.White else if(studyModule.watched) Color.White else Color.Black
+                                )
+                        }
+                    }
+                    if (videos > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_video_library_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = if(studyModule.watched || studyModule.module_passed) Color.White else Primary_Green
+                            )
+                            Text(text = videos.toString(),
+                                color = if (studyModule.module_passed) Color.White else if(studyModule.watched) Color.White else Color.Black
+                                )
+                        }
+                    }
+                    if (tests > 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 10.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_quiz_24),
+                                contentDescription = "",
+                                Modifier.size(20.dp),
+                                tint = if(studyModule.watched || studyModule.module_passed) Color.White else Primary_Green
+                            )
+                            Text(text = tests.toString(),
+                                color = if (studyModule.module_passed) Color.White else if(studyModule.watched) Color.White else Color.Black
+                                )
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+
+}
+@Preview
+@Composable
+fun modprev()
+{
+    Column {
+        moduleNew2(StudyModule(Module(1, 1, "Аспекты инфекционной безопасности и инфекционного контроля в учреждениях здравоохранени"), true), 1, rememberNavController())
+        moduleNew2(StudyModule(Module(1, 1, "Аспекты инфекционной безопасности и инфекционного контроля в учреждениях здравоохранени"), false, true), 1, rememberNavController())
+        moduleNew2(StudyModule(Module(1, 1, "Аспекты инфекционной безопасности и инфекционного контроля в учреждениях здравоохранени"), false, false), 1, rememberNavController())
+
+    }
 }

@@ -1,8 +1,5 @@
 package lk.mzpo.ru.ui.components.stories.ui
 
-import android.content.Intent
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
@@ -24,18 +21,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import lk.mzpo.ru.MainActivity
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.Indicator
 import lk.mzpo.ru.ui.components.stories.data.ScrollState
@@ -157,11 +149,16 @@ fun RowScope.ProgressLine(
     }
 
     LinearProgressIndicator(
-        progress = animatable.value,
+        progress = {animatable.value},
         modifier = Modifier
             .weight(1f)
             .then(indicator.modifier),
         color = indicator.indicatorColor,
-        trackColor = indicator.indicatorTrackColor
+        trackColor = indicator.indicatorTrackColor,
+        gapSize = 0.dp,
+        strokeCap = StrokeCap.Square,
+        drawStopIndicator = {
+
+        }
     )
 }

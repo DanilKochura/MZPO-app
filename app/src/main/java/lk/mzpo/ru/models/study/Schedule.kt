@@ -1,5 +1,6 @@
 package lk.mzpo.ru.models.study
 
+import CoursePreview
 import com.google.gson.annotations.SerializedName
 
 
@@ -12,6 +13,7 @@ data class CourseSchedule (
     @SerializedName("passed"        ) var passed       : String? = null,
     @SerializedName("course_closed" ) var courseClosed : String? = null,
     @SerializedName("status"        ) var status       : String? = null,
+    @SerializedName("module"        ) var  module       : CoursePreview? = null,
     @SerializedName("group"         ) var group        : Group  = Group(),
 )
 
