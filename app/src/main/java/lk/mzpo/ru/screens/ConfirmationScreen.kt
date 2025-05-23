@@ -742,7 +742,7 @@ fun ConfirmationScreen(
                                         .horizontalScroll(rememberScrollState())
                                 ) {
                                     if (course.course.prices.dist !== null) {
-                                        if (course.course.prices.dist != 0) {
+                                        if (course.course.prices.dist.price != 0) {
                                             Column(
                                                 modifier = Modifier
                                                     .height(45.dp)
@@ -750,15 +750,15 @@ fun ConfirmationScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.dist) Primary_Green else Color.Transparent)
+                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.dist.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.dist) Primary_Green else Color.LightGray,
+                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.dist.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         confirmationViewModel.selectedPrice.value =
-                                                            course.course.prices.dist
+                                                            course.course.prices.dist.price!!
                                                         confirmationViewModel.selectedType.value =
                                                             "dist"
                                                         confirmationViewModel.updateType(
@@ -773,7 +773,7 @@ fun ConfirmationScreen(
                                                 Text(
                                                     text = "Дистанционно",
                                                     Modifier.padding(10.dp),
-                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.dist) Color.White else Color.Black
+                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.dist.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -786,15 +786,15 @@ fun ConfirmationScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.sale15) Primary_Green else Color.Transparent)
+                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.sale15.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.sale15) Primary_Green else Color.LightGray,
+                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.sale15.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         confirmationViewModel.selectedPrice.value =
-                                                            course.course.prices.sale15
+                                                            course.course.prices.sale15.price!!
                                                         confirmationViewModel.selectedType.value =
                                                             "sale15"
                                                         confirmationViewModel.updateType(
@@ -810,7 +810,7 @@ fun ConfirmationScreen(
                                                 Text(
                                                     text = "Очно в группе",
                                                     Modifier.padding(10.dp),
-                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.sale15) Color.White else Color.Black
+                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.sale15.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -822,15 +822,15 @@ fun ConfirmationScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.ind) Primary_Green else Color.Transparent)
+                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.ind.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.ind) Primary_Green else Color.LightGray,
+                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.ind.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         confirmationViewModel.selectedPrice.value =
-                                                            course.course.prices.ind!!
+                                                            course.course.prices.ind.price!!
                                                         confirmationViewModel.selectedType.value =
                                                             "ind"
 
@@ -847,7 +847,7 @@ fun ConfirmationScreen(
                                                 Text(
                                                     text = "Индивидуально",
                                                     Modifier.padding(10.dp),
-                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.ind) Color.White else Color.Black
+                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.ind.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -859,15 +859,15 @@ fun ConfirmationScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.weekend) Primary_Green else Color.Transparent)
+                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.weekend.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.weekend) Primary_Green else Color.LightGray,
+                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.weekend.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         confirmationViewModel.selectedPrice.value =
-                                                            course.course.prices.weekend!!
+                                                            course.course.prices.weekend.price!!
                                                         confirmationViewModel.selectedType.value =
                                                             "weekend"
 
@@ -886,7 +886,7 @@ fun ConfirmationScreen(
                                                 Text(
                                                     text = "Учись в выходной",
                                                     Modifier.padding(10.dp),
-                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.weekend) Color.White else Color.Black
+                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.weekend.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -898,22 +898,22 @@ fun ConfirmationScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.intensive) Primary_Green else Color.Transparent)
+                                                    .background(if (confirmationViewModel.selectedPrice.value == course.course.prices.intensive.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.intensive) Primary_Green else Color.LightGray,
+                                                        color = if (confirmationViewModel.selectedPrice.value == course.course.prices.intensive.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         confirmationViewModel.selectedPrice.value =
-                                                            course.course.prices.intensive!!
+                                                            course.course.prices.intensive.price!!
                                                         confirmationViewModel.selectedType.value =
                                                             "intensive"
 
                                                         val cartItem =
                                                             confirmationViewModel.cartItem.value!!
                                                         cartItem.price =
-                                                            course.course.prices.intensive
+                                                            course.course.prices.intensive.price
                                                         confirmationViewModel.courses[confirmationViewModel.selectedCourseIndex.value] =
                                                             cartItem
 
@@ -930,7 +930,7 @@ fun ConfirmationScreen(
                                                 Text(
                                                     text = "Интенсив",
                                                     Modifier.padding(10.dp),
-                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.intensive) Color.White else Color.Black
+                                                    color = if (confirmationViewModel.selectedPrice.value == course.course.prices.intensive.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -1082,11 +1082,12 @@ fun ConfirmationScreen(
         floatingActionButton = {
             if (confirmationViewModel.cartItem.value != null) {
                 val value = confirmationViewModel.cartItem.value!!
+
                 val config = YookassaConfigs.getConfig(value.org_id)
 
                 val paymentMethodTypes = setOf(
                     PaymentMethodType.BANK_CARD,
-//                                            PaymentMethodType.SBERBANK,
+                                            PaymentMethodType.SBERBANK,
 //                                            PaymentMethodType.YOO_MONEY,
                     PaymentMethodType.SBP,
                 )

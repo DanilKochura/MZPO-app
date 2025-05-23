@@ -749,7 +749,7 @@ fun CartScreen(
                                         .horizontalScroll(rememberScrollState())
                                 ) {
                                     if (course.course.prices.dist !== null) {
-                                        if (course.course.prices.dist != 0) {
+                                        if (course.course.prices.dist.price != 0) {
                                             Column(
                                                 modifier = Modifier
                                                     .height(45.dp)
@@ -757,15 +757,15 @@ fun CartScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.dist) Primary_Green else Color.Transparent)
+                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.dist.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.dist) Primary_Green else Color.LightGray,
+                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.dist.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         cartViewModel.selectedPrice.value =
-                                                            course.course.prices.dist
+                                                            course.course.prices.dist.price!!
                                                         cartViewModel.selectedType.value = "dist"
                                                         cartViewModel.updateType(
                                                             context = ctx,
@@ -779,7 +779,7 @@ fun CartScreen(
                                                 Text(
                                                     text = "Дистанционно",
                                                     Modifier.padding(10.dp),
-                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.dist) Color.White else Color.Black
+                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.dist.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -792,15 +792,15 @@ fun CartScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.sale15) Primary_Green else Color.Transparent)
+                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.sale15.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.sale15) Primary_Green else Color.LightGray,
+                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.sale15.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         cartViewModel.selectedPrice.value =
-                                                            course.course.prices.sale15
+                                                            course.course.prices.sale15.price!!
                                                         cartViewModel.selectedType.value = "sale15"
                                                         cartViewModel.updateType(
                                                             context = ctx,
@@ -815,7 +815,7 @@ fun CartScreen(
                                                 Text(
                                                     text = "Очно в группе",
                                                     Modifier.padding(10.dp),
-                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.sale15) Color.White else Color.Black
+                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.sale15.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -827,15 +827,15 @@ fun CartScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.ind) Primary_Green else Color.Transparent)
+                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.ind.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.ind) Primary_Green else Color.LightGray,
+                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.ind.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         cartViewModel.selectedPrice.value =
-                                                            course.course.prices.ind!!
+                                                            course.course.prices.ind.price!!
                                                         cartViewModel.selectedType.value = "ind"
                                                         cartViewModel.updateType(
                                                             context = ctx,
@@ -850,7 +850,7 @@ fun CartScreen(
                                                 Text(
                                                     text = "Индивидуально",
                                                     Modifier.padding(10.dp),
-                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.ind) Color.White else Color.Black
+                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.ind.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -862,21 +862,21 @@ fun CartScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.weekend) Primary_Green else Color.Transparent)
+                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.weekend.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.weekend) Primary_Green else Color.LightGray,
+                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.weekend.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         cartViewModel.selectedPrice.value =
-                                                            course.course.prices.weekend!!
+                                                            course.course.prices.weekend.price!!
                                                         cartViewModel.selectedType.value = "weekend"
 
                                                         val cartItem =
                                                             cartViewModel.courses.get(cartViewModel.selectedCourseIndex.value)
                                                         cartItem.price =
-                                                            course.course.prices.weekend
+                                                            course.course.prices.weekend.price
                                                         cartViewModel.courses[cartViewModel.selectedCourseIndex.value] =
                                                             cartItem
 
@@ -893,7 +893,7 @@ fun CartScreen(
                                                 Text(
                                                     text = "Учись в выходной",
                                                     Modifier.padding(10.dp),
-                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.weekend) Color.White else Color.Black
+                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.weekend.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -905,21 +905,21 @@ fun CartScreen(
                                                     .clip(
                                                         RoundedCornerShape(20)
                                                     )
-                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.intensive) Primary_Green else Color.Transparent)
+                                                    .background(if (cartViewModel.selectedPrice.value == course.course.prices.intensive.price) Primary_Green else Color.Transparent)
                                                     .border(
                                                         width = 1.dp,
-                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.intensive) Primary_Green else Color.LightGray,
+                                                        color = if (cartViewModel.selectedPrice.value == course.course.prices.intensive.price) Primary_Green else Color.LightGray,
                                                         RoundedCornerShape(20)
                                                     )
                                                     .clickable {
                                                         cartViewModel.selectedPrice.value =
-                                                            course.course.prices.intensive!!
+                                                            course.course.prices.intensive.price!!
                                                         cartViewModel.selectedType.value = "intensive"
 
                                                         val cartItem =
                                                             cartViewModel.courses.get(cartViewModel.selectedCourseIndex.value)
                                                         cartItem.price =
-                                                            course.course.prices.intensive
+                                                            course.course.prices.intensive.price
                                                         cartViewModel.courses[cartViewModel.selectedCourseIndex.value] =
                                                             cartItem
 
@@ -936,7 +936,7 @@ fun CartScreen(
                                                 Text(
                                                     text = "Интенсив",
                                                     Modifier.padding(10.dp),
-                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.intensive) Color.White else Color.Black
+                                                    color = if (cartViewModel.selectedPrice.value == course.course.prices.intensive.price) Color.White else Color.Black
                                                 )
                                             }
                                         }
@@ -1158,18 +1158,8 @@ fun CartCourse(
     modifier: Modifier = Modifier,
     onAuthBuy: () -> Unit = {}
 ) {
-    var text = "";
-    if (item.type == "dist") {
-        text = "Дистанционно"
-    } else if (item.type == "sale15") {
-        text = "Очно в группе"
-    } else if (item.course.prices.ind == price) {
-        text = "Индивидуально"
-    }else if (item.course.prices.intensive == price) {
-        text = "Интенсив"
-    } else if (item.course.prices.weekend == price) {
-        text = "Учись в выходной"
-    }
+    var text = item.getPriceName()
+
     val coroutineScopeDates = rememberCoroutineScope()
     val coroutineScope = rememberCoroutineScope()
 

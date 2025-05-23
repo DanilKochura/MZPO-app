@@ -1,5 +1,6 @@
 package lk.mzpo.ru.viewModel
 
+import NewPrices
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ class CourseViewModel(
     val availible_months = mutableStateOf(listOf<Int>()) // список доступных месяцев для расписания
     val admissions = mutableStateOf(listOf<String>())
     val selectedPrice = mutableStateOf(0) //выбранная цена для главной
+    val selectedPriceBase = mutableStateOf(0) //выбранная цена(базовая) для главной
     val selectedType = mutableStateOf("sale15") //выбранный тип цены для главной
     val selectedMonth = mutableStateOf(0) // выбранный месяц для расписания
     val db = Firebase.firestore
@@ -70,6 +72,7 @@ class CourseViewModel(
             //mainObject.length()
             val item = mainObject as JSONObject
             val prices = item.getJSONObject("prices")
+            val new_prices = item.getJSONObject("new_prices")
             var groups = JSONArray()
             var docs = JSONArray()
             var adms = JSONArray()
@@ -139,6 +142,8 @@ class CourseViewModel(
                 }
             }
             val gson = Gson()
+
+
             if (groups.length() > 0) {
                 try {
                     for (j in 0 until groups.length()) {
@@ -151,6 +156,25 @@ class CourseViewModel(
                     Log.d("MyLog", "Groups:  " + e.toString())
                 }
             }
+            val _prices = gson.fromJson(new_prices.toString(), NewPrices::class.java)
+            if (_prices.dist != null)
+            {
+                selectedPrice.value = _prices.dist.price!!
+                selectedPriceBase.value = _prices.dist.old!!
+            } else if (_prices.sale15 !== null)
+            {
+                selectedPrice.value = _prices.sale15.price!!
+                selectedPriceBase.value = _prices.sale15.old!!
+            } else if (_prices.intensive !== null)
+            {
+                selectedPrice.value = _prices.intensive.price!!
+                selectedPriceBase.value = _prices.intensive.old!!
+            } else if (_prices.ind !== null)
+            {
+                selectedPrice.value = _prices.ind.price!!
+                selectedPriceBase.value = _prices.ind.old!!
+            }
+
             var modulesAr = listOf<Module>()
             if (mods.length() == 0) {
                 modulesAr = listOf()
@@ -169,7 +193,7 @@ class CourseViewModel(
                     item.getString("site_name"),
                     item.getString("prefix"),
                     item.getInt("hours"),
-                    getPrice(prices),
+                    _prices,
                     item.getString("description"),
                     item.getString("uid_1c"),
                     images,

@@ -89,6 +89,7 @@ fun CatalogScreen(
     cart_sum: MutableState<Int> = mutableStateOf(0)
 
 ) {
+    Log.d("MyLog!!!", string)
     val bottomSheetState =
         rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
         val contextForToast = LocalContext.current.applicationContext
@@ -500,7 +501,7 @@ fun CourseCardDual(course: CoursePreview, modifier: Modifier = Modifier)
                 androidx.compose.material3.Text(text = course.doctype, color = Color.Gray, fontSize = 14.sp)
             }
         }
-            if (course.prices.dist != 0 && course.prices.dist != null)
+            if (course.prices.dist != null && course.prices.dist.price != 0)
             {
                 Column(
                     Modifier
@@ -520,7 +521,7 @@ fun CourseCardDual(course: CoursePreview, modifier: Modifier = Modifier)
                                 fontSize = 10.sp
                             )
                             androidx.compose.material3.Text(
-                                text = course.prices.dist.toString() + " руб.",
+                                text = course.prices.dist.price.toString() + " руб.",
                                 color = Color.White,
                                 fontSize = 16.sp
                             )
@@ -542,7 +543,7 @@ fun CourseCardDual(course: CoursePreview, modifier: Modifier = Modifier)
                                 color = Color.White,
                                 fontSize = 11.sp)
                             androidx.compose.material3.Text(
-                                text = "от " + course.getMinPrice().toString() + " руб.",
+                                text = "от " + course.getMinPrice().price.toString() + " руб.",
                                 color = Color.White, fontSize = 16.sp
                             )
 

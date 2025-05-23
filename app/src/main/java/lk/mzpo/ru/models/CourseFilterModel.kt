@@ -7,23 +7,23 @@ class CourseFilterModel(var fromCost: Int?, var toCost: Int?, var dist: Boolean,
     public fun filterBase(predicate: CoursePreview): Boolean {
         if(sale && !dist)
         {
-            if(predicate.prices.sale15 != null && predicate.prices.sale15 != 0)
+            if(predicate.prices.sale15 != null && predicate.prices.sale15.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.sale15) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.sale15.price) == true)
                 {
                     return true;
                 }
             }
-            if(predicate.prices.weekend != null && predicate.prices.weekend != 0)
+            if(predicate.prices.weekend != null && predicate.prices.weekend.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.weekend) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.weekend.price) == true)
                 {
                     return true;
                 }
             }
-            if(predicate.prices.ind != null && predicate.prices.ind != 0)
+            if(predicate.prices.ind != null && predicate.prices.ind.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.ind) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.ind.price) == true)
                 {
                     return true;
                 }
@@ -31,9 +31,9 @@ class CourseFilterModel(var fromCost: Int?, var toCost: Int?, var dist: Boolean,
             return false
         } else if (!sale && dist)
         {
-            if(predicate.prices.dist != null && predicate.prices.dist != 0)
+            if(predicate.prices.dist != null && predicate.prices.dist.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.dist) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.dist.price) == true)
                 {
                     return true;
                 }
@@ -42,30 +42,30 @@ class CourseFilterModel(var fromCost: Int?, var toCost: Int?, var dist: Boolean,
         }
         else
         {
-            if(predicate.prices.dist != null && predicate.prices.dist != 0)
+            if(predicate.prices.dist != null && predicate.prices.dist.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.dist) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.dist.price) == true)
                 {
                     return true;
                 }
             }
-            if(predicate.prices.sale15 != null && predicate.prices.sale15 != 0)
+            if(predicate.prices.sale15 != null && predicate.prices.sale15.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.sale15) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.sale15.price) == true)
                 {
                     return true;
                 }
             }
-            if(predicate.prices.weekend != null && predicate.prices.weekend != 0)
+            if(predicate.prices.weekend != null && predicate.prices.weekend.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.weekend) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.weekend.price) == true)
                 {
                     return true;
                 }
             }
-            if(predicate.prices.ind != null && predicate.prices.ind != 0)
+            if(predicate.prices.ind != null && predicate.prices.ind.price != 0)
             {
-                if(fromCost?.until(toCost!!)?.contains(predicate.prices.ind) == true)
+                if(fromCost?.until(toCost!!)?.contains(predicate.prices.ind.price) == true)
                 {
                     return true;
                 }

@@ -8,3 +8,16 @@ data class Prices (
     val weekend: Int?,
     val intensive: Int?
         )
+
+data class PricesNew (
+    var sale15: PriceNew?,
+    val dist: PriceNew?,
+    val ind: PriceNew?,
+    val weekend: PriceNew?,
+    val intensive: PriceNew?
+)
+
+data class PriceNew (
+    var old: Int,
+    var price: Int
+)

@@ -1,5 +1,6 @@
 package lk.mzpo.ru.models
 
+import NewPrices
 import com.google.gson.annotations.SerializedName
 
 class Course(
@@ -8,7 +9,7 @@ class Course(
     val name: String,
     val prefix: String,
     val hours: Int,
-    val prices: Prices,
+    val prices: NewPrices,
     val description: String,
     val uid: String,
     val images: List<String>,

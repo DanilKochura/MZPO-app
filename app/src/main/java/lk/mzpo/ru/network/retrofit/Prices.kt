@@ -20,3 +20,17 @@ data class Prices (
 	@SerializedName("dist") val dist : Int?,
 	@SerializedName("intensive") val intensive : Int?
 )
+
+data class NewPrices (
+
+	@SerializedName("sale15") val sale15 : NewPrice?,
+	@SerializedName("ind") val ind : NewPrice?,
+	@SerializedName("weekend") val weekend : NewPrice?,
+	@SerializedName("dist") val dist : NewPrice?,
+	@SerializedName("intensive") val intensive : NewPrice?
+)
+data class NewPrice (
+	@SerializedName("old") val old : Int?,
+	@SerializedName("price") val price : Int?,
+)
+

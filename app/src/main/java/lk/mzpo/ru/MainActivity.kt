@@ -128,7 +128,6 @@ class MainActivity : ComponentActivity() {
 //
 //        }
         analytics = Firebase.analytics
-
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         HttpsTrustManager.allowAllSSL();

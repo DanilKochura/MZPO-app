@@ -25,11 +25,11 @@ class CartItem(
       text = "Дистанционно"
     } else if (this.type == "sale15") {
       text = "Очно в группе"
-    } else if (this.course.prices.ind == price) {
+    } else if (this.type == "ind") {
       text = "Индивидуально"
-    }else if (this.course.prices.intensive == price) {
+    }else if (this.type == "intensiv") {
       text = "Интенсив"
-    } else if (this.course.prices.weekend == price) {
+    } else if (this.type == "weekend") {
       text = "Учись в выходной"
     }
     return text;
@@ -39,5 +39,5 @@ class CartItem(
 class PriceCart(
   @SerializedName("full_price")  val full_price: Int,
   @SerializedName("price")  val price: Int,
-  @SerializedName("sale")  val sale: Int
+  @SerializedName("main_sale")  val sale: Int
 )

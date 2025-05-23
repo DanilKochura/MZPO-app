@@ -122,7 +122,6 @@ import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.CartViewModel
 import lk.mzpo.ru.viewModel.CourseViewModel
-import java.math.RoundingMode
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -602,8 +601,7 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                 fontSize = 40.sp
             )
             Text(
-                text = courseViewModel.selectedPrice.value.times(1.15).toBigDecimal()
-                    .setScale(-2, RoundingMode.UP).toInt().toString() + " ₽",
+                text = courseViewModel.selectedPriceBase.value.toString() + " ₽",
                 textDecoration = TextDecoration.LineThrough,
                 fontSize = 18.sp,
                 modifier = Modifier.padding(start = 10.dp)
@@ -622,8 +620,8 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                 .padding(vertical = 15.dp)
                 .horizontalScroll(rememberScrollState())
         ) {
-            if (course.prices.dist != 0) {
-                if (course.prices.dist != 0) {
+            if (course.prices.dist !== null && course.prices.dist.price != 0) {
+                if (course.prices.dist.price != 0) {
                     Column(
                         modifier = Modifier
                             .height(45.dp)
@@ -631,14 +629,15 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                             .clip(
                                 RoundedCornerShape(20)
                             )
-                            .background(if (courseViewModel.selectedPrice.value == course.prices.dist!!) Primary_Green else Color.Transparent)
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.dist.price!!) Primary_Green else Color.Transparent)
                             .border(
                                 width = 1.dp,
-                                color = if (courseViewModel.selectedPrice.value == course.prices.dist!!) Primary_Green else Color.LightGray,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.dist.price!!) Primary_Green else Color.LightGray,
                                 RoundedCornerShape(20)
                             )
                             .clickable {
-                                courseViewModel.selectedPrice.value = course.prices.dist!!
+                                courseViewModel.selectedPrice.value = course.prices.dist.price!!
+                                courseViewModel.selectedPriceBase.value = course.prices.dist.old!!
                                 courseViewModel.selectedType.value = "dist"
                                 if (scrollstate.value > 800) {
                                     scope.launch {
@@ -651,12 +650,12 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                         Text(
                             text = "Дистанционно",
                             Modifier.padding(10.dp),
-                            color = if (courseViewModel.selectedPrice.value == course.prices.dist!!) Color.White else Color.Black
+                            color = if (courseViewModel.selectedPrice.value == course.prices.dist.price!!) Color.White else Color.Black
                         )
                     }
                 }
             } else {
-                if (course.prices.sale15 != 0) {
+                if (course.prices.sale15 !== null && course.prices.sale15.price != 0) {
                     Column(
                         modifier = Modifier
                             .height(45.dp)
@@ -664,14 +663,16 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                             .clip(
                                 RoundedCornerShape(20)
                             )
-                            .background(if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.Transparent)
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.sale15.price!!) Primary_Green else Color.Transparent)
                             .border(
                                 width = 1.dp,
-                                color = if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Primary_Green else Color.LightGray,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.sale15.price!!) Primary_Green else Color.LightGray,
                                 RoundedCornerShape(20)
                             )
                             .clickable {
-                                courseViewModel.selectedPrice.value = course.prices.sale15!!
+                                courseViewModel.selectedPrice.value = course.prices.sale15.price!!
+                                courseViewModel.selectedPriceBase.value = course.prices.sale15.old!!
+
                                 courseViewModel.selectedType.value = "sale15"
 
                                 if (scrollstate.value > 800) {
@@ -685,11 +686,11 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                         Text(
                             text = "Очно в группе",
                             Modifier.padding(10.dp),
-                            color = if (courseViewModel.selectedPrice.value == course.prices.sale15!!) Color.White else Color.Black
+                            color = if (courseViewModel.selectedPrice.value == course.prices.sale15.price!!) Color.White else Color.Black
                         )
                     }
                 }
-                if (course.prices.ind != 0) {
+                if (course.prices.ind !== null && course.prices.ind.price != 0) {
                     Column(
                         modifier = Modifier
                             .height(45.dp)
@@ -697,14 +698,16 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                             .clip(
                                 RoundedCornerShape(20)
                             )
-                            .background(if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.Transparent)
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.ind.price!!) Primary_Green else Color.Transparent)
                             .border(
                                 width = 1.dp,
-                                color = if (courseViewModel.selectedPrice.value == course.prices.ind!!) Primary_Green else Color.LightGray,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.ind.price!!) Primary_Green else Color.LightGray,
                                 RoundedCornerShape(20)
                             )
                             .clickable {
-                                courseViewModel.selectedPrice.value = course.prices.ind!!
+                                courseViewModel.selectedPrice.value = course.prices.ind.price!!
+                                courseViewModel.selectedPriceBase.value = course.prices.ind.old!!
+
                                 courseViewModel.selectedType.value = "ind"
 
                                 if (scrollstate.value > 800) {
@@ -718,11 +721,11 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                         Text(
                             text = "Индивидуально",
                             Modifier.padding(10.dp),
-                            color = if (courseViewModel.selectedPrice.value == course.prices.ind!!) Color.White else Color.Black
+                            color = if (courseViewModel.selectedPrice.value == course.prices.ind.price!!) Color.White else Color.Black
                         )
                     }
                 }
-                if (course.prices.weekend != 0) {
+                if (course.prices.weekend !== null && course.prices.weekend.price != 0) {
                     Column(
                         modifier = Modifier
                             .height(45.dp)
@@ -730,14 +733,15 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                             .clip(
                                 RoundedCornerShape(20)
                             )
-                            .background(if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.Transparent)
+                            .background(if (courseViewModel.selectedPrice.value == course.prices.weekend.price!!) Primary_Green else Color.Transparent)
                             .border(
                                 width = 1.dp,
-                                color = if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Primary_Green else Color.LightGray,
+                                color = if (courseViewModel.selectedPrice.value == course.prices.weekend.price!!) Primary_Green else Color.LightGray,
                                 RoundedCornerShape(20)
                             )
                             .clickable {
-                                courseViewModel.selectedPrice.value = course.prices.weekend!!
+                                courseViewModel.selectedPrice.value = course.prices.weekend.price!!
+                                courseViewModel.selectedPriceBase.value = course.prices.weekend.old!!
                                 courseViewModel.selectedType.value = "weekend"
 
                                 if (scrollstate.value > 800) {
@@ -751,7 +755,7 @@ fun CourseInfo(courseViewModel: CourseViewModel, scrollstate: ScrollState) {
                         Text(
                             text = "Учись в выходной",
                             Modifier.padding(10.dp),
-                            color = if (courseViewModel.selectedPrice.value == course.prices.weekend!!) Color.White else Color.Black
+                            color = if (courseViewModel.selectedPrice.value == course.prices.weekend.price!!) Color.White else Color.Black
                         )
                     }
                 }
@@ -1103,6 +1107,7 @@ fun CourseModules(course: Course) {
             }
 
         }
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 

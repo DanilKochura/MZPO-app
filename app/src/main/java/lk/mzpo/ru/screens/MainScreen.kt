@@ -3,7 +3,8 @@
 package lk.mzpo.ru.screens
 
 import CoursePreview
-import Prices
+import NewPrice
+import NewPrices
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -641,7 +642,7 @@ fun Main(
 
 @Preview
 @Composable
-fun CourseCard(course: CoursePreview = CoursePreview(1, "https://trayektoriya.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, Prices(1,2,3, 4, 0), "", 1,""), modifier: Modifier = Modifier.width(300.dp), obClick: () -> Unit = {})
+fun CourseCard(course: CoursePreview = CoursePreview(1, "https://trayektoriya.ru/build/images/courses/2022-03-10/1.jpg", "Классический массаж тела", "МАС-1", 60, NewPrices(NewPrice(0,0), null, null, null, null), "", 1,"", false), modifier: Modifier = Modifier.width(300.dp), obClick: () -> Unit = {})
 {
     Card(modifier = modifier
         .padding(end = 5.dp)
@@ -678,17 +679,17 @@ fun CourseCard(course: CoursePreview = CoursePreview(1, "https://trayektoriya.ru
                 Text(text = "Срок обучения: ", fontWeight = FontWeight.Bold)
                 Text(text = "1,5 - 2 мес.")
             }
-            if (course.prices.dist != 0 && course.prices.dist != null)
+            if (course.prices.dist != null && course.prices.dist.price != 0 )
             {
                 Row{
                     Text(text = "Дистанционно: ", fontWeight = FontWeight.Bold)
-                    Text(text = "9000 руб.", color = Aggressive_red)
+                    Text(text = course.prices.dist.price.toString()+" руб.", color = Aggressive_red)
                 }
             } else
             {
                 Row{
                     Text(text = "Очно: ", fontWeight = FontWeight.Bold)
-                    Text(text = "от "+course.prices.sale15.toString()+" руб.", color = Aggressive_red)
+                    Text(text = "от "+course.prices.sale15?.price.toString()+" руб.", color = Aggressive_red)
                 }
             }
             Button(onClick = { obClick.invoke() }, modifier = Modifier
