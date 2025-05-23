@@ -34,6 +34,14 @@ data class UserDocument (
     @SerializedName("comment"       ) var comment      : String?    = null,
     @SerializedName("created_at"    ) var createdAt    : String?    = null,
     @SerializedName("updated_at"    ) var updatedAt    : String?    = null,
-    @SerializedName("admission"     ) var admission    : Admission? = Admission()
+    @SerializedName("admission"     ) var admission    : Admission? = Admission(),
+    @SerializedName("required"      ) var  required    : String? = null,
+    @SerializedName("uploaded_at"   ) var uploadedAt   : String? = null,
+    @SerializedName("cond"          ) var cond         : DocumentCondition? = null
 
+)
+
+data class DocumentCondition (
+    @SerializedName("class") var style: String = "",
+    @SerializedName("condition") var condition: String = ""
 )
