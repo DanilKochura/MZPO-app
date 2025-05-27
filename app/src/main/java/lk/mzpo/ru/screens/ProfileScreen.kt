@@ -127,7 +127,8 @@ fun ProfileScreen(
                         Modifier
                             .fillMaxSize()
                             .background(
-                                color = Color.White,
+                                color = Color(0xFFEFF4F6),
+//                                color = Color.White,
                                 shape = RoundedCornerShape(
                                     topStart = MainRounded,
                                     topEnd = MainRounded
@@ -279,10 +280,11 @@ fun ProfileScreen(
                             )
                             Column (modifier =
                                 Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Color.White)
                                     .padding(5.dp)
                                     .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color.White)
+
 
 
                             ){
@@ -327,10 +329,11 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.height(50.dp))
                             Column (modifier =
                                 Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Color.White)
                                     .padding(5.dp)
                                     .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color.White)
+
 
 
                             ) {
@@ -510,8 +513,8 @@ fun ProfilePreview()
                         Modifier
                             .fillMaxSize()
                             .background(
-//                                color = Color(0xFFB2B7B9),
-                                color = Color.White,
+                                color = Color(0xFFEFF4F6),
+//                                color = Color.White,
                                 shape = RoundedCornerShape(
                                     topStart = MainRounded,
                                     topEnd = MainRounded
@@ -642,10 +645,11 @@ fun ProfilePreview()
                             Spacer(Modifier.height(20.dp))
                             Column (modifier =
                                 Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Color.White)
                                     .padding(5.dp)
                                     .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color.White)
+
 
 
                             ) {
@@ -682,10 +686,10 @@ fun ProfilePreview()
                             Spacer(modifier = Modifier.height(50.dp))
                             Column (modifier =
                                 Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Color.White)
                                     .padding(5.dp)
                                     .shadow(2.dp, shape = RoundedCornerShape(20.dp), clip = true)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color.White)
 
 
                             ) {

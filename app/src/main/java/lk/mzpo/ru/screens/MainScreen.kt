@@ -44,6 +44,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
@@ -77,6 +78,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -106,6 +108,7 @@ import lk.mzpo.ru.ui.components.SearchViewPreview
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.StoryIndicator
 import lk.mzpo.ru.ui.theme.Aggressive_red
+import lk.mzpo.ru.ui.theme.New_Aggressive_red
 import lk.mzpo.ru.ui.theme.Primary_Green
 import lk.mzpo.ru.viewModel.MainViewModel
 import kotlin.math.abs
@@ -694,8 +697,11 @@ fun CourseCard(course: CoursePreview = CoursePreview(1, "https://trayektoriya.ru
             }
             Button(onClick = { obClick.invoke() }, modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 5.dp), shape = RoundedCornerShape(30), colors = ButtonDefaults.buttonColors(backgroundColor = Aggressive_red, contentColor = Color.White)) {
-                Text("Купить со скидкой", color = Color.White)
+                .padding(vertical = 5.dp), shape = RoundedCornerShape(30), colors = ButtonDefaults.buttonColors(backgroundColor = New_Aggressive_red, contentColor = Color.White)) {
+                Row (horizontalArrangement = Arrangement.SpaceAround){
+                    Icon(painter = painterResource(R.drawable.baseline_shopping_basket_24), contentDescription = "", tint = Color.White, modifier=Modifier.padding(end = 5.dp))
+                    Text("Купить со скидкой", color = Color.White)
+                }
             }
         }
     }
@@ -1113,3 +1119,91 @@ fun SliderView(state: PagerState, viewModel: MainViewModel, navHostController: N
 }
 
 
+
+
+@Preview
+@Composable
+fun MassageCourseCard() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .background(
+                color = Color(0xCCFFFFFF), // полупрозрачный белый
+                shape = RoundedCornerShape(16.dp)
+            )
+            .shadow(8.dp, RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        Column {
+            Text(
+                text = "Освой массаж за 2 месяца!",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0A3E52)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Пример изображения
+            Image(
+                painter = painterResource(id = R.drawable.massaj),
+                contentDescription = "Массаж",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text("Классический массаж тела", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(painter = painterResource(R.drawable.time_svgrepo_com), contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("72 ак.ч.", color = Color.Gray)
+
+                Spacer(Modifier.width(16.dp))
+
+                Icon(painter = painterResource(R.drawable.diploma_svgrepo_com), contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Свидетельство", color = Color.Gray)
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Длительность: 1,5–2 мес.", color = Color.Gray)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "от 18 000 руб.",
+                    style = TextStyle(textDecoration = TextDecoration.LineThrough),
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "15 700 руб.",
+                    color = Color(0xFFE53935),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { /* TODO: Handle click */ },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE53935)),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Записаться со скидкой")
+            }
+        }
+    }
+}

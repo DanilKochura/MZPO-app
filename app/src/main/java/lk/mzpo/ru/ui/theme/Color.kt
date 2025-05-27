@@ -31,6 +31,7 @@ val Third_green = Color(0xFF3D8A8A);
 val Transparent = Color(0x357A89);
 //val Aggressive_red = Color(0xFFCA6D8F)
 val Aggressive_red = Color(0xFFAB352C)
+val New_Aggressive_red = Color(0xFFCE4540)
 val Orange = Color(0xFFE0843E)
 val Blue_BG = Color(0xFF2F6DB9)
 val Skin = Color(0xFF75533C)

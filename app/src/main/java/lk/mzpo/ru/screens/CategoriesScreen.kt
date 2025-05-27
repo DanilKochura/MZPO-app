@@ -1,6 +1,5 @@
 package lk.mzpo.ru.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,11 +8,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -62,7 +59,6 @@ import lk.mzpo.ru.ui.theme.Primary_Green_BG
 import lk.mzpo.ru.ui.theme.Second_Green
 import lk.mzpo.ru.ui.theme.Third_green
 import lk.mzpo.ru.viewModel.CategoriesViewModel
-import kotlin.math.log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -279,7 +275,7 @@ fun CatCardAlternate(category: Category, navHostController: NavHostController, m
     }
     Surface (modifier = modifier
         .padding(horizontal = 5.dp)
-        .shadow(1.dp, RoundedCornerShape(10.dp))
+        .shadow(5.dp, RoundedCornerShape(10.dp))
         .clickable {
             navHostController.navigate("catalog?name=" + category.url)
         }) {
