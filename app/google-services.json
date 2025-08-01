@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "384937914759",
+    "project_id": "mzpo-bae65",
+    "storage_bucket": "mzpo-bae65.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:384937914759:android:c631c289ea8b3231946322",
+        "android_client_info": {
+          "package_name": "lk.mzpo.ru"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "384937914759-2tfp9j8n9vmgphror8ggtso63kqfnd9p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuhqhnuRmZjtxGmlhdJcqxsZSEEtd2e00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "384937914759-2tfp9j8n9vmgphror8ggtso63kqfnd9p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
