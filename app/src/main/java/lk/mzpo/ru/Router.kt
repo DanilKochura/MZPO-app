@@ -50,7 +50,7 @@ import lk.mzpo.ru.screens.Main
 import lk.mzpo.ru.screens.NotificationPromoScreen
 import lk.mzpo.ru.screens.NotificationsScreen
 import lk.mzpo.ru.screens.PdfGiftScreen
-import lk.mzpo.ru.screens.PdfScreen
+import lk.mzpo.ru.screens.PdfScreen_New
 import lk.mzpo.ru.screens.ProfileScreen
 import lk.mzpo.ru.screens.RegisterScreen
 import lk.mzpo.ru.screens.StudyModuleScreen
@@ -507,10 +507,11 @@ fun NavGraph(
                 val contract =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<Int>("CONTRACT")
                 if (userObject !== null && contract !== null) {
-                    PdfScreen(
+                    PdfScreen_New(
                         navHostController = navHostController,
                         material = userObject,
-                        contract = contract
+                        contract = contract,
+                        startPage = userObject.watched
                     )
                 } else {
                     navHostController.navigate("study")
