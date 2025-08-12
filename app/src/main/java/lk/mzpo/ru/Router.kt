@@ -36,7 +36,6 @@ import lk.mzpo.ru.models.Gift
 import lk.mzpo.ru.models.User
 import lk.mzpo.ru.models.study.ActiveFile
 import lk.mzpo.ru.models.study.NewMaterials
-import lk.mzpo.ru.models.study.StudyModule
 import lk.mzpo.ru.screens.CartScreen
 import lk.mzpo.ru.screens.CatalogScreen
 import lk.mzpo.ru.screens.CategoriesScreen
@@ -277,15 +276,20 @@ fun NavGraph(
                 }
 
             }
-            composable("study")
+            composable(
+                route = "study/{id}", arguments = listOf(navArgument("id") {
+                    type = NavType.IntType
+                })
+            )
             {
+                val id = it.arguments?.getInt("id")
 
                 val contractJson =
                     navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Contract")
                 val gson = Gson()
                 val contract = gson.fromJson(contractJson, Contract::class.java)
-                if (contract !== null) {
-                    StudyScreen(contract = contract, navHostController = navHostController)
+                if (contract !== null || id !== null) {
+                    StudyScreen(contract_id = id!!, navHostController = navHostController)
                 } else {
                     ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
@@ -303,27 +307,22 @@ fun NavGraph(
                     ContractsScreen(navHostController = navHostController, cart_sum = cart_sum)
                 }
             }
-            composable("study/module")
+            composable(
+                "study/{contractId}/module/{id}", arguments = listOf(
+                    navArgument("id")
+                    {
+                        type = NavType.IntType
+                    }, navArgument("contractId") {
+                        type = NavType.IntType
+                    }
+                ))
             {
-
-                val gson = Gson()
-                var contract: Contract? = null
-                var module: StudyModule? = null
-                try {
-                    val contractJson =
-                        navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("Contract")
-                    contract = gson.fromJson(contractJson, Contract::class.java)
-
-                    val moduleJson =
-                        navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("StudyModule")
-                    module = gson.fromJson(moduleJson, StudyModule::class.java)
-                } catch (_: Exception) {
-                }
-
-                if (contract !== null && module !== null) {
+                val id = it.arguments?.getInt("id")
+                val contractId = it.arguments?.getInt("contractId")
+                if (contractId !== null && id !== null) {
                     StudyModuleScreen(
-                        module = module,
-                        contract = contract,
+                        moduleId = id,
+                        contractId = contractId,
                         navHostController = navHostController,
                         cart_sum = cart_sum
                     )
@@ -343,7 +342,8 @@ fun NavGraph(
             {
                 Main(navHostController, cart_sum = cart_sum)
             }
-            composable("login",
+            composable(
+                "login",
                 deepLinks = listOf(
                     navDeepLink {
                         uriPattern = "https://trayektoriya.ru/login"
@@ -369,16 +369,16 @@ fun NavGraph(
 
             composable(
                 route = "confirmation/{id}",
-                arguments = listOf(navArgument("id")
-                {
-                    type = NavType.IntType
-                })
+                arguments = listOf(
+                    navArgument("id")
+                    {
+                        type = NavType.IntType
+                    })
             )
 
             {
                 val id = it.arguments?.getInt("id")
-                if (id !== null)
-                {
+                if (id !== null) {
                     ConfirmationScreen(
                         navHostController = navHostController,
                         cart_sum = cart_sum,
@@ -388,16 +388,17 @@ fun NavGraph(
                     )
                 }
             }
-            composable("cart-deep", deepLinks = listOf(
-                navDeepLink {
-                    uriPattern = "https://trayektoriya.ru/mobile/cart"
-                    action = Intent.ACTION_VIEW
-                },
-                navDeepLink {
-                    uriPattern = "https://trayektoriya.ru/category/cart"
-                    action = Intent.ACTION_VIEW
-                }
-            ))
+            composable(
+                "cart-deep", deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "https://trayektoriya.ru/mobile/cart"
+                        action = Intent.ACTION_VIEW
+                    },
+                    navDeepLink {
+                        uriPattern = "https://trayektoriya.ru/category/cart"
+                        action = Intent.ACTION_VIEW
+                    }
+                ))
             {
                 CartScreen(
                     navHostController = navHostController,
@@ -417,10 +418,11 @@ fun NavGraph(
 
             composable(
                 route = "course/{id}",
-                arguments = listOf(navArgument("id")
-                {
-                    type = NavType.IntType
-                })
+                arguments = listOf(
+                    navArgument("id")
+                    {
+                        type = NavType.IntType
+                    })
             ) {
                 val id = it.arguments?.getInt("id")
                 if (id != null) {
@@ -498,24 +500,27 @@ fun NavGraph(
                 }
             }
             composable(
-                "pdf",
-            ) {
-                val userJson =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<String>("MATERIAL")
-                val gson = Gson()
-                val userObject = gson.fromJson(userJson, NewMaterials::class.java)
-                val contract =
-                    navHostController.previousBackStackEntry?.savedStateHandle?.get<Int>("CONTRACT")
-                if (userObject !== null && contract !== null) {
-                    PdfScreen_New(
-                        navHostController = navHostController,
-                        material = userObject,
-                        contract = contract,
-                        startPage = userObject.watched
-                    )
-                } else {
-                    navHostController.navigate("study")
-                }
+                route = "study/{contractId}/module/{moduleId}/{materialId}/pdf",
+                arguments = listOf(
+                    navArgument("contractId")
+                    {
+                        type = NavType.IntType
+                    }, navArgument("moduleId") {
+                        type = NavType.IntType
+                    }, navArgument("materialId") {
+                        type = NavType.IntType
+                    }
+                )) {
+                val contractId = it.arguments?.getInt("contractId")
+                val moduleId = it.arguments?.getInt("moduleId")
+                val materialId = it.arguments?.getInt("materialId")
+                PdfScreen_New(
+                    navHostController = navHostController,
+                    materialId = materialId!!,
+                    contractId = contractId!!,
+                    moduleId = moduleId!!
+                )
+
             }
             composable(
                 "gift/pdf",
@@ -560,12 +565,13 @@ fun NavGraph(
             }
             composable(
                 route = BottomItem.Cats.route + "?name={name}",
-                arguments = listOf(navArgument("name")
-                {
-                    type = NavType.StringType
-                    defaultValue = "main"
-                    nullable = true
-                })
+                arguments = listOf(
+                    navArgument("name")
+                    {
+                        type = NavType.StringType
+                        defaultValue = "main"
+                        nullable = true
+                    })
             ) { entry ->
                 CatalogScreen(
                     navHostController = navHostController,
@@ -575,12 +581,13 @@ fun NavGraph(
             }
             composable(
                 route = BottomItem.Cats.route + "?search={search}",
-                arguments = listOf(navArgument("search")
-                {
-                    type = NavType.StringType
-                    defaultValue = "main"
-                    nullable = true
-                })
+                arguments = listOf(
+                    navArgument("search")
+                    {
+                        type = NavType.StringType
+                        defaultValue = "main"
+                        nullable = true
+                    })
             ) { entry ->
 
                 CatalogScreen(

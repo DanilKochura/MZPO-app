@@ -49,140 +49,94 @@ import coil.compose.AsyncImage
 import com.google.gson.Gson
 import lk.mzpo.ru.R
 import lk.mzpo.ru.models.BottomNavigationMenu
-import lk.mzpo.ru.models.Contract
 import lk.mzpo.ru.models.study.NewMaterials
-import lk.mzpo.ru.models.study.StudyModule
+import lk.mzpo.ru.ui.components.LoadableScreen
 import lk.mzpo.ru.ui.theme.MainRounded
 import lk.mzpo.ru.ui.theme.Orange
 import lk.mzpo.ru.ui.theme.Primary_Green
-import lk.mzpo.ru.viewModel.StudyViewModel
+import lk.mzpo.ru.viewModel.StudyModuleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun StudyModuleScreen(
-    module: StudyModule,
-    contract: Contract,
+    moduleId: Int,
+    contractId: Int,
     navHostController: NavHostController,
-    studyViewModel: StudyViewModel = viewModel(),
+    studyViewModel: StudyModuleViewModel = viewModel(),
     cart_sum: MutableState<Int> = mutableStateOf(0)
 
 ) {
     val gson = Gson()
+    val context = LocalContext.current
 
-    Scaffold(
+    studyViewModel.getData(context, contractId, moduleId)
+    LoadableScreen(loaded = studyViewModel.loaded, error = studyViewModel.error)
+    {
+        val module = studyViewModel.module.value!!
+        Scaffold(
 
-        bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
-        content = { padding ->
-            Log.d("StudyLog", "entered")
-            val context = LocalContext.current
-            val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-            val token = test.getString("token_lk", "")
-            val uriHandler = LocalUriHandler.current
+            bottomBar = { BottomNavigationMenu(navController = navHostController, cart = cart_sum) },
+            content = { padding ->
+                Log.d("StudyLog", "entered")
+                val context = LocalContext.current
+                val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+                val token = test.getString("token_lk", "")
+                val uriHandler = LocalUriHandler.current
 
-            Box(
-                Modifier
-                    .background(color = Primary_Green)
-                    .fillMaxSize()
-            ) {
-                //region Top
-                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    Image(
-                        painter = painterResource(id = R.drawable.lebed),
-                        contentDescription = "lebed_back",
-                        modifier = Modifier.padding(1.dp)
-                    )
-                }
-                //endregion
-
-                Column(
+                Box(
                     Modifier
+                        .background(color = Primary_Green)
                         .fillMaxSize()
-                        .padding(padding)
                 ) {
-
-                    //region Search
-                    ProfileHeader(navHostController = navHostController, true)
+                    //region Top
+                    Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                        Image(
+                            painter = painterResource(id = R.drawable.lebed),
+                            contentDescription = "lebed_back",
+                            modifier = Modifier.padding(1.dp)
+                        )
+                    }
                     //endregion
 
                     Column(
                         Modifier
                             .fillMaxSize()
-                            .background(
-                                color = Color.White,
-                                shape = RoundedCornerShape(
-                                    topStart = MainRounded,
-                                    topEnd = MainRounded
-                                )
-                            )
-                            .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
+                            .padding(padding)
                     ) {
 
-                        Text(
-                            text = module.module!!.name!!, textAlign = TextAlign.Center, modifier = Modifier
-                                .padding(10.dp)
-                                .fillMaxWidth(), fontSize = 18.sp
-                        )
-                        LazyColumn(content = {
-                            itemsIndexed(module.materials)
-                            { _, i ->
-                                if (i.file !== null) {
+                        //region Search
+                        ProfileHeader(navHostController = navHostController, true)
+                        //endregion
 
-                                    Card(
-                                        modifier = Modifier
-                                            .padding(vertical = 10.dp, horizontal = 20.dp)
-                                            .shadow(2.dp, RoundedCornerShape(10.dp))
-                                            .clickable(onClick = {
-                                                if (i.file!!.image !== null) {
-                                                    val video = gson.toJson(
-                                                        i,
-                                                        NewMaterials::class.java
-                                                    )
-                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                        "video",
-                                                        video
-                                                    )
-                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                        "contract",
-                                                        contract.id.toString()
-                                                    )
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .background(
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(
+                                        topStart = MainRounded,
+                                        topEnd = MainRounded
+                                    )
+                                )
+                                .clip(RoundedCornerShape(topStart = MainRounded, topEnd = MainRounded))
+                        ) {
 
-                                                    navHostController.navigate("video")
-                                                } else if (i.file!!.type == "file" || i.file!!.type == "downloadable") {
-                                                    val material = gson.toJson(
-                                                        i,
-                                                        NewMaterials::class.java
-                                                    )
-                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                        "MATERIAL",
-                                                        material
-                                                    )
+                            Text(
+                                text = module.module!!.name!!, textAlign = TextAlign.Center, modifier = Modifier
+                                    .padding(10.dp)
+                                    .fillMaxWidth(), fontSize = 18.sp
+                            )
+                            LazyColumn(content = {
+                                itemsIndexed(module.materials)
+                                { _, i ->
+                                    if (i.file !== null) {
 
-                                                    navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                        "CONTRACT",
-                                                        contract.id
-                                                    )
-                                                    navHostController.navigate("pdf")
-                                                } else if (i.file!!.type == "test" || i.file!!.type == "final_test") {
-                                                    navHostController.navigate("test/${contract.id}/${i.id}")
-                                                }
-                                            }),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.White
-                                        )
-                                    ) {
-
-                                        Box(modifier = Modifier.fillMaxWidth())
-                                        {
-                                            if (i.file!!.image !== null) {
-                                                AsyncImage(
-                                                    model = "https://trayektoriya.ru/build/images/videos/${i.file!!.image}",
-                                                    contentDescription = "",
-                                                    modifier = Modifier
-                                                        .fillMaxWidth(),
-                                                    contentScale = ContentScale.FillWidth
-                                                )
-                                                IconButton(
-                                                    onClick = {
+                                        Card(
+                                            modifier = Modifier
+                                                .padding(vertical = 10.dp, horizontal = 20.dp)
+                                                .shadow(2.dp, RoundedCornerShape(10.dp))
+                                                .clickable(onClick = {
+                                                    if (i.file!!.image !== null) {
                                                         val video = gson.toJson(
                                                             i,
                                                             NewMaterials::class.java
@@ -193,139 +147,161 @@ fun StudyModuleScreen(
                                                         )
                                                         navHostController.currentBackStackEntry?.savedStateHandle?.set(
                                                             "contract",
-                                                            contract.id.toString()
+                                                            contractId.toString()
                                                         )
 
                                                         navHostController.navigate("video")
-                                                    }, modifier = Modifier.align(
-                                                        Alignment.Center
-                                                    )
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.PlayArrow,
+                                                    } else if (i.file!!.type == "file" || i.file!!.type == "downloadable") {
+                                                        navHostController.navigate("study/${contractId}/module/${moduleId}/${i.id}/pdf")
+
+                                                    } else if (i.file!!.type == "test" || i.file!!.type == "final_test") {
+                                                        navHostController.navigate("test/${contractId}/${i.id}")
+                                                    }
+                                                }),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.White
+                                            )
+                                        ) {
+
+                                            Box(modifier = Modifier.fillMaxWidth())
+                                            {
+                                                if (i.file!!.image !== null) {
+                                                    AsyncImage(
+                                                        model = "https://trayektoriya.ru/build/images/videos/${i.file!!.image}",
                                                         contentDescription = "",
                                                         modifier = Modifier
-                                                            .background(Primary_Green)
-                                                            .padding(10.dp)
-                                                            .clip(
-                                                                RoundedCornerShape(10.dp)
-                                                            ),
-                                                        tint = Color.White
+                                                            .fillMaxWidth(),
+                                                        contentScale = ContentScale.FillWidth
                                                     )
-                                                }
-
-                                            } else {
-                                                if (i.file!!.type == "file" || i.file!!.type == "downloadable") {
                                                     IconButton(
                                                         onClick = {
-//
-//                                                               uriHandler.openUri("https://trayektoriya.ru/mobile/study/${contract.id}/${i.id}/${token?.trim('\"')}")
-//                                                               navHostController.navigate("material/${contract.id}/${i.id}/${token?.trim('\"')}" )
-                                                            val material = gson.toJson(
+                                                            val video = gson.toJson(
                                                                 i,
                                                                 NewMaterials::class.java
                                                             )
                                                             navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                                "MATERIAL",
-                                                                material
+                                                                "video",
+                                                                video
+                                                            )
+                                                            navHostController.currentBackStackEntry?.savedStateHandle?.set(
+                                                                "contract",
+                                                                contractId.toString()
                                                             )
 
-                                                            navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                                                "CONTRACT",
-                                                                contract.id
-                                                            )
-                                                            navHostController.navigate("pdf")
-                                                        }, modifier = Modifier
-                                                            .align(
-                                                                Alignment.Center
-                                                            )
-                                                            .padding(10.dp)
+                                                            navHostController.navigate("video")
+                                                        }, modifier = Modifier.align(
+                                                            Alignment.Center
+                                                        )
                                                     ) {
                                                         Icon(
-                                                            painter = painterResource(id = R.drawable.doc),
+                                                            imageVector = Icons.Default.PlayArrow,
                                                             contentDescription = "",
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            tint = Primary_Green
+                                                            modifier = Modifier
+                                                                .background(Primary_Green)
+                                                                .padding(10.dp)
+                                                                .clip(
+                                                                    RoundedCornerShape(10.dp)
+                                                                ),
+                                                            tint = Color.White
                                                         )
                                                     }
-                                                } else if (i.file!!.type == "test"  || i.file!!.type == "final_test") {
-                                                    IconButton(
-                                                        onClick = {
-                                                            navHostController.navigate("test/${contract.id}/${i.id}")
-                                                        }, modifier = Modifier
-                                                            .align(
-                                                                Alignment.Center
-                                                            )
-                                                            .padding(10.dp)
-                                                    ) {
-                                                        Icon(
-                                                            painter = painterResource(id = R.drawable.baseline_quiz_24),
-                                                            contentDescription = "",
-                                                            modifier = Modifier.fillMaxSize(),
-                                                            tint = Primary_Green
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            if (i.watched != 0 && i.percent !== null) {
-                                                if (i.percent == 100) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.CheckCircle,
-                                                        contentDescription = "",
-                                                        tint = Primary_Green,
-                                                        modifier = Modifier.padding(5.dp)
-                                                    )
 
                                                 } else {
-                                                    Icon(
-                                                        imageVector = Icons.Default.CheckCircle,
-                                                        contentDescription = "",
-                                                        tint = Orange,
-                                                        modifier = Modifier.padding(5.dp)
-                                                    )
-
+                                                    if (i.file!!.type == "file" || i.file!!.type == "downloadable") {
+                                                        IconButton(
+                                                            onClick = {
+                                                                navHostController.navigate("study/${contractId}/module/${moduleId}/${i.id}/pdf")
+                                                            }, modifier = Modifier
+                                                                .align(
+                                                                    Alignment.Center
+                                                                )
+                                                                .padding(10.dp)
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(id = R.drawable.doc),
+                                                                contentDescription = "",
+                                                                modifier = Modifier.fillMaxSize(),
+                                                                tint = Primary_Green
+                                                            )
+                                                        }
+                                                    } else if (i.file!!.type == "test"  || i.file!!.type == "final_test") {
+                                                        IconButton(
+                                                            onClick = {
+                                                                navHostController.navigate("test/${contractId}/${i.id}")
+                                                            }, modifier = Modifier
+                                                                .align(
+                                                                    Alignment.Center
+                                                                )
+                                                                .padding(10.dp)
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(id = R.drawable.baseline_quiz_24),
+                                                                contentDescription = "",
+                                                                modifier = Modifier.fillMaxSize(),
+                                                                tint = Primary_Green
+                                                            )
+                                                        }
+                                                    }
                                                 }
+                                                if (i.watched != 0 && i.percent !== null) {
+                                                    if (i.percent == 100) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.CheckCircle,
+                                                            contentDescription = "",
+                                                            tint = Primary_Green,
+                                                            modifier = Modifier.padding(5.dp)
+                                                        )
+
+                                                    } else {
+                                                        Icon(
+                                                            imageVector = Icons.Default.CheckCircle,
+                                                            contentDescription = "",
+                                                            tint = Orange,
+                                                            modifier = Modifier.padding(5.dp)
+                                                        )
+
+                                                    }
+                                                }
+
                                             }
+                                            Text(
+                                                text = i.studyMaterial!!.name!!,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(10.dp)
+                                            )
+
 
                                         }
-                                        Text(
-                                            text = i.studyMaterial!!.name!!,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(10.dp)
-                                        )
 
 
                                     }
-
-
                                 }
-                            }
-                            itemsIndexed(module.tests)
-                            { _, i ->
-                                if (i.activeFile !== null) {
+                                itemsIndexed(module.tests)
+                                { _, i ->
+                                    if (i.activeFile !== null) {
 
-                                    Card(
-                                        modifier = Modifier
-                                            .padding(vertical = 10.dp, horizontal = 20.dp)
-                                            .shadow(2.dp, RoundedCornerShape(10.dp))
-                                            .clickable(onClick = {
-                                               if (i.activeFile!!.type == "test" || i.activeFile!!.type == "final_test") {
-                                                    navHostController.navigate("test/${contract.id}/${i.id}")
-                                                }
-                                            }),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.White
-                                        )
-                                    ) {
+                                        Card(
+                                            modifier = Modifier
+                                                .padding(vertical = 10.dp, horizontal = 20.dp)
+                                                .shadow(2.dp, RoundedCornerShape(10.dp))
+                                                .clickable(onClick = {
+                                                    if (i.activeFile!!.type == "test" || i.activeFile!!.type == "final_test") {
+                                                        navHostController.navigate("test/${contractId}/${i.id}")
+                                                    }
+                                                }),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color.White
+                                            )
+                                        ) {
 
-                                        Box(modifier = Modifier.fillMaxWidth())
-                                        {
-                                           if (i.activeFile!!.type == "test"  || i.activeFile!!.type == "final_test") {
+                                            Box(modifier = Modifier.fillMaxWidth())
+                                            {
+                                                if (i.activeFile!!.type == "test"  || i.activeFile!!.type == "final_test") {
                                                     IconButton(
                                                         onClick = {
-                                                            navHostController.navigate("test/${contract.id}/${i.id}")
+                                                            navHostController.navigate("test/${contractId}/${i.id}")
                                                         }, modifier = Modifier
                                                             .align(
                                                                 Alignment.Center
@@ -340,32 +316,33 @@ fun StudyModuleScreen(
                                                         )
                                                     }
                                                 }
+                                            }
+                                            Text(
+                                                text = i.activeFile?.name!!,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(10.dp)
+                                            )
+
+
                                         }
-                                        Text(
-                                            text = i.activeFile?.name!!,
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(10.dp)
-                                        )
 
 
                                     }
-
-
                                 }
-                            }
-                            item {
-                                Spacer(modifier = Modifier.height(50.dp))
-                            }
-                        }, modifier = Modifier.fillMaxWidth())
+                                item {
+                                    Spacer(modifier = Modifier.height(50.dp))
+                                }
+                            }, modifier = Modifier.fillMaxWidth())
+                        }
                     }
                 }
+
+
             }
-
-
-        }
-    )
+        )
+    }
 }
 
 //Column (Modifier.fillMaxWidth()){

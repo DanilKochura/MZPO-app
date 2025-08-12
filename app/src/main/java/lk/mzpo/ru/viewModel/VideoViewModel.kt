@@ -16,14 +16,15 @@ class VideoViewModel  (
     fun update(
         ctx: Context,
         id: Int,
-        time: Float,
-        progress: Int
+        watched: Int,
+        percent: Int,
+        passed: Int,
     ) {
 
         val queue = Volley.newRequestQueue(ctx)
         val stringRequest: StringRequest = object : StringRequest(
             Method.POST,
-            "https://trayektoriya.ru/mobile/user/study/saveTime/$id",
+            "https://trayektoriya.ru/mobile/v2/user/saveTime/$id",
             Response.Listener { response ->
                 Log.d("MyLog", response)
             },
@@ -50,9 +51,11 @@ class VideoViewModel  (
             override fun getParams(): Map<String, String> {
                 val params: MutableMap<String, String> =
                     HashMap()
-                params["time"] = time.toString()
-                params["progress"] = progress.toString()
+                params["passed"] = passed.toString()
+                params["percent"] = percent.toString()
+                params["watched"] = watched.toString()
 //                Log.d("MyLog", params.toString());
+                params["lk_view"] = "0"
                 return params
             }
         }

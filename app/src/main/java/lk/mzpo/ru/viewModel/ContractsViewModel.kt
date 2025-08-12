@@ -1,6 +1,7 @@
 package lk.mzpo.ru.viewModel
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -73,8 +74,10 @@ class ContractsViewModel  (
                             arrayg.add(gson.fromJson(string, Gift::class.java))
                         }
                         this.gifts.value = arrayg
-                    } catch (_:Exception)
+                    } catch (e:Exception)
                     {
+                        Log.d("MyLog", e.stackTrace.joinToString(","))
+                        Log.d("MyLog", e.localizedMessage)
                         error.value = true
                     }
 

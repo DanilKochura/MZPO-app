@@ -1,6 +1,7 @@
 package lk.mzpo.ru.screens
 
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.os.PowerManager
 import android.util.Log
 import android.widget.Toast
@@ -50,6 +51,15 @@ fun VideoScreen(
         wakeLock.acquire(100*60*1000L /*100 minutes*/)  // Захватываем блокировку экрана
     }
 
+    DisposableEffect(Unit) {
+        val activity = ctx as? android.app.Activity
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+
+        onDispose {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+    }
+
     // Освобождаем блокировку, когда видео завершено или экран закрывается
     DisposableEffect(Unit) {
         onDispose {
@@ -95,15 +105,27 @@ fun VideoScreen(
             ),
             volume = 0.5f,  // volume 0.0f to 1.0f
             onCurrentTimeChanged = { // long type, current player time (millisec)
-                if (it/1000 - state.value  > 30)
+                val time = it/1000
+                if (time - state.value  > 30)
                 {
-                    state.value = it/1000F
-                    var send = it/1000.toFloat()
-                    if (video.file!!.size!!.toFloat() - it/1000f < 40)
+                    state.value = time.toFloat()
+                    var send = time.toFloat()
+                    if (video.file!!.size!!.toFloat() - time.toFloat() < 40)
                     {
                         send = video.file!!.size!!.toFloat()
                     }
-                    videoViewModel.update(ctx, video.id, send, video.id)
+                    val size = video.file!!.size!!.toFloat()
+                    val percent = ((send/size)*100).toInt()
+                    var passed = if (percent > 97) 1 else 0
+
+                    Log.d("MyLog", "Watched: "+send.toString())
+                    Log.d("MyLog", "Size: "+size.toString())
+                    Log.d("MyLog", "Percent: "+percent.toString())
+                    Log.d("MyLog", "Progress: "+video.id.toString())
+                    Log.d("MyLog", "Passed: "+passed.toString())
+
+
+                    videoViewModel.update(ctx, video.id, send.toInt(), percent, passed)
                 }
             },
             playerInstance = {

@@ -3,6 +3,7 @@ package lk.mzpo.ru.viewModel
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.android.volley.Response
@@ -25,10 +26,9 @@ import org.json.JSONObject
 
 class StudyViewModel: ViewModel() {
 
-    lateinit var contract: Contract
+    val contract: MutableState<Contract?> = mutableStateOf(null);
     val loaded = mutableStateOf(false)
     val error = mutableStateOf(false)
-
 
     val answered = mutableStateOf(false)
 
@@ -42,6 +42,7 @@ class StudyViewModel: ViewModel() {
     val passedModules = mutableListOf<PassedModules>()
 
     val docsBitMaps = mutableMapOf<Int, Bitmap>()
+    val modules = mutableListOf<String>()
 
     val practiceOcno = mutableListOf<PracticeOchno>()
 
@@ -53,9 +54,9 @@ class StudyViewModel: ViewModel() {
     val examNew = mutableListOf<ExamNew>()
 
     val verify_docs = mutableStateOf(false)
-    fun getData(context: Context)
+    fun getData(context: Context, contract_id: Int)
     {
-        val url = "https://trayektoriya.ru/mobile/user/contract/${contract.id}"
+        val url = "https://trayektoriya.ru/mobile/v2/user/contract/${contract_id}"
         val test = context.getSharedPreferences("session", Context.MODE_PRIVATE)
         val token = test.getString("token_lk", "")
         val queue = Volley.newRequestQueue(context)
@@ -75,6 +76,19 @@ class StudyViewModel: ViewModel() {
                        val schedJson = main.getJSONArray("sched")
                        val examJson = main.getJSONArray("exam")
                        val examsJson = main.getJSONArray("exams")
+                       val contract = main.getJSONObject("contract")
+                       val modules = main.getJSONArray("modules")
+
+                       modules.let { mods ->
+                           this.modules.clear()
+                           for(i in 0 until mods.length())
+                           {
+                               this.modules.add(mods[i].toString())
+                           }
+                       }
+                       contract.let { obj ->
+                           this.contract.value = gson.fromJson(obj.toString(), Contract::class.java)
+                       }
                        if(examJson.length() > 0)
                        {
                            exam.add(gson.fromJson(examJson[0].toString(), Exam::class.java))

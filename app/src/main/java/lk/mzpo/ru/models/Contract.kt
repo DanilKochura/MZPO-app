@@ -33,7 +33,8 @@ data class Contract (
         @SerializedName("course"          ) var course         : CoursePreview? = null,
         @SerializedName("certs"           ) var certs          : List<String> = emptyList(),
         @SerializedName("need_docs"       ) var need_docs      : Boolean = false,
-        @SerializedName("practiceData"  ) var practiceData   : PracticeData? = null
+        @SerializedName("practiceData"  ) var practiceData   : PracticeData? = null,
+        @SerializedName("examData"  ) var examData   : List<ExamData> = emptyList()
 
 
     )
@@ -83,3 +84,62 @@ data class Gift (
         @SerializedName("user_type" ) var userType : String? = null
 
 )
+
+data class ExamData (
+
+        @SerializedName("id"               ) var id             : Int?    = null,
+        @SerializedName("contract_id"      ) var contractId     : Int?    = null,
+        @SerializedName("module_id"        ) var moduleId       : Int?    = null,
+        @SerializedName("module_passed"    ) var modulePassed   : String? = null,
+        @SerializedName("exam"             ) var exam           : String? = null,
+        @SerializedName("passed"           ) var passed         : String? = null,
+        @SerializedName("passed_at"        ) var passedAt       : String? = null,
+        @SerializedName("extend_till"      ) var extendTill     : String? = null,
+        @SerializedName("extended"         ) var extended       : Int?    = null,
+        @SerializedName("free_extend"      ) var freeExtend     : String? = null,
+        @SerializedName("can_free_extend"  ) var canFreeExtend  : String? = null,
+        @SerializedName("exam_ticket"      ) var examTicket     : String? = null,
+//        @SerializedName("exam_answer"      ) var examAnswer     : Obj? = null,
+        @SerializedName("exam_answered_at" ) var examAnsweredAt : String? = null,
+        @SerializedName("exam_passed"      ) var examPassed     : String? = null,
+        @SerializedName("exam_answer_till" ) var examAnswerTill : String? = null,
+        @SerializedName("status"           ) var status         : String? = null,
+        @SerializedName("payed_access"     ) var payedAccess    : String? = null,
+        @SerializedName("warning"          ) var warning        : String? = null,
+        @SerializedName("email_sent"       ) var emailSent      : String? = null,
+        @SerializedName("created_at"       ) var createdAt      : String? = null,
+        @SerializedName("updated_at"       ) var updatedAt      : String? = null
+
+)
+
+fun Contract.canAccessCourse(): Boolean {
+        return notPassed == null && status!! in intArrayOf(1, 6, 7, 9, 10, 11, 14)
+}
+
+fun Contract.isActiveCourse(): Boolean {
+        return status!! in intArrayOf(1, 6, 7, 8, 9, 10, 11, 14)
+}
+
+fun Contract.isCompleted(): Boolean {
+        return status!! in intArrayOf(0, 3, 15)
+}
+
+fun Contract.isCanceled(): Boolean {
+        return status!! in intArrayOf(2, 5)
+}
+
+fun Contract.isSuspended(): Boolean {
+        return status == 8
+}
+
+fun Contract.canExtendAccess(): Boolean {
+        return status!! in intArrayOf(1, 6, 7, 9, 10, 11, 17)
+}
+
+fun Contract.hasFreeExtension(): Boolean {
+        return notPassed?.free?.isNotEmpty() == true && notPassed?.free != "0"
+}
+
+fun Contract.hasPaidExtension(): Boolean {
+        return notPassed?.free == "0"
+}

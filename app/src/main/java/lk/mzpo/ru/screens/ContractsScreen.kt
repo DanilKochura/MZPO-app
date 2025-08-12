@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +29,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
@@ -38,6 +40,8 @@ import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.OutlinedButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -57,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -65,6 +70,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -83,7 +89,14 @@ import lk.mzpo.ru.R
 import lk.mzpo.ru.exceptions.NoConnectionException
 import lk.mzpo.ru.models.BottomNavigationMenu
 import lk.mzpo.ru.models.Contract
+import lk.mzpo.ru.models.ExamData
 import lk.mzpo.ru.models.Gift
+import lk.mzpo.ru.models.canAccessCourse
+import lk.mzpo.ru.models.canExtendAccess
+import lk.mzpo.ru.models.isActiveCourse
+import lk.mzpo.ru.models.isCanceled
+import lk.mzpo.ru.models.isCompleted
+import lk.mzpo.ru.models.isSuspended
 import lk.mzpo.ru.network.retrofit.AuthData
 import lk.mzpo.ru.network.retrofit.AuthService
 import lk.mzpo.ru.network.retrofit.AuthStatus
@@ -101,6 +114,9 @@ import lk.mzpo.ru.viewModel.ContractsViewModel
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -531,17 +547,17 @@ fun ActiveTab(
                     if (contract.course !== null) {
                         ContractCard(
                             contract, onClick = {
-                                val gson = Gson()
-                                val contractJson = gson.toJson(
-                                    contract,
-                                    Contract::class.java
-                                )
-                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                    "Contract",
-                                    contractJson
-                                )
+//                                val gson = Gson()
+//                                val contractJson = gson.toJson(
+//                                    contract,
+//                                    Contract::class.java
+//                                )
+//                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
+//                                    "Contract",
+//                                    contractJson
+//                                )
 
-                                navHostController.navigate("study")
+                                navHostController.navigate("study/" + contract.id)
 
                             },
                             onAccess = {
@@ -590,14 +606,28 @@ fun ActiveTab(
             flingBehavior = rememberSnapFlingBehavior(listState)
         )
     } else {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
-            Text("Активные курсы", fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Primary_Green)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                "Активные курсы",
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp,
+                color = Primary_Green
+            )
             Image(
                 painter = painterResource(id = R.drawable.books__1_),
                 contentDescription = "lebed_back",
                 modifier = Modifier.fillMaxWidth(0.6f)
             )
-            Text("Тут пока ничего нет...",  fontSize = 22.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(
+                "Тут пока ничего нет...",
+                fontSize = 22.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
 //            Text("Самое время что-нибудь подобрать",  fontSize = 22.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(20.dp))
             Button(
@@ -616,7 +646,8 @@ fun ActiveTab(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class,
+@OptIn(
+    ExperimentalFoundationApi::class, ExperimentalMaterialApi::class,
     ExperimentalMaterial3Api::class
 )
 @Composable
@@ -644,42 +675,44 @@ fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHo
                 itemsIndexed(courses)
                 { i, contract ->
                     if (contract.course !== null) {
-                        ContractCard(contract, Modifier, navHostController,
+                        ContractCard(
+                            contract, Modifier, navHostController,
                             onClick = {
-                                val gson = Gson()
-                                val contractJson = gson.toJson(
-                                    contract,
-                                    Contract::class.java
-                                )
-                                navHostController.currentBackStackEntry?.savedStateHandle?.set(
-                                    "Contract",
-                                    contractJson
-                                )
-
-                                navHostController.navigate("study")
+                                navHostController.navigate("study/" + contract.id)
 
                             })
                     }
-
                 }
             },
             modifier = Modifier.fillMaxSize(),
             state = listState,
             flingBehavior = rememberSnapFlingBehavior(listState)
         )
-    } else
-    {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize()) {
-            Text("Завершенные курсы", fontWeight = FontWeight.Bold, fontSize = 30.sp, color = Primary_Green)
+    } else {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                "Завершенные курсы",
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp,
+                color = Primary_Green
+            )
             Image(
                 painter = painterResource(id = R.drawable.books__1_),
                 contentDescription = "lebed_back",
                 modifier = Modifier.fillMaxWidth(0.6f)
             )
-            Text("Вы еще не завершили ни одного курса",  fontSize = 18.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text(
+                "Вы еще не завершили ни одного курса",
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(Modifier.height(20.dp))
-            if (active_courses.isNotEmpty())
-            {
+            if (active_courses.isNotEmpty()) {
                 Button(
                     onClick = {
                         contractsViewModel.selected.value = "Активные"
@@ -690,8 +723,7 @@ fun FinishedTab(contractsViewModel: ContractsViewModel, navHostController: NavHo
                 ) {
                     Text(text = "Перейти к учебе", color = Color.White)
                 }
-            } else
-            {
+            } else {
                 Button(
                     onClick = {
                         navHostController.navigate("categories")
@@ -748,40 +780,32 @@ fun ContractCard(
     val metodCallText = buildAnnotatedString {
         val mStr =
             "Если у вас есть вопросы по документам, свяжитесь с Методическим отделом +7(495)278-11-09 (доб. 302)"
-
-        // word and span to be hyperlinked
         val mStartIndex = mStr.indexOf("+7(495)278-11-09")
         val mEndIndex = mStartIndex + 17
-        addStyle(
-            style = ParagraphStyle(textAlign = TextAlign.Center),
-            start = 0,
-            end = mStr.length
-        )
+        addStyle(style = ParagraphStyle(textAlign = TextAlign.Center), start = 0, end = mStr.length)
         append(mStr)
         addStyle(
-            style = SpanStyle(
-                color = Color.Blue,
-                textDecoration = TextDecoration.Underline
-            ), start = mStartIndex, end = mEndIndex
+            style = SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline),
+            start = mStartIndex,
+            end = mEndIndex
         )
-
-        // attach a string annotation that
-        // stores a URL to the text "link"
         addStringAnnotation(
             tag = "URL",
             annotation = "tel:84952781109",
             start = mStartIndex,
             end = mEndIndex
         )
-
     }
+
+
     val uriHandler = LocalUriHandler.current
     Card(
         modifier = modifier
 
             .padding(25.dp)
             .shadow(2.dp, RoundedCornerShape(10.dp))
-            .fillMaxHeight()
+//            .fillMaxHeight()
+            .heightIn(min = 450.dp) // Минимальная высота
             .width(conf.screenWidthDp.dp.minus(50.dp)), colors = CardDefaults.cardColors(
             containerColor = Color.White
         )
@@ -789,14 +813,18 @@ fun ContractCard(
 //        Image(painter = painterResource(id = R.drawable.masage), contentDescription = "", modifier = Modifier
 //            .height(150.dp)
 //            .fillMaxWidth(), contentScale = ContentScale.Crop)
-        AsyncImage(
-            model = contract.course?.image,
-            contentDescription = contract.course?.id.toString(),
+        Column(
             modifier = Modifier
-                .height(200.dp)
-                .fillMaxWidth()
-                .clickable {
-                    if (contract.notPassed === null && contract.status!! in intArrayOf(
+                .fillMaxSize(),
+
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clickable(
+                        enabled = contract.notPassed == null && contract.status!! in intArrayOf(
                             1,
                             6,
                             7,
@@ -806,138 +834,131 @@ fun ContractCard(
                             14
                         )
                     ) {
-                        onClick.invoke()
+                        onClick()
                     }
-                },
-            contentScale = ContentScale.Crop
-        )
-        Column(
-            modifier = Modifier
-                .padding(7.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                contract.course!!.name,
-                maxLines = 2,
-                fontSize = 18.sp,
-                overflow = TextOverflow.Ellipsis,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(10.dp),
-                textAlign = TextAlign.Center
-            )
-            if (contract.status!! in intArrayOf(
-                    1,
-                    6,
-                    7,
-                    8,
-                    9,
-                    10,
-                    11,
-                    14
-                )
             ) {
-                Text(
-                    text = contract.course!!.hours.toString() + " ак.ч.",
-                    fontWeight = FontWeight.Bold
+                AsyncImage(
+                    model = contract.course?.image,
+                    contentDescription = contract.course?.id?.toString() ?: "course-image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Row {
-                            Text(text = "Тесты: ", color = Primary_Green)
-                            Text(text = contract.progress!!.tests!!)
-                        }
-                        Row {
-                            Text(text = "Видео: ", color = Primary_Green)
-                            Text(text = contract.progress!!.video!!)
-                        }
-                        Row {
-                            Text(text = "Пособия: ", color = Primary_Green)
-                            Text(text = contract.progress!!.files!!)
-                        }
-                    }
-                    CircularProgressbar2(
-                        contract.progress!!.total!!.toFloat(),
-                        size = conf.screenHeightDp.dp.div(10)
-                    )
-
-                }
-            } else if (contract.status!! in intArrayOf(
-                    0,
-                    3,
-                    15
-                )
-            ) {
-                Column(
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 20.dp)
-                        .verticalScroll(
-                            rememberScrollState()
-                        ),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (contract.status!! == 0 || contract.status!! == 15) {
-                        Text(
-                            text = "Вы успешно прошли обучение!",
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 7.dp),
-                            color = Aggressive_red
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                0f to Color.Transparent,
+                                0.55f to Color(0x66000000),
+                                1f to Color(0xB3000000)
+                            )
                         )
-                        Button(
-                            onClick = {
-                                onClick.invoke()
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 5.dp),
-                            shape = RoundedCornerShape(30),
-                            colors = ButtonDefaults.buttonColors(
-                                backgroundColor = Aggressive_red,
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text("Смотреть материалы", color = Color.White)
+                )
+                Text(
+                    text = contract.course?.name ?: "Курс",
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 20.sp,
+                    lineHeight = 24.sp,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(16.dp),
+                    maxLines = 2
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .padding(7.dp)
+                    .weight(1f) // Это заставит блок занимать всё доступное пространство
+                    .fillMaxWidth()
+            ) {
 
-                        }
-                    }
-                    Text(
-                        buildAnnotatedString {
-                            append("Документ ")
-                            withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
-                                if (contract.certs.isNotEmpty()) {
-                                    append(contract.certs[0])
-                                } else if(contract.legal == "2") {
-                                    append("будет передан в вашу организацию.")
-                                } else
-                                {
-                                    append("изготавливается")
-                                }
-                            }
-                        }, modifier = Modifier.padding(bottom = 5.dp), textAlign = TextAlign.Center
 
+                if (contract.isActiveCourse()) {
+                    ProgressBlockPretty(
+                        contract.progress!!.tests!!,
+                        contract.progress!!.video!!,
+                        contract.progress!!.files!!,
+                        contract.progress!!.total!!.toFloat(),
+                        contract.examData,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    if (contract.certs.isNotEmpty() && contract.debt == 0 && !contract.need_docs) {
-                        OutlinedButton(
-                            onClick = {
-                                navHostController.navigate(
-                                    "profile/certs"
-                                )
-                            },
-                            border = BorderStroke(2.dp, Primary_Green),
-                            modifier = Modifier.padding(vertical = 10.dp)
-                        ) {
+                }
+            }
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                if (contract.isCompleted()) {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                            .verticalScroll(
+                                rememberScrollState()
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (contract.status!! == 0 || contract.status!! == 15) {
                             Text(
-                                text = "Получить документ",
-                                color = Primary_Green,
-                                fontWeight = FontWeight.Bold
+                                text = "Вы успешно прошли обучение!",
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(bottom = 7.dp),
+                                color = Aggressive_red
                             )
+                            Button(
+                                onClick = {
+                                    onClick.invoke()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 5.dp),
+                                shape = RoundedCornerShape(30),
+                                colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = Aggressive_red,
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("Смотреть материалы", color = Color.White)
+
+                            }
                         }
-                    }
+                        Text(
+                            buildAnnotatedString {
+                                append("Документ ")
+                                withStyle(SpanStyle(textDecoration = TextDecoration.Underline)) {
+                                    if (contract.certs.isNotEmpty()) {
+                                        append(contract.certs[0])
+                                    } else if (contract.legal == "2") {
+                                        append("будет передан в вашу организацию.")
+                                    } else {
+                                        append("изготавливается")
+                                    }
+                                }
+                            },
+                            modifier = Modifier.padding(bottom = 5.dp),
+                            textAlign = TextAlign.Center
+
+                        )
+                        if (contract.certs.isNotEmpty() && contract.debt == 0 && !contract.need_docs) {
+                            OutlinedButton(
+                                onClick = {
+                                    navHostController.navigate(
+                                        "profile/certs"
+                                    )
+                                },
+                                border = BorderStroke(2.dp, Primary_Green),
+                                modifier = Modifier.padding(vertical = 10.dp)
+                            ) {
+                                Text(
+                                    text = "Получить документ",
+                                    color = Primary_Green,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
 //                    if (contract.debt != 0 && contract.legal !== "2") {
 //                        Text(
 //                            text = "Для получения документа, Вам необходимо оплатить долг в размере ${contract.debt} руб.",
@@ -946,211 +967,207 @@ fun ContractCard(
 //                            fontWeight = FontWeight.Bold
 //                        )
 //                    }
-                    if (contract.need_docs) {
-                        Text(
-                            text = "Чтобы получить документ об образовании загрузите документы и ожидайте уведомление о статусе проверки",
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 7.dp),
-                        )
-                        ClickableText(text = metodCallText, onClick = {
-                            metodCallText
-                                .getStringAnnotations("URL", it, it)
-                                .firstOrNull()?.let { stringAnnotation ->
-                                    uriHandler.openUri(stringAnnotation.item)
-                                }
-                        })
-                    }
-
-                }
-
-            }
-            if (contract.status == 5 || contract.status == 2) {
-                Text(text = "Отказ от курса", color = Aggressive_red, textAlign = TextAlign.Center)
-
-                if (contract.amount !== null) {
-                    Text(text = buildAnnotatedString {
-                        withStyle(SpanStyle(color = Aggressive_red))
-                        {
-                            if (contract.status == 2) {
-                                append("Денежные средства возвращены ")
-                            } else {
-                                append("Частичный возврат денежных средств ")
-                            }
-                        }
-                        append(contract.dateCancel)
-                    }, textAlign = TextAlign.Center)
-                }
-            }
-            if (contract.whyCancel !== null) {
-                Text(text = contract.whyCancel!!, textAlign = TextAlign.Center)
-            }
-            if (contract.notPassed === null && contract.status!! in intArrayOf(
-                    1,
-                    6,
-                    7,
-//                    8,
-                    9,
-                    10,
-                    11,
-                    14,
-//                0, 15
-                )
-            ) {
-                Button(
-                    onClick = {
-                        onClick.invoke()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 5.dp),
-                    shape = RoundedCornerShape(30),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Aggressive_red,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Перейти", color = Color.White)
-
-                }
-            }
-
-            //region Продление
-            else if (contract.status!! in intArrayOf(1, 6, 7, 9, 10, 11)) {
-
-
-                if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
-                    Text(
-                        text = "У вас " + contract.notPassed?.extendTimes + " бесплатно продлить доступ. Используйте " + contract.notPassed?.left + " до " + contract.notPassed?.extendTill,
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        lineHeight = 15.sp,
-                        modifier = Modifier.padding(top = 5.dp, bottom = 0.dp)
-                    )
-                }
-                val scope = rememberCoroutineScope()
-                Button(
-                    onClick = {
-                        if (contract.status != 10) {
-                            scope.launch {
-                                bottom?.show()
-                                onAccess.invoke()
-                            }
-                        } else {
-                            Toast.makeText(
-                                context,
-                                "Вы сможете продлить доступ после полной оплаты курса.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(),
-//                        .padding(vertical = 5.dp),
-                    shape = RoundedCornerShape(30),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Aggressive_red,
-                        contentColor = Color.White
-                    ),
-                ) {
-                    if (contract.notPassed!!.free == "0") {
-                        Text(
-                            "Продлить доступ за " + contract.extendPrice + " руб.",
-                            color = Color.White
-                        )
-                    } else {
-                        Text("Продлить доступ", color = Color.White)
-                    }
-                }
-
-            }
-            //endregion
-
-            else if (contract.status!! in intArrayOf(8)) {
-
-                Button(
-                    onClick = {
-
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(),
-//                        .padding(vertical = 5.dp),
-                    shape = RoundedCornerShape(30),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.LightGray,
-                        contentColor = Color.White
-                    ),
-                    enabled = false
-                ) {
-                    Text("Обучение приостановлено", color = Color.White)
-                }
-
-            } else if (contract.status!! in intArrayOf(17)) {
-
-
-                if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
-                    Text(
-                        text = "Восстановить доступ к курсу за 50% стоимости - " + contract.extendPrice,
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        lineHeight = 15.sp,
-                        modifier = Modifier.padding(top = 5.dp, bottom = 0.dp)
-                    )
-                }
-                val scope = rememberCoroutineScope()
-                val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
-                val token_ = pref.getString("token_lk", "")
-                Button(
-                    onClick = {
-                        BuyExtendRequest().sendRecovery(
-                            "Bearer " + token_?.trim('"'),
-                            RecoveryPostBody(
-                                contract_id = contract.id
+                        if (contract.need_docs) {
+                            Text(
+                                text = "Чтобы получить документ об образовании загрузите документы и ожидайте уведомление о статусе проверки",
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(bottom = 7.dp),
                             )
+                            ClickableText(text = metodCallText, onClick = {
+                                metodCallText
+                                    .getStringAnnotations("URL", it, it)
+                                    .firstOrNull()?.let { stringAnnotation ->
+                                        uriHandler.openUri(stringAnnotation.item)
+                                    }
+                            })
+                        }
 
-                        ).enqueue(object : retrofit2.Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                Log.e("API Request", "I got an error and i don't know why :(")
-                                Log.e("API Request", t.message.toString())
+                    }
+
+                }
+                if (contract.isCanceled()) {
+                    Text(
+                        text = "Отказ от курса",
+                        color = Aggressive_red,
+                        textAlign = TextAlign.Center
+                    )
+
+                    if (contract.amount !== null) {
+                        Text(text = buildAnnotatedString {
+                            withStyle(SpanStyle(color = Aggressive_red))
+                            {
+                                if (contract.status == 2) {
+                                    append("Денежные средства возвращены ")
+                                } else {
+                                    append("Частичный возврат денежных средств ")
+                                }
+                            }
+                            append(contract.dateCancel)
+                        }, textAlign = TextAlign.Center)
+                    }
+                }
+                if (contract.whyCancel !== null) {
+                    Text(text = contract.whyCancel!!, textAlign = TextAlign.Center)
+                }
+                if (contract.canAccessCourse()) {
+                    Button(
+                        onClick = {
+                            onClick.invoke()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 5.dp),
+                        shape = RoundedCornerShape(30),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Aggressive_red,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Перейти", color = Color.White)
+
+                    }
+                }
+
+                //region Продление
+                else if (contract.canExtendAccess()) {
+
+
+                    if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
+                        Text(
+                            text = "У вас " + contract.notPassed?.extendTimes + " бесплатно продлить доступ. Используйте " + contract.notPassed?.left + " до " + contract.notPassed?.extendTill,
+                            textAlign = TextAlign.Center,
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp,
+                            modifier = Modifier.padding(top = 5.dp, bottom = 0.dp)
+                        )
+                    }
+                    val scope = rememberCoroutineScope()
+                    Button(
+                        onClick = {
+                            if (contract.status != 10) {
+                                scope.launch {
+                                    bottom?.show()
+                                    onAccess.invoke()
+                                }
+                            } else {
                                 Toast.makeText(
                                     context,
-                                    "Произошла ошибка. Попробуйте позже!",
-                                    Toast.LENGTH_SHORT
+                                    "Вы сможете продлить доступ после полной оплаты курса.",
+                                    Toast.LENGTH_LONG
                                 ).show()
                             }
-
-                            override fun onResponse(
-                                call: Call<ResponseBody>,
-                                response: Response<ResponseBody>
-                            ) {
-                                Log.d("API Request", response.body().toString())
-                                Log.d("API Request", response.message())
-                                Log.d("API Request", response.errorBody().toString())
-                                Log.d("API Request", response.raw().body.toString())
-                                if (response.isSuccessful) {
-                                    navHostController.navigate("cart")
-                                }
-                            }
-                        })
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(),
 //                        .padding(vertical = 5.dp),
-                    shape = RoundedCornerShape(30),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Aggressive_red,
-                        contentColor = Color.White
-                    ),
-                ) {
+                        shape = RoundedCornerShape(30),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Aggressive_red,
+                            contentColor = Color.White
+                        ),
+                    ) {
+                        if (contract.notPassed!!.free == "0") {
+                            Text(
+                                "Продлить доступ за " + contract.extendPrice + " руб.",
+                                color = Color.White
+                            )
+                        } else {
+                            Text("Продлить доступ", color = Color.White)
+                        }
+                    }
 
-                    Text("Восстановиться", color = Color.White)
+                }
+                //endregion
+
+                else if (contract.isSuspended()) {
+
+                    Button(
+                        onClick = {
+
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+//                        .padding(vertical = 5.dp),
+                        shape = RoundedCornerShape(30),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.LightGray,
+                            contentColor = Color.White
+                        ),
+                        enabled = false
+                    ) {
+                        Text("Обучение приостановлено", color = Color.White)
+                    }
+
+                } else if (contract.status!! in intArrayOf(17)) {
+
+
+                    if (!contract.notPassed?.free.isNullOrEmpty() && contract.notPassed?.free != "0") {
+                        Text(
+                            text = "Восстановить доступ к курсу за 50% стоимости - " + contract.extendPrice,
+                            textAlign = TextAlign.Center,
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp,
+                            modifier = Modifier.padding(top = 5.dp, bottom = 0.dp)
+                        )
+                    }
+                    val scope = rememberCoroutineScope()
+                    val pref = context.getSharedPreferences("session", Context.MODE_PRIVATE)
+                    val token_ = pref.getString("token_lk", "")
+                    Button(
+                        onClick = {
+                            BuyExtendRequest().sendRecovery(
+                                "Bearer " + token_?.trim('"'),
+                                RecoveryPostBody(
+                                    contract_id = contract.id
+                                )
+
+                            ).enqueue(object : retrofit2.Callback<ResponseBody> {
+                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                    Log.e("API Request", "I got an error and i don't know why :(")
+                                    Log.e("API Request", t.message.toString())
+                                    Toast.makeText(
+                                        context,
+                                        "Произошла ошибка. Попробуйте позже!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
+                                override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>
+                                ) {
+                                    Log.d("API Request", response.body().toString())
+                                    Log.d("API Request", response.message())
+                                    Log.d("API Request", response.errorBody().toString())
+                                    Log.d("API Request", response.raw().body.toString())
+                                    if (response.isSuccessful) {
+                                        navHostController.navigate("cart")
+                                    }
+                                }
+                            })
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+//                        .padding(vertical = 5.dp),
+                        shape = RoundedCornerShape(30),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Aggressive_red,
+                            contentColor = Color.White
+                        ),
+                    ) {
+
+                        Text("Восстановиться", color = Color.White)
+                    }
+
                 }
 
             }
-
         }
     }
+
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -1237,4 +1254,313 @@ fun GiftCard(
 
         }
     }
+}
+
+@Composable
+fun ProgressBlockPretty(
+    tests: String,
+    video: String,
+    files: String,
+    total: Float, // 0..100
+    examData: List<ExamData>,
+    freeExtends: String? = null,
+    extendTimes: String? = null,
+    left: String? = null,
+    extendTill: String? = null,
+    modifier: Modifier = Modifier
+) {
+    val conf = LocalConfiguration.current
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF8FAFC), RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(16.dp))
+            .padding(14.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
+            // Заголовок + бейдж процента
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Прогресс",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF111827)
+                )
+                // Небольшой бейдж справа
+//                Box(
+//                    modifier = Modifier
+//                        .clip(RoundedCornerShape(10.dp))
+//                        .background(Color(0xFFE5F5E9)) // светло-зелёный фон
+//                        .padding(horizontal = 8.dp, vertical = 4.dp)
+//                ) {
+//                    Text(
+//                        text = "${total.toInt()}%",
+//                        fontSize = 12.sp,
+//                        fontWeight = FontWeight.Medium,
+//                        color = Primary_Green
+//                    )
+//                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Левая колонка с метриками
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    MetricLine(label = "Тесты", value = tests)
+                    MetricLine(label = "Видео", value = video)
+                    MetricLine(label = "Пособия", value = files)
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                // Круг прогресса справа
+                CircularProgressbar2(
+                    number = total,
+                    size = conf.screenHeightDp.dp.div(9),
+                    thickness = 13.dp,
+                    numberStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                    foregroundIndicatorColor = Primary_Green,
+                    backgroundIndicatorColor = Primary_Green.copy(alpha = 0.25f),
+                    extraSizeForegroundIndicator = 6.dp,
+                    animationDuration = 700,
+                    animationDelay = 100
+                )
+            }
+
+            // Подсказка о бесплатных продлениях (если есть)
+            if (!freeExtends.isNullOrEmpty() && freeExtends != "0") {
+                Text(
+                    text = "У вас $extendTimes бесплатно продлить доступ. Используйте $left до $extendTill",
+                    fontSize = 12.sp,
+                    color = Color(0xFF6B7280),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (examData.size > 0) {
+                var selectedExam = examData.find { it.passed == "0" }
+                if (selectedExam == null) selectedExam = examData[0]
+                ExamBanner(selectedExam.exam, selectedExam.passed == "1", {})
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricLine(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFFF3F4F6))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // маленький маркер
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(Primary_Green)
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(text = "$label:", color = Primary_Green, fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.width(6.dp))
+        Text(text = value, color = Color(0xFF111827))
+    }
+}
+
+@Composable
+fun dateExam(examDate: String) {
+    val formattedDate = try {
+        val dateTime = ZonedDateTime.parse(examDate) // Парсим строку в ZonedDateTime
+        dateTime.format(
+            DateTimeFormatter.ofPattern(
+                "dd MMMM yyyy, HH:mm",
+                Locale("ru")
+            )
+        ) // Форматируем
+    } catch (e: Exception) {
+        "Дата недоступна" // В случае ошибки парсинга
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(5.dp))
+            .background(Primary_Green.copy(0.2f))
+            .border(1.dp, Primary_Green, RoundedCornerShape(5.dp))
+            .padding(6.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.calendar),
+            contentDescription = "Дата экзамена",
+            tint = Primary_Green.copy(0.7f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Экзамен: $formattedDate",
+            color = Primary_Green.copy(0.7f),
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
+        )
+    }
+
+}
+
+@Composable
+fun ExamBanner(
+    examDateIso: String?, // например "2025-08-10T12:00:00+03:00"
+    passed: Boolean,
+    onOpenExam: (() -> Unit)? = null
+) {
+    val (bg, fg) = if (passed) Color(0xFFE6F9EE) to Color(0xFF1E7F4C) else Color(0xFFFFF6E6) to Color(
+        0xFF8A5A00
+    )
+    val iconTint = fg.copy(alpha = 0.85f)
+
+    val text = remember(examDateIso, passed) {
+        val formatted = try {
+            val dt = java.time.ZonedDateTime.parse(examDateIso)
+            dt.format(
+                java.time.format.DateTimeFormatter.ofPattern(
+                    "dd MMMM yyyy, HH:mm",
+                    java.util.Locale("ru")
+                )
+            )
+        } catch (_: Exception) {
+            null
+        }
+
+        when {
+            passed -> "Экзамен: сдан"
+            formatted != null -> "Экзамен: $formatted"
+            else -> "Экзамен: дата не назначена"
+        }
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(bg)
+            .border(1.dp, fg.copy(0.35f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 10.dp, vertical = 10.dp)
+    ) {
+        if (passed) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = iconTint
+            )
+        } else {
+            Icon(
+                painter = painterResource(R.drawable.calendar),
+                contentDescription = null,
+                tint = iconTint
+            )
+        }
+
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text,
+            color = fg,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            modifier = Modifier.weight(1f)
+        )
+        if (!passed && onOpenExam != null) {
+            Text(
+                "Перейти",
+                color = Aggressive_red,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onOpenExam() }
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun InfoChipsRow(
+    hours: Int,
+    format: String?,        // например: "видео, тесты"
+    certReady: Boolean,     // есть certs и нет need_docs/долга
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        InfoChip(text = "$hours ак.ч.")
+        format?.takeIf { it.isNotBlank() }?.let { InfoChip(text = it) }
+        InfoChip(
+            text = if (certReady) "Документ готов" else "Документ в обработке",
+            filled = certReady
+        )
+    }
+}
+
+@Composable
+private fun InfoChip(text: String, filled: Boolean = false) {
+    val bg = if (filled) Primary_Green.copy(0.12f) else Color(0xFFF3F4F6)
+    val fg = if (filled) Primary_Green else Color(0xFF111827)
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(999.dp))
+            .background(bg)
+            .border(
+                1.dp,
+                if (filled) Primary_Green.copy(0.4f) else Color(0xFFE5E7EB),
+                RoundedCornerShape(999.dp)
+            )
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+    ) {
+        Text(
+            text,
+            color = fg,
+            fontSize = 12.sp,
+            fontWeight = if (filled) FontWeight.SemiBold else FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun AccessUntilBadge(untilIso: String?) {
+    if (untilIso.isNullOrBlank()) return
+    val text = try {
+        val end = java.time.ZonedDateTime.parse(untilIso)
+        val now = java.time.ZonedDateTime.now(end.zone)
+        val days = java.time.Duration.between(now, end).toDays().coerceAtLeast(0)
+        "Доступ: ещё $days дн."
+    } catch (_: Exception) {
+        "Доступ: дата неизвестна"
+    }
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFFEFF6FF))
+            .border(1.dp, Color(0xFF93C5FD), RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    ) { Text(text, fontSize = 12.sp, color = Color(0xFF1D4ED8)) }
 }

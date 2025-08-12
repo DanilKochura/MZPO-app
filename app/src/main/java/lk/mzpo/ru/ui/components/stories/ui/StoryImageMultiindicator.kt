@@ -155,10 +155,10 @@ fun RowScope.ProgressLine(
             .then(indicator.modifier),
         color = indicator.indicatorColor,
         trackColor = indicator.indicatorTrackColor,
-        gapSize = 0.dp,
+//        gapSize = 0.dp,
         strokeCap = StrokeCap.Square,
-        drawStopIndicator = {
-
-        }
+//        drawStopIndicator = {
+//
+//        }
     )
 }

@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import lk.mzpo.ru.ui.components.stories.Story
 import lk.mzpo.ru.ui.components.stories.data.Indicator
 
@@ -100,11 +99,11 @@ fun StoryImage(
             modifier = indicator.modifier,
             color = indicator.indicatorColor,
             trackColor = indicator.indicatorTrackColor,
-            gapSize = 0.dp,
+//            gapSize = 0.dp,
             strokeCap = StrokeCap.Square,
-            drawStopIndicator = {
-
-            }
+//            drawStopIndicator = {
+//
+//            }
         )
     }
 }
